@@ -26,61 +26,28 @@
 
 #pragma once
 
-namespace CppEvent {
+#include <cppevent/abstract-trackable.hpp>
 
-// forward declaration
-//template<typename ... ParamTypes> class Connection;
-//template<typename ReturnType, typename ... ParamTypes> struct ConnectionNode;
- class Connection;
+namespace CppEvent {
 
 /**
  * @brief Abstract class for event
  */
-class Trackable
+class Trackable: public AbstractTrackable
 {
-  friend class Connection;
-
 public:
 
   inline Trackable ()
-      : head_connection_(0), tail_connection_(0), connection_count_(0)
+      : AbstractTrackable()
   {
   }
 
   virtual ~Trackable ();
 
-  int count () const
-  {
-    return connection_count_;
-  }
-
-  void Clear ();
-
 protected:
 
-  virtual void AuditDestroyingConnection (Connection* node);
+  virtual void AuditDestroyingConnection (Connection* node) final;
 
-  void PushBackConnection (Connection* node);
-
-  void PushFrontConnection (Connection* node);
-
-  void InsertConnection (int index, Connection* node);
-
-  inline Connection* head_connection () const
-  {
-    return head_connection_;
-  }
-
-  inline Connection* tail_connection () const
-  {
-    return tail_connection_;
-  }
-
-private:
-
-  Connection* head_connection_;
-  Connection* tail_connection_;
-  int connection_count_;
 };
 
 }

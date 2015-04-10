@@ -36,7 +36,7 @@ class DelegateConnection : public InvokableConnection < ParamTypes... >
 {
 public:
 
-  inline DelegateConnection();
+  DelegateConnection() = delete;
 
   inline DelegateConnection(const Delegate<void, ParamTypes...>& d);
 
@@ -48,14 +48,7 @@ private:
 
   Delegate<void, ParamTypes...> delegate_;
 
-  //ConnectionNode<ReturnType, ParamTypes...>* connection_node;
 };
-
-template<typename ... ParamTypes>
-inline DelegateConnection<ParamTypes...>::DelegateConnection()
-  : InvokableConnection<ParamTypes...>()
-{
-}
 
 template<typename ... ParamTypes>
 inline DelegateConnection<ParamTypes...>::DelegateConnection(const Delegate<void, ParamTypes...>& d)
@@ -66,14 +59,6 @@ inline DelegateConnection<ParamTypes...>::DelegateConnection(const Delegate<void
 template<typename ... ParamTypes>
 DelegateConnection<ParamTypes...>::~DelegateConnection()
 {
-  /*
-  if (connection_node) {
-  //assert(connection_node->delegate_node == this);
-  connection_node->delegate_node = 0;
-  delete connection_node;
-  connection_node = 0;
-  }
-  */
 }
 
 template<typename ... ParamTypes>

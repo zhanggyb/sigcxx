@@ -32,22 +32,22 @@ namespace CppEvent {
 
 Connection::~Connection ()
 {
-  if (trackable_) {
+  if (trackable_object_) {
 
-    trackable_->AuditDestroyingConnection(this);
+    trackable_object_->AuditDestroyingConnection(this);
 
     if (previous_)
       previous_->next_ = next_;
     else
-      trackable_->head_connection_ = next_;
+      trackable_object_->head_connection_ = next_;
 
     if (next_)
       next_->previous_ = previous_;
     else
-      trackable_->tail_connection_ = previous_;
+      trackable_object_->tail_connection_ = previous_;
 
-    trackable_->connection_count_--;
-    trackable_ = 0;
+    trackable_object_->connection_count_--;
+    trackable_object_ = 0;
 
   } else {
 

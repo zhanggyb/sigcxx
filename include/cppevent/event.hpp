@@ -27,12 +27,12 @@
 #pragma once
 
 #include <cppevent/delegate-connection.hpp>
-#include <cppevent/trackable.hpp>
+#include <cppevent/abstract-trackable.hpp>
 
 namespace CppEvent {
 
 template<typename ... ParamTypes>
-class Event: public Trackable
+class Event: public AbstractTrackable
 {
 public:
 
@@ -63,7 +63,7 @@ private:
 
 template<typename ... ParamTypes>
 inline Event<ParamTypes...>::Event ()
-    : Trackable(), v_(0)
+    : AbstractTrackable(), v_(0)
 {
 }
 

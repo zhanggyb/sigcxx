@@ -31,9 +31,7 @@ namespace CppEvent {
 /**
  * @brief Delegate with variadic template
  *
- * Inspired by http://www.codeproject.com/Articles/11015/The-Impossibly-Fast-C-Delegates,
- * http://blog.coldflake.com/posts/C++-delegates-on-steroids/ and
- * http://www.codeproject.com/Articles/136799/Lightweight-Generic-C-Callbacks-or-Yet-Another-Del
+ * Inspired by http://www.codeproject.com/Articles/11015/The-Impossibly-Fast-C-Delegates
  *
  * @note only support method in this project, which means you cannot
  * create a delegate to a static member function

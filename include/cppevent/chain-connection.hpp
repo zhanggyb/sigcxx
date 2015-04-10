@@ -24,19 +24,46 @@
  * SOFTWARE.
  */
 
-#include <cppevent/connection.hpp>
-#include <cppevent/trackable.hpp>
-#include <cassert>
+#pragma once
+
+#include <cppevent/event.hpp>
 
 namespace CppEvent {
 
-Trackable::~Trackable ()
+template<typename ... ParamTypes>
+class ChainConnection : public InvokableConnection < ParamTypes... >
+{
+public:
+
+  ChainConnection () = delete;
+
+  inline ChainConnection(const Event<ParamTypes...>* event);
+
+  virtual ~ChainConnection();
+
+  virtual void Invoke(ParamTypes... Args) override;
+
+private:
+
+  Event<ParamTypes...>* event_;
+};
+
+template<typename ... ParamTypes>
+inline ChainConnection<ParamTypes...>::ChainConnection (const Event<
+    ParamTypes...>* event)
+    : InvokableConnection<ParamTypes...>(), event_(event)
 {
 }
 
-void Trackable::AuditDestroyingConnection (Connection* node)
+template<typename ... ParamTypes>
+ChainConnection<ParamTypes...>::~ChainConnection()
 {
-  // TODO: override this
 }
 
-} // namespace CppEvent
+template<typename ... ParamTypes>
+void ChainConnection<ParamTypes...>::Invoke(ParamTypes... Args)
+{
+  if(event_) event_->Invoke(Args...);
+}
+
+}

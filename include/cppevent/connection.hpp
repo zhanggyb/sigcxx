@@ -29,7 +29,7 @@
 namespace CppEvent {
 
 // forward declaration
-class Trackable;
+class AbstractTrackable;
 
 /**
  * @brief The abstract event node
@@ -39,7 +39,7 @@ class Connection
 public:
 
   inline Connection ()
-    : trackable_(0), previous_(0), next_(0), upstream_(0), downstream_(0)
+    : trackable_object_(0), previous_(0), next_(0), upstream_(0), downstream_(0)
   {}
 
   virtual ~Connection ();
@@ -47,9 +47,9 @@ public:
   static bool LinkPair(Connection* upstream,
     Connection* downstream);
 
-  inline Trackable* trackable() const
+  inline AbstractTrackable* trackable_object() const
   {
-    return trackable_;
+    return trackable_object_;
   }
 
   inline Connection* previous() const
@@ -64,9 +64,9 @@ public:
 
 private:
 
-  friend class Trackable;
+  friend class AbstractTrackable;
 
-  Trackable* trackable_;
+  AbstractTrackable* trackable_object_;
   Connection* previous_;
   Connection* next_;
   Connection* upstream_;

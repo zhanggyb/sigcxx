@@ -24,19 +24,63 @@
  * SOFTWARE.
  */
 
-#include <cppevent/connection.hpp>
-#include <cppevent/trackable.hpp>
-#include <cassert>
+#pragma once
 
 namespace CppEvent {
 
-Trackable::~Trackable ()
-{
-}
+// forward declaration
+//template<typename ... ParamTypes> class Connection;
+//template<typename ReturnType, typename ... ParamTypes> struct ConnectionNode;
+ class Connection;
 
-void Trackable::AuditDestroyingConnection (Connection* node)
+/**
+ * @brief Abstract class for event
+ */
+class AbstractTrackable
 {
-  // TODO: override this
-}
+  friend class Connection;
 
-} // namespace CppEvent
+public:
+
+  inline AbstractTrackable ()
+      : head_connection_(0), tail_connection_(0), connection_count_(0)
+  {
+  }
+
+  virtual ~AbstractTrackable ();
+
+  inline int count () const
+  {
+    return connection_count_;
+  }
+
+  void Clear ();
+
+protected:
+
+  virtual void AuditDestroyingConnection (Connection* node) = 0;
+
+  void PushBackConnection (Connection* node);
+
+  void PushFrontConnection (Connection* node);
+
+  void InsertConnection (int index, Connection* node);
+
+  inline Connection* head_connection () const
+  {
+    return head_connection_;
+  }
+
+  inline Connection* tail_connection () const
+  {
+    return tail_connection_;
+  }
+
+private:
+
+  Connection* head_connection_;
+  Connection* tail_connection_;
+  int connection_count_;
+};
+
+}
