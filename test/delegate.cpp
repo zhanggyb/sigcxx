@@ -79,7 +79,7 @@ static void test_event01()
   TestClassBase obj1;
 
   Event<int> event;
-  event.connect<TestClassBase, &TestClassBase::Method1>(&obj1);
+  event.Connect<TestClassBase, &TestClassBase::Method1>(&obj1);
   event.Invoke(1);
 
   std::cout << "size of AbstractEvent: " << sizeof(event) << std::endl;

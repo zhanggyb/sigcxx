@@ -26,9 +26,12 @@
 
 #pragma once
 
-#include <cppevent/event.hpp>
+#include <cppevent/invokable-connection.hpp>
 
 namespace CppEvent {
+
+// forward declaration
+template<typename ... ParamTypes> class Event;
 
 template<typename ... ParamTypes>
 class ChainConnection : public InvokableConnection < ParamTypes... >
@@ -37,7 +40,7 @@ public:
 
   ChainConnection () = delete;
 
-  inline ChainConnection(const Event<ParamTypes...>* event);
+  inline ChainConnection(Event<ParamTypes...>* event);
 
   virtual ~ChainConnection();
 
@@ -49,7 +52,7 @@ private:
 };
 
 template<typename ... ParamTypes>
-inline ChainConnection<ParamTypes...>::ChainConnection (const Event<
+inline ChainConnection<ParamTypes...>::ChainConnection (Event<
     ParamTypes...>* event)
     : InvokableConnection<ParamTypes...>(), event_(event)
 {

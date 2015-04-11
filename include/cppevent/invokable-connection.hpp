@@ -56,7 +56,7 @@ InvokableConnection<ParamTypes...>::~InvokableConnection ()
 template<typename ... ParamTypes>
 void InvokableConnection<ParamTypes...>::Invoke (ParamTypes ... Args)
 {
-  // TODO: override this
+  // TODO: override this, or use this class for event chian load
 }
 
 } // namespace CppEvent

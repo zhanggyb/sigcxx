@@ -32,30 +32,8 @@ namespace CppEvent {
 
 AbstractTrackable::~AbstractTrackable ()
 {
-  Clear();
-}
-
-void AbstractTrackable::Clear ()
-{
-  Connection* tmp = 0;
-  Connection* p = head_connection_;
-
-  while (p) {
-
-    tmp = p->next_;
-
-    p->previous_ = 0;
-    p->next_ = 0;
-    p->trackable_object_ = 0;
-
-    // TODO: disconnect before delete
-    delete p;
-
-    p = tmp;
-
-  }
-
-  connection_count_ = 0;
+  // MUST call RemoveAllConnections() in sub class destructor
+  assert(connection_count_ == 0);
 }
 
 void AbstractTrackable::PushBackConnection (Connection* node)
@@ -63,15 +41,15 @@ void AbstractTrackable::PushBackConnection (Connection* node)
   assert(node->trackable_object_ == 0);
 
   if (tail_connection_) {
-    tail_connection_->next_ = node;
-    node->previous_ = tail_connection_;
+    tail_connection_->next_connection_ = node;
+    node->previous_connection_ = tail_connection_;
   } else {
     assert(head_connection_ == 0);
-    node->previous_ = 0;
+    node->previous_connection_ = 0;
     head_connection_ = node;
   }
   tail_connection_ = node;
-  node->next_ = 0;
+  node->next_connection_ = 0;
   node->trackable_object_ = this;
   connection_count_++;
 }
@@ -81,16 +59,16 @@ void AbstractTrackable::PushFrontConnection (Connection* node)
   assert(node->trackable_object_ == 0);
 
   if (head_connection_) {
-    head_connection_->previous_ = node;
-    node->next_ = head_connection_;
+    head_connection_->previous_connection_ = node;
+    node->next_connection_ = head_connection_;
   } else {
     assert(tail_connection_ == 0);
-    node->next_ = 0;
+    node->next_connection_ = 0;
     tail_connection_ = node;
   }
   head_connection_ = node;
 
-  node->previous_ = 0;
+  node->previous_connection_ = 0;
   node->trackable_object_ = this;
   connection_count_++;
 }
@@ -107,43 +85,57 @@ void AbstractTrackable::InsertConnection (int index, Connection* node)
   if (head_connection_ == 0) {
     assert(tail_connection_ == 0);
 
-    node->next_ = 0;
+    node->next_connection_ = 0;
     tail_connection_ = node;
     head_connection_ = node;
-    node->previous_ = 0;
+    node->previous_connection_ = 0;
   } else {
     if (index > 0) {
 
       Connection* p = head_connection_;
 
       while (p && (index > 0)) {
-        if (p->next_ == 0) break;
-        p = p->next_;
+        if (p->next_connection_ == 0) break;
+        p = p->next_connection_;
         index--;
       }
 
       if (index == 0) {  // insert
-        node->previous_ = p->previous_;
-        node->next_ = p;
-        p->previous_->next_ = node;
-        p->previous_ = node;
+        node->previous_connection_ = p->previous_connection_;
+        node->next_connection_ = p;
+        p->previous_connection_->next_connection_ = node;
+        p->previous_connection_ = node;
       } else {  // same as push back
         assert(p == tail_connection_);
-        tail_connection_->next_ = node;
-        node->previous_ = tail_connection_;
+        tail_connection_->next_connection_ = node;
+        node->previous_connection_ = tail_connection_;
         tail_connection_ = node;
-        node->next_ = 0;
+        node->next_connection_ = 0;
       }
 
     } else {  // same as push front
-      head_connection_->previous_ = node;
-      node->next_ = head_connection_;
+      head_connection_->previous_connection_ = node;
+      node->next_connection_ = head_connection_;
       head_connection_ = node;
-      node->previous_ = 0;
+      node->previous_connection_ = 0;
     }
   }
   node->trackable_object_ = this;
   connection_count_++;
+}
+
+void AbstractTrackable::RemoveAllConnections ()
+{
+  Connection* tmp = 0;
+  Connection* p = head_connection_;
+
+  while (p) {
+    tmp = p->next_connection_;
+    delete p;
+    p = tmp;
+  }
+
+  connection_count_ = 0;
 }
 
 } // namespace CppEvent

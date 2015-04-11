@@ -26,8 +26,10 @@
 
 #pragma once
 
-#include <cppevent/delegate-connection.hpp>
 #include <cppevent/abstract-trackable.hpp>
+#include <cppevent/trackable.hpp>
+#include <cppevent/delegate-connection.hpp>
+#include <cppevent/chain-connection.hpp>
 
 namespace CppEvent {
 
@@ -40,14 +42,25 @@ public:
 
   virtual ~Event ();
 
+  /**
+   * @brief Connect this event to a method of trackable object
+   */
   template<typename T, void (T::*TMethod) (ParamTypes...)>
-  void connect (T* obj);
+  void Connect (T* obj);
+
+  /**
+   * @brief Connect this event to a const method of trackable object
+   */
+  template<typename T, void (T::*TMethod) (ParamTypes...) const>
+  void Connect (T* obj);
+
+  template<typename T, void (T::*TMethod) (ParamTypes...)>
+  void DisconnectOne (T* obj);
 
   template<typename T, void (T::*TMethod) (ParamTypes...) const>
-  void connect (T* obj);
+  void DisconnectOne (T* obj);
 
-  template<typename T, void (T::*TMethod) (ParamTypes...)>
-  void disconnect (T* obj);
+  void Connect (Event<ParamTypes...>& other);
 
   virtual void Invoke (ParamTypes ... Args);
 
@@ -70,40 +83,88 @@ inline Event<ParamTypes...>::Event ()
 template<typename ... ParamTypes>
 Event<ParamTypes...>::~Event ()
 {
+    RemoveAllConnections();
 }
 
 template<typename ... ParamTypes>
 template<typename T, void (T::*TMethod) (ParamTypes...)>
-void Event<ParamTypes...>::connect (T* obj)
+void Event<ParamTypes...>::Connect (T* obj)
 {
-  Delegate<void, ParamTypes...> d =
-      Delegate<void, ParamTypes...>::template from_method<T, TMethod>(obj);
-  this->PushBackConnection(new DelegateConnection<ParamTypes...>(d));
+  Trackable* trackable_object = dynamic_cast<Trackable*>(obj);
+  if (trackable_object) {
+
+    Connection* downstream = new Connection;
+
+    Delegate<void, ParamTypes...> d =
+        Delegate<void, ParamTypes...>::template from_method<T, TMethod>(obj);
+    DelegateConnection<ParamTypes...>* upstream = new DelegateConnection<
+        ParamTypes...>(d);
+
+    Connection::LinkPair(upstream, downstream);
+
+    this->PushBackConnection(upstream);
+    add_connection(trackable_object, downstream);
+
+    return;
+  }
 }
 
 template<typename ... ParamTypes>
 template<typename T, void (T::*TMethod) (ParamTypes...) const>
-void Event<ParamTypes...>::connect (T* obj)
+void Event<ParamTypes...>::Connect (T* obj)
 {
-  Delegate<void, ParamTypes...> d =
-      Delegate<void, ParamTypes...>::template from_const_method<T, TMethod>(
-          obj);
-  this->PushBackConnection(new DelegateConnection<ParamTypes...>(d));
+  Trackable* trackable_object = dynamic_cast<Trackable*>(obj);
+  if (trackable_object) {
+
+    Connection* downstream = new Connection;
+
+    Delegate<void, ParamTypes...> d =
+        Delegate<void, ParamTypes...>::template from_const_method<T, TMethod>(
+            obj);
+    DelegateConnection<ParamTypes...>* upstream = new DelegateConnection<
+        ParamTypes...>(d);
+
+    Connection::LinkPair(upstream, downstream);
+
+    this->PushBackConnection(upstream);
+    add_connection(trackable_object, downstream);
+
+    return;
+  }
 }
 
 template<typename ... ParamTypes>
 template<typename T, void (T::*TMethod) (ParamTypes...)>
-void Event<ParamTypes...>::disconnect (T* obj)
+void Event<ParamTypes...>::DisconnectOne (T* obj)
 {
   // TODO
+}
+
+template<typename ... ParamTypes>
+template<typename T, void (T::*TMethod) (ParamTypes...) const>
+void Event<ParamTypes...>::DisconnectOne (T* obj)
+{
+  // TODO
+}
+
+template<typename ... ParamTypes>
+void Event<ParamTypes...>::Connect (Event<ParamTypes...>& other)
+{
+  ChainConnection<ParamTypes...>* upstream = new ChainConnection<ParamTypes...>(
+      &other);
+  InvokableConnection<ParamTypes...>* downstream =
+      new InvokableConnection<ParamTypes...>;
+  Connection::LinkPair(upstream, downstream);
+  this->PushBackConnection(upstream);
+  add_connection(&other, downstream);
 }
 
 template<typename ... ParamTypes>
 void Event<ParamTypes...>::Invoke (ParamTypes ... Args)
 {
   v_ = 0;
-  for (v_ = this->head_connection(); v_; v_ = v_->next()) {
-    static_cast<DelegateConnection<ParamTypes...>*>(v_)->Invoke(Args...);
+  for (v_ = this->head_connection(); v_; v_ = v_->next_connection()) {
+    static_cast<InvokableConnection<ParamTypes...>*>(v_)->Invoke(Args...);
   }
   v_ = 0;
 }
@@ -112,7 +173,7 @@ template<typename ... ParamTypes>
 void Event<ParamTypes...>::AuditDestroyingConnection (Connection* node)
 {
   if (node == v_) {
-    v_ = v_->next();
+    v_ = v_->next_connection();
   }
 }
 

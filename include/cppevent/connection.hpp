@@ -39,27 +39,41 @@ class Connection
 public:
 
   inline Connection ()
-    : trackable_object_(0), previous_(0), next_(0), upstream_(0), downstream_(0)
-  {}
+  : trackable_object_(0),
+    previous_connection_(0),
+    next_connection_(0),
+    upstream_connection_(0),
+    downstream_connection_(0)
+  {
+  }
 
   virtual ~Connection ();
 
-  static bool LinkPair(Connection* upstream,
-    Connection* downstream);
+  static bool LinkPair (Connection* upstream, Connection* downstream);
 
-  inline AbstractTrackable* trackable_object() const
+  inline AbstractTrackable* trackable_object () const
   {
     return trackable_object_;
   }
 
-  inline Connection* previous() const
+  inline Connection* previous_connection () const
   {
-    return previous_;
+    return previous_connection_;
   }
 
-  inline Connection* next() const
+  inline Connection* next_connection () const
   {
-    return next_;
+    return next_connection_;
+  }
+
+  inline Connection* upstream_connection () const
+  {
+    return upstream_connection_;
+  }
+
+  inline Connection* downstream_connection () const
+  {
+    return downstream_connection_;
   }
 
 private:
@@ -67,10 +81,10 @@ private:
   friend class AbstractTrackable;
 
   AbstractTrackable* trackable_object_;
-  Connection* previous_;
-  Connection* next_;
-  Connection* upstream_;
-  Connection* downstream_;
+  Connection* previous_connection_;
+  Connection* next_connection_;
+  Connection* upstream_connection_;
+  Connection* downstream_connection_;
 };
 
 } // namespace CppEvent

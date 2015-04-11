@@ -32,6 +32,7 @@ namespace CppEvent {
 
 Trackable::~Trackable ()
 {
+    RemoveAllConnections();
 }
 
 void Trackable::AuditDestroyingConnection (Connection* node)

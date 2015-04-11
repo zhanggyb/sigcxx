@@ -28,10 +28,7 @@
 
 namespace CppEvent {
 
-// forward declaration
-//template<typename ... ParamTypes> class Connection;
-//template<typename ReturnType, typename ... ParamTypes> struct ConnectionNode;
- class Connection;
+class Connection;
 
 /**
  * @brief Abstract class for event
@@ -49,12 +46,10 @@ public:
 
   virtual ~AbstractTrackable ();
 
-  inline int count () const
+  inline int connection_count () const
   {
     return connection_count_;
   }
-
-  void Clear ();
 
 protected:
 
@@ -66,6 +61,8 @@ protected:
 
   void InsertConnection (int index, Connection* node);
 
+  void RemoveAllConnections ();
+
   inline Connection* head_connection () const
   {
     return head_connection_;
@@ -74,6 +71,19 @@ protected:
   inline Connection* tail_connection () const
   {
     return tail_connection_;
+  }
+
+  static inline void add_connection (AbstractTrackable* trackable,
+                                     Connection* conn)
+  {
+    trackable->PushBackConnection(conn);
+  }
+
+  static inline void insert_connection (AbstractTrackable* trackable,
+                                        Connection* conn,
+                                        int index = 0)
+  {
+    trackable->InsertConnection(index, conn);
   }
 
 private:

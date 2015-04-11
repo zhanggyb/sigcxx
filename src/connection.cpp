@@ -28,6 +28,8 @@
 #include <cppevent/trackable.hpp>
 #include <cassert>
 
+#include <iostream> // for debug
+
 namespace CppEvent {
 
 Connection::~Connection ()
@@ -36,42 +38,46 @@ Connection::~Connection ()
 
     trackable_object_->AuditDestroyingConnection(this);
 
-    if (previous_)
-      previous_->next_ = next_;
+    if (previous_connection_)
+      previous_connection_->next_connection_ = next_connection_;
     else
-      trackable_object_->head_connection_ = next_;
+      trackable_object_->head_connection_ = next_connection_;
 
-    if (next_)
-      next_->previous_ = previous_;
+    if (next_connection_)
+      next_connection_->previous_connection_ = previous_connection_;
     else
-      trackable_object_->tail_connection_ = previous_;
+      trackable_object_->tail_connection_ = previous_connection_;
 
     trackable_object_->connection_count_--;
     trackable_object_ = 0;
 
   } else {
 
-    if (previous_) previous_->next_ = next_;
-    if (next_) next_->previous_ = previous_;
+    if (previous_connection_) previous_connection_->next_connection_ =
+        next_connection_;
+    if (next_connection_) next_connection_->previous_connection_ =
+        previous_connection_;
 
   }
 
-  previous_ = 0;
-  next_ = 0;
+  previous_connection_ = 0;
+  next_connection_ = 0;
 
-  if (upstream_) {
-    assert(upstream_->downstream_ == this);
-    upstream_->downstream_ = 0;
-    delete upstream_;
-    upstream_ = 0;
+  if (upstream_connection_) {
+    assert(upstream_connection_->downstream_connection_ == this);
+    upstream_connection_->downstream_connection_ = 0;
+    delete upstream_connection_;
+    upstream_connection_ = 0;
   }
 
-  if (downstream_) {
-    assert(downstream_->upstream_ == this);
-    downstream_->upstream_ = 0;
-    delete downstream_;
-    downstream_ = 0;
+  if (downstream_connection_) {
+    assert(downstream_connection_->upstream_connection_ == this);
+    downstream_connection_->upstream_connection_ = 0;
+    delete downstream_connection_;
+    downstream_connection_ = 0;
   }
+
+  std::cout << "Connection destroyed" << std::endl;
 }
 
 bool Connection::LinkPair (Connection* upstream, Connection* downstream)
@@ -79,10 +85,10 @@ bool Connection::LinkPair (Connection* upstream, Connection* downstream)
   if (upstream == downstream) return false;
   if ((upstream == 0) || (downstream == 0)) return false;
 
-  assert((upstream->downstream_ == 0) && (downstream->upstream_ == 0));
+  assert((upstream->downstream_connection_ == 0) && (downstream->upstream_connection_ == 0));
 
-  upstream->downstream_ = downstream;
-  downstream->upstream_ = upstream;
+  upstream->downstream_connection_ = downstream;
+  downstream->upstream_connection_ = upstream;
 
   return true;
 }
