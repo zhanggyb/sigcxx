@@ -49,7 +49,7 @@ public:
 
   virtual ~Connection ();
 
-  static bool LinkPair (Connection* upstream, Connection* downstream);
+  static bool Link (Connection* upstream, Connection* downstream);
 
   inline AbstractTrackable* trackable_object () const
   {

@@ -26,25 +26,34 @@
 
 #include <cppevent/connection.hpp>
 #include <cppevent/abstract-trackable.hpp>
+
+#ifdef DEBUG
 #include <cassert>
+#endif
 
 namespace CppEvent {
 
 AbstractTrackable::~AbstractTrackable ()
 {
   // MUST call RemoveAllConnections() in sub class destructor
+#ifdef DEBUG
   assert(connection_count_ == 0);
+#endif
 }
 
 void AbstractTrackable::PushBackConnection (Connection* node)
 {
+#ifdef DEBUG
   assert(node->trackable_object_ == 0);
+#endif
 
   if (tail_connection_) {
     tail_connection_->next_connection_ = node;
     node->previous_connection_ = tail_connection_;
   } else {
+#ifdef DEBUG
     assert(head_connection_ == 0);
+#endif
     node->previous_connection_ = 0;
     head_connection_ = node;
   }
@@ -56,13 +65,17 @@ void AbstractTrackable::PushBackConnection (Connection* node)
 
 void AbstractTrackable::PushFrontConnection (Connection* node)
 {
+#ifdef DEBUG
   assert(node->trackable_object_ == 0);
+#endif
 
   if (head_connection_) {
     head_connection_->previous_connection_ = node;
     node->next_connection_ = head_connection_;
   } else {
+#ifdef DEBUG
     assert(tail_connection_ == 0);
+#endif
     node->next_connection_ = 0;
     tail_connection_ = node;
   }
@@ -80,10 +93,14 @@ void AbstractTrackable::AuditDestroyingConnection (Connection* node)
 
 void AbstractTrackable::InsertConnection (int index, Connection* node)
 {
+#ifdef DEBUG
   assert(node->trackable_object_ == 0);
+#endif
 
   if (head_connection_ == 0) {
+#ifdef DEBUG
     assert(tail_connection_ == 0);
+#endif
 
     node->next_connection_ = 0;
     tail_connection_ = node;
@@ -106,7 +123,9 @@ void AbstractTrackable::InsertConnection (int index, Connection* node)
         p->previous_connection_->next_connection_ = node;
         p->previous_connection_ = node;
       } else {  // same as push back
+#ifdef DEBUG
         assert(p == tail_connection_);
+#endif
         tail_connection_->next_connection_ = node;
         node->previous_connection_ = tail_connection_;
         tail_connection_ = node;

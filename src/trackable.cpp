@@ -24,9 +24,7 @@
  * SOFTWARE.
  */
 
-#include <cppevent/connection.hpp>
 #include <cppevent/trackable.hpp>
-#include <cassert>
 
 namespace CppEvent {
 
@@ -37,7 +35,7 @@ Trackable::~Trackable ()
 
 void Trackable::AuditDestroyingConnection (Connection* node)
 {
-  // TODO: override this
+  // Nothing to do
 }
 
 } // namespace CppEvent

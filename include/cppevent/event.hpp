@@ -82,14 +82,14 @@ protected:
 
 private:
 
-  Connection* v_;  // a node pointer to iterate through all nodes in fire()
-  bool removed_;
+  Connection* iterator_;  // a pointer to iterate through all connections
+  bool iterator_removed_;
 
 };
 
 template<typename ... ParamTypes>
 inline Event<ParamTypes...>::Event ()
-    : AbstractTrackable(), v_(0), removed_(false)
+    : AbstractTrackable(), iterator_(0), iterator_removed_(false)
 {
 }
 
@@ -113,7 +113,7 @@ void Event<ParamTypes...>::Connect (T* obj)
     DelegateConnection<ParamTypes...>* upstream = new DelegateConnection<
         ParamTypes...>(d);
 
-    Connection::LinkPair(upstream, downstream);
+    Connection::Link(upstream, downstream);
 
     this->PushBackConnection(upstream);
     add_connection(trackable_object, downstream);
@@ -137,7 +137,7 @@ void Event<ParamTypes...>::Connect (T* obj)
     DelegateConnection<ParamTypes...>* upstream = new DelegateConnection<
         ParamTypes...>(d);
 
-    Connection::LinkPair(upstream, downstream);
+    Connection::Link(upstream, downstream);
 
     this->PushBackConnection(upstream);
     add_connection(trackable_object, downstream);
@@ -153,7 +153,7 @@ void Event<ParamTypes...>::Connect (Event<ParamTypes...>& other)
       &other);
   InvokableConnection<ParamTypes...>* downstream = new InvokableConnection<
       ParamTypes...>;
-  Connection::LinkPair(upstream, downstream);
+  Connection::Link(upstream, downstream);
   this->PushBackConnection(upstream);
   add_connection(&other, downstream);
 }
@@ -167,7 +167,7 @@ void Event<ParamTypes...>::DisconnectOne (T* obj)
     DelegateConnection<ParamTypes...>* conn = 0;
     for (Connection* p = tail_connection(); p; p = p->previous_connection()) {
       conn = dynamic_cast<DelegateConnection<ParamTypes...>*>(p);
-      if (conn && conn->delegate().template equal<T, TMethod>(obj)) {
+      if (conn && (conn->delegate().template equal<T, TMethod>(obj))) {
         delete conn;
         break;
       }
@@ -186,7 +186,8 @@ void Event<ParamTypes...>::DisconnectAll (T* obj)
     DelegateConnection<ParamTypes...>* conn = 0;
     for (Connection* p = tail_connection(); p; p = p->previous_connection()) {
       conn = dynamic_cast<DelegateConnection<ParamTypes...>*>(p);
-      if (conn && conn->delegate().template equal<T, TMethod>(obj)) delete conn;
+      if (conn && (conn->delegate().template equal<T, TMethod>(obj)))
+        delete conn;
     }
 
     return;
@@ -202,7 +203,7 @@ void Event<ParamTypes...>::DisconnectOne (T* obj)
     DelegateConnection<ParamTypes...>* conn = 0;
     for (Connection* p = tail_connection(); p; p = p->previous_connection()) {
       conn = dynamic_cast<DelegateConnection<ParamTypes...>*>(p);
-      if (conn && conn->delegate().template equal<T, TMethod>(obj)) {
+      if (conn && (conn->delegate().template equal<T, TMethod>(obj))) {
         delete conn;
         break;
       }
@@ -220,7 +221,8 @@ void Event<ParamTypes...>::DisconnectAll (T* obj)
     DelegateConnection<ParamTypes...>* conn = 0;
     for (Connection* p = tail_connection(); p; p = p->previous_connection()) {
       conn = dynamic_cast<DelegateConnection<ParamTypes...>*>(p);
-      if (conn && conn->delegate().template equal<T, TMethod>(obj)) delete conn;
+      if (conn && (conn->delegate().template equal<T, TMethod>(obj)))
+        delete conn;
     }
     return;
   }
@@ -232,7 +234,7 @@ void Event<ParamTypes...>::DisconnectOne (Event<ParamTypes...>& other)
   ChainConnection<ParamTypes...>* conn = 0;
   for (Connection* p = tail_connection(); p; p = p->previous_connection()) {
     conn = dynamic_cast<ChainConnection<ParamTypes...>*>(p);
-    if (conn && conn->event() == (&other)) {
+    if (conn && (conn->event() == (&other))) {
       delete conn;
       break;
     }
@@ -245,7 +247,7 @@ void Event<ParamTypes...>::DisconnectAll (Event<ParamTypes...>& other)
   ChainConnection<ParamTypes...>* conn = 0;
   for (Connection* p = tail_connection(); p; p = p->previous_connection()) {
     conn = dynamic_cast<ChainConnection<ParamTypes...>*>(p);
-    if (conn && conn->event() == (&other)) delete conn;
+    if (conn && (conn->event() == (&other))) delete conn;
   }
 }
 
@@ -258,25 +260,27 @@ void Event<ParamTypes...>::DisconnectAll ()
 template<typename ... ParamTypes>
 void Event<ParamTypes...>::Invoke (ParamTypes ... Args)
 {
-  v_ = this->head_connection();
-  while (v_) {
-    static_cast<InvokableConnection<ParamTypes...>*>(v_)->Invoke(Args...);
-    if (removed_) {
-      removed_ = false;
-    } else {
-      v_ = v_->next_connection();
-    }
+  iterator_ = this->head_connection();
+  while (iterator_) {
+    static_cast<InvokableConnection<ParamTypes...>*>(iterator_)->Invoke(Args...);
+
+    // check if iterator was deleted when being invoked
+    // (iterator_removed_ was set via the virtual AuditDestroyingConnection()
+    if (iterator_removed_)
+      iterator_removed_ = false;
+    else
+      iterator_ = iterator_->next_connection();
   }
-  v_ = 0;
-  removed_ = false;
+  iterator_ = 0;
+  iterator_removed_ = false;
 }
 
 template<typename ... ParamTypes>
 void Event<ParamTypes...>::AuditDestroyingConnection (Connection* node)
 {
-  if (node == v_) {
-    removed_ = true;
-    v_ = v_->next_connection();
+  if (node == iterator_) {
+    iterator_removed_ = true;
+    iterator_ = iterator_->next_connection();
   }
 }
 

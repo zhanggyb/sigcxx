@@ -26,9 +26,11 @@
 
 #include <cppevent/connection.hpp>
 #include <cppevent/trackable.hpp>
-#include <cassert>
 
+#ifdef DEBUG
+#include <cassert>
 #include <iostream> // for debug
+#endif
 
 namespace CppEvent {
 
@@ -64,28 +66,32 @@ Connection::~Connection ()
   next_connection_ = 0;
 
   if (upstream_connection_) {
+#ifdef DEBUG
     assert(upstream_connection_->downstream_connection_ == this);
+#endif
     upstream_connection_->downstream_connection_ = 0;
     delete upstream_connection_;
     upstream_connection_ = 0;
   }
 
   if (downstream_connection_) {
+#ifdef DEBUG
     assert(downstream_connection_->upstream_connection_ == this);
+#endif
     downstream_connection_->upstream_connection_ = 0;
     delete downstream_connection_;
     downstream_connection_ = 0;
   }
-
-  std::cout << "Connection destroyed" << std::endl;
 }
 
-bool Connection::LinkPair (Connection* upstream, Connection* downstream)
+bool Connection::Link (Connection* upstream, Connection* downstream)
 {
   if (upstream == downstream) return false;
   if ((upstream == 0) || (downstream == 0)) return false;
 
+#ifdef DEBUG
   assert((upstream->downstream_connection_ == 0) && (downstream->upstream_connection_ == 0));
+#endif
 
   upstream->downstream_connection_ = downstream;
   downstream->upstream_connection_ = upstream;
