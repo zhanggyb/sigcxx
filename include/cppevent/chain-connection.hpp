@@ -46,6 +46,8 @@ public:
 
   virtual void Invoke(ParamTypes... Args) override;
 
+  inline const Event<ParamTypes...>* event () const;
+
 private:
 
   Event<ParamTypes...>* event_;
@@ -66,7 +68,13 @@ ChainConnection<ParamTypes...>::~ChainConnection()
 template<typename ... ParamTypes>
 void ChainConnection<ParamTypes...>::Invoke(ParamTypes... Args)
 {
-  if(event_) event_->Invoke(Args...);
+  event_->Invoke(Args...);
+}
+
+template<typename ... ParamTypes>
+inline const Event<ParamTypes...>* ChainConnection<ParamTypes...>::event() const
+{
+  return event_;
 }
 
 }

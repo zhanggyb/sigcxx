@@ -44,6 +44,11 @@ public:
 
   virtual void Invoke(ParamTypes... Args) override;
 
+  const Delegate<void, ParamTypes...>& delegate () const
+  {
+    return delegate_;
+  }
+
 private:
 
   Delegate<void, ParamTypes...> delegate_;
@@ -64,7 +69,7 @@ DelegateConnection<ParamTypes...>::~DelegateConnection()
 template<typename ... ParamTypes>
 void DelegateConnection<ParamTypes...>::Invoke(ParamTypes... Args)
 {
-  if (delegate_) delegate_(Args...);
+  delegate_(Args...);
 }
 
 } // namespace CppEvent

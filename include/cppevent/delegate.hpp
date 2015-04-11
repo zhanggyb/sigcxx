@@ -113,14 +113,14 @@ public:
   }
 
   template<typename T, ReturnType(T::*TMethod) (ParamTypes...)>
-  inline bool equal(T* object_ptr)
+  inline bool equal(T* object_ptr) const
   {
     return (object_ptr_ == object_ptr) &&
       (method_ptr_ == &method_stub<T, TMethod>);
   }
 
   template<typename T, ReturnType(T::*TMethod) (ParamTypes...) const>
-  inline bool equal(T* object_ptr)
+  inline bool equal(T* object_ptr) const
   {
     return (object_ptr_ == object_ptr) &&
       (method_ptr_ == &const_method_stub<T, TMethod>);

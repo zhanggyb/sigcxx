@@ -54,29 +54,42 @@ public:
   template<typename T, void (T::*TMethod) (ParamTypes...) const>
   void Connect (T* obj);
 
+  void Connect (Event<ParamTypes...>& other);
+
   template<typename T, void (T::*TMethod) (ParamTypes...)>
   void DisconnectOne (T* obj);
+
+  template<typename T, void (T::*TMethod) (ParamTypes...)>
+  void DisconnectAll (T* obj);
 
   template<typename T, void (T::*TMethod) (ParamTypes...) const>
   void DisconnectOne (T* obj);
 
-  void Connect (Event<ParamTypes...>& other);
+  template<typename T, void (T::*TMethod) (ParamTypes...) const>
+  void DisconnectAll (T* obj);
+
+  void DisconnectOne (Event<ParamTypes...>& other);
+
+  void DisconnectAll (Event<ParamTypes...>& other);
+
+  void DisconnectAll ();
 
   virtual void Invoke (ParamTypes ... Args);
 
 protected:
 
-  virtual void AuditDestroyingConnection (Connection* node);
+  virtual void AuditDestroyingConnection (Connection* node) final;
 
 private:
 
   Connection* v_;  // a node pointer to iterate through all nodes in fire()
+  bool removed_;
 
 };
 
 template<typename ... ParamTypes>
 inline Event<ParamTypes...>::Event ()
-    : AbstractTrackable(), v_(0)
+    : AbstractTrackable(), v_(0), removed_(false)
 {
 }
 
@@ -134,45 +147,135 @@ void Event<ParamTypes...>::Connect (T* obj)
 }
 
 template<typename ... ParamTypes>
-template<typename T, void (T::*TMethod) (ParamTypes...)>
-void Event<ParamTypes...>::DisconnectOne (T* obj)
-{
-  // TODO
-}
-
-template<typename ... ParamTypes>
-template<typename T, void (T::*TMethod) (ParamTypes...) const>
-void Event<ParamTypes...>::DisconnectOne (T* obj)
-{
-  // TODO
-}
-
-template<typename ... ParamTypes>
 void Event<ParamTypes...>::Connect (Event<ParamTypes...>& other)
 {
   ChainConnection<ParamTypes...>* upstream = new ChainConnection<ParamTypes...>(
       &other);
-  InvokableConnection<ParamTypes...>* downstream =
-      new InvokableConnection<ParamTypes...>;
+  InvokableConnection<ParamTypes...>* downstream = new InvokableConnection<
+      ParamTypes...>;
   Connection::LinkPair(upstream, downstream);
   this->PushBackConnection(upstream);
   add_connection(&other, downstream);
 }
 
 template<typename ... ParamTypes>
+template<typename T, void (T::*TMethod) (ParamTypes...)>
+void Event<ParamTypes...>::DisconnectOne (T* obj)
+{
+  Trackable* trackable_object = dynamic_cast<Trackable*>(obj);
+  if (trackable_object) {
+    DelegateConnection<ParamTypes...>* conn = 0;
+    for (Connection* p = tail_connection(); p; p = p->previous_connection()) {
+      conn = dynamic_cast<DelegateConnection<ParamTypes...>*>(p);
+      if (conn && conn->delegate().template equal<T, TMethod>(obj)) {
+        delete conn;
+        break;
+      }
+    }
+
+    return;
+  }
+}
+
+template<typename ... ParamTypes>
+template<typename T, void (T::*TMethod) (ParamTypes...)>
+void Event<ParamTypes...>::DisconnectAll (T* obj)
+{
+  Trackable* trackable_object = dynamic_cast<Trackable*>(obj);
+  if (trackable_object) {
+    DelegateConnection<ParamTypes...>* conn = 0;
+    for (Connection* p = tail_connection(); p; p = p->previous_connection()) {
+      conn = dynamic_cast<DelegateConnection<ParamTypes...>*>(p);
+      if (conn && conn->delegate().template equal<T, TMethod>(obj)) delete conn;
+    }
+
+    return;
+  }
+}
+
+template<typename ... ParamTypes>
+template<typename T, void (T::*TMethod) (ParamTypes...) const>
+void Event<ParamTypes...>::DisconnectOne (T* obj)
+{
+  Trackable* trackable_object = dynamic_cast<Trackable*>(obj);
+  if (trackable_object) {
+    DelegateConnection<ParamTypes...>* conn = 0;
+    for (Connection* p = tail_connection(); p; p = p->previous_connection()) {
+      conn = dynamic_cast<DelegateConnection<ParamTypes...>*>(p);
+      if (conn && conn->delegate().template equal<T, TMethod>(obj)) {
+        delete conn;
+        break;
+      }
+    }
+    return;
+  }
+}
+
+template<typename ... ParamTypes>
+template<typename T, void (T::*TMethod) (ParamTypes...) const>
+void Event<ParamTypes...>::DisconnectAll (T* obj)
+{
+  Trackable* trackable_object = dynamic_cast<Trackable*>(obj);
+  if (trackable_object) {
+    DelegateConnection<ParamTypes...>* conn = 0;
+    for (Connection* p = tail_connection(); p; p = p->previous_connection()) {
+      conn = dynamic_cast<DelegateConnection<ParamTypes...>*>(p);
+      if (conn && conn->delegate().template equal<T, TMethod>(obj)) delete conn;
+    }
+    return;
+  }
+}
+
+template<typename ... ParamTypes>
+void Event<ParamTypes...>::DisconnectOne (Event<ParamTypes...>& other)
+{
+  ChainConnection<ParamTypes...>* conn = 0;
+  for (Connection* p = tail_connection(); p; p = p->previous_connection()) {
+    conn = dynamic_cast<ChainConnection<ParamTypes...>*>(p);
+    if (conn && conn->event() == (&other)) {
+      delete conn;
+      break;
+    }
+  }
+}
+
+template<typename ... ParamTypes>
+void Event<ParamTypes...>::DisconnectAll (Event<ParamTypes...>& other)
+{
+  ChainConnection<ParamTypes...>* conn = 0;
+  for (Connection* p = tail_connection(); p; p = p->previous_connection()) {
+    conn = dynamic_cast<ChainConnection<ParamTypes...>*>(p);
+    if (conn && conn->event() == (&other)) delete conn;
+  }
+}
+
+template<typename ... ParamTypes>
+void Event<ParamTypes...>::DisconnectAll ()
+{
+  RemoveAllConnections();
+}
+
+template<typename ... ParamTypes>
 void Event<ParamTypes...>::Invoke (ParamTypes ... Args)
 {
-  v_ = 0;
-  for (v_ = this->head_connection(); v_; v_ = v_->next_connection()) {
+  v_ = this->head_connection();
+  while (v_) {
     static_cast<InvokableConnection<ParamTypes...>*>(v_)->Invoke(Args...);
+    if (removed_) {
+      removed_ = false;
+    } else {
+      v_ = v_->next_connection();
+    }
   }
   v_ = 0;
+  removed_ = false;
 }
 
 template<typename ... ParamTypes>
 void Event<ParamTypes...>::AuditDestroyingConnection (Connection* node)
 {
   if (node == v_) {
+    removed_ = true;
     v_ = v_->next_connection();
   }
 }
