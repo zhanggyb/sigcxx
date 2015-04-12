@@ -24,8 +24,8 @@
  * SOFTWARE.
  */
 
-#include <cppevent/connection.hpp>
 #include <cppevent/abstract-trackable.hpp>
+#include <cppevent/slot.hpp>
 
 #ifdef DEBUG
 #include <cassert>
@@ -37,124 +37,124 @@ AbstractTrackable::~AbstractTrackable ()
 {
   // MUST call RemoveAllConnections() in sub class destructor
 #ifdef DEBUG
-  assert(connection_count_ == 0);
+  assert(slot_count_ == 0);
 #endif
 }
 
-void AbstractTrackable::PushBackConnection (Connection* node)
+void AbstractTrackable::PushBackSlot (Slot* node)
 {
 #ifdef DEBUG
   assert(node->trackable_object_ == 0);
 #endif
 
-  if (tail_connection_) {
-    tail_connection_->next_connection_ = node;
-    node->previous_connection_ = tail_connection_;
+  if (tail_slot_) {
+    tail_slot_->next_ = node;
+    node->previous_ = tail_slot_;
   } else {
 #ifdef DEBUG
-    assert(head_connection_ == 0);
+    assert(head_slot_ == 0);
 #endif
-    node->previous_connection_ = 0;
-    head_connection_ = node;
+    node->previous_ = 0;
+    head_slot_ = node;
   }
-  tail_connection_ = node;
-  node->next_connection_ = 0;
+  tail_slot_ = node;
+  node->next_ = 0;
   node->trackable_object_ = this;
-  connection_count_++;
+  slot_count_++;
 }
 
-void AbstractTrackable::PushFrontConnection (Connection* node)
+void AbstractTrackable::PushFrontSlot (Slot* node)
 {
 #ifdef DEBUG
   assert(node->trackable_object_ == 0);
 #endif
 
-  if (head_connection_) {
-    head_connection_->previous_connection_ = node;
-    node->next_connection_ = head_connection_;
+  if (head_slot_) {
+    head_slot_->previous_ = node;
+    node->next_ = head_slot_;
   } else {
 #ifdef DEBUG
-    assert(tail_connection_ == 0);
+    assert(tail_slot_ == 0);
 #endif
-    node->next_connection_ = 0;
-    tail_connection_ = node;
+    node->next_ = 0;
+    tail_slot_ = node;
   }
-  head_connection_ = node;
+  head_slot_ = node;
 
-  node->previous_connection_ = 0;
+  node->previous_ = 0;
   node->trackable_object_ = this;
-  connection_count_++;
+  slot_count_++;
 }
 
-void AbstractTrackable::AuditDestroyingConnection (Connection* node)
+void AbstractTrackable::AuditDestroyingSlot (Slot* node)
 {
   // TODO: override this
 }
 
-void AbstractTrackable::InsertConnection (int index, Connection* node)
+void AbstractTrackable::InsertSlot (int index, Slot* node)
 {
 #ifdef DEBUG
   assert(node->trackable_object_ == 0);
 #endif
 
-  if (head_connection_ == 0) {
+  if (head_slot_ == 0) {
 #ifdef DEBUG
-    assert(tail_connection_ == 0);
+    assert(tail_slot_ == 0);
 #endif
 
-    node->next_connection_ = 0;
-    tail_connection_ = node;
-    head_connection_ = node;
-    node->previous_connection_ = 0;
+    node->next_ = 0;
+    tail_slot_ = node;
+    head_slot_ = node;
+    node->previous_ = 0;
   } else {
     if (index > 0) {
 
-      Connection* p = head_connection_;
+      Slot* p = head_slot_;
 
       while (p && (index > 0)) {
-        if (p->next_connection_ == 0) break;
-        p = p->next_connection_;
+        if (p->next_ == 0) break;
+        p = p->next_;
         index--;
       }
 
       if (index == 0) {  // insert
-        node->previous_connection_ = p->previous_connection_;
-        node->next_connection_ = p;
-        p->previous_connection_->next_connection_ = node;
-        p->previous_connection_ = node;
+        node->previous_ = p->previous_;
+        node->next_ = p;
+        p->previous_->next_ = node;
+        p->previous_ = node;
       } else {  // same as push back
 #ifdef DEBUG
-        assert(p == tail_connection_);
+        assert(p == tail_slot_);
 #endif
-        tail_connection_->next_connection_ = node;
-        node->previous_connection_ = tail_connection_;
-        tail_connection_ = node;
-        node->next_connection_ = 0;
+        tail_slot_->next_ = node;
+        node->previous_ = tail_slot_;
+        tail_slot_ = node;
+        node->next_ = 0;
       }
 
     } else {  // same as push front
-      head_connection_->previous_connection_ = node;
-      node->next_connection_ = head_connection_;
-      head_connection_ = node;
-      node->previous_connection_ = 0;
+      head_slot_->previous_ = node;
+      node->next_ = head_slot_;
+      head_slot_ = node;
+      node->previous_ = 0;
     }
   }
   node->trackable_object_ = this;
-  connection_count_++;
+  slot_count_++;
 }
 
-void AbstractTrackable::RemoveAllConnections ()
+void AbstractTrackable::RemoveAllSlots ()
 {
-  Connection* tmp = 0;
-  Connection* p = head_connection_;
+  Slot* tmp = 0;
+  Slot* p = head_slot_;
 
   while (p) {
-    tmp = p->next_connection_;
+    tmp = p->next_;
     delete p;
     p = tmp;
   }
 
-  connection_count_ = 0;
+  slot_count_ = 0;
 }
 
 } // namespace CppEvent

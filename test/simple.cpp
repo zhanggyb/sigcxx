@@ -1,8 +1,4 @@
 /*
- * simple.cpp
- *
- *  Created on: 2015年4月11日
- *      Author: zhanggy
  */
 
 #include <iostream>

@@ -46,7 +46,7 @@ public:
 
 protected:
 
-  virtual void AuditDestroyingConnection (Connection* node) final;
+  virtual void AuditDestroyingSlot (Slot* node) final;
 
 };
 

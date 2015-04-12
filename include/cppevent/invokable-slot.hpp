@@ -26,35 +26,35 @@
 
 #pragma once
 
-#include <cppevent/connection.hpp>
+#include <cppevent/slot.hpp>
 
 namespace CppEvent {
 
 template<typename ... ParamTypes>
-class InvokableConnection: public Connection
+class InvokableSlot: public Slot
 {
 public:
 
-  inline InvokableConnection ();
+  inline InvokableSlot ();
 
-  virtual ~InvokableConnection ();
+  virtual ~InvokableSlot ();
 
   virtual void Invoke (ParamTypes ... Args);
 };
 
 template<typename ... ParamTypes>
-inline InvokableConnection<ParamTypes...>::InvokableConnection ()
-    : Connection()
+inline InvokableSlot<ParamTypes...>::InvokableSlot ()
+    : Slot()
 {
 }
 
 template<typename ... ParamTypes>
-InvokableConnection<ParamTypes...>::~InvokableConnection ()
+InvokableSlot<ParamTypes...>::~InvokableSlot ()
 {
 }
 
 template<typename ... ParamTypes>
-void InvokableConnection<ParamTypes...>::Invoke (ParamTypes ... Args)
+void InvokableSlot<ParamTypes...>::Invoke (ParamTypes ... Args)
 {
   // TODO: override this, or use this class for event chian load
 }

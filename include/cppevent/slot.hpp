@@ -26,55 +26,65 @@
 
 #pragma once
 
-#include <cppevent/invokable-connection.hpp>
-
 namespace CppEvent {
 
 // forward declaration
-template<typename ... ParamTypes> class Event;
+class AbstractTrackable;
 
-template<typename ... ParamTypes>
-class ChainConnection : public InvokableConnection < ParamTypes... >
+/**
+ * @brief The abstract event node
+ */
+class Slot
 {
 public:
 
-  ChainConnection () = delete;
+  inline Slot ()
+  : trackable_object_(0),
+    previous_(0),
+    next_(0),
+    upstream_(0),
+    downstream_(0)
+  {
+  }
 
-  inline ChainConnection(Event<ParamTypes...>* event);
+  virtual ~Slot ();
 
-  virtual ~ChainConnection();
+  static bool Link (Slot* upstream, Slot* downstream);
 
-  virtual void Invoke(ParamTypes... Args) override;
+  inline AbstractTrackable* trackable_object () const
+  {
+    return trackable_object_;
+  }
 
-  inline const Event<ParamTypes...>* event () const;
+  inline Slot* previous () const
+  {
+    return previous_;
+  }
+
+  inline Slot* next () const
+  {
+    return next_;
+  }
+
+  inline Slot* upstream () const
+  {
+    return upstream_;
+  }
+
+  inline Slot* downstream () const
+  {
+    return downstream_;
+  }
 
 private:
 
-  Event<ParamTypes...>* event_;
+  friend class AbstractTrackable;
+
+  AbstractTrackable* trackable_object_;
+  Slot* previous_;
+  Slot* next_;
+  Slot* upstream_;
+  Slot* downstream_;
 };
 
-template<typename ... ParamTypes>
-inline ChainConnection<ParamTypes...>::ChainConnection (Event<
-    ParamTypes...>* event)
-    : InvokableConnection<ParamTypes...>(), event_(event)
-{
-}
-
-template<typename ... ParamTypes>
-ChainConnection<ParamTypes...>::~ChainConnection()
-{
-}
-
-template<typename ... ParamTypes>
-void ChainConnection<ParamTypes...>::Invoke(ParamTypes... Args)
-{
-  event_->Invoke(Args...);
-}
-
-template<typename ... ParamTypes>
-inline const Event<ParamTypes...>* ChainConnection<ParamTypes...>::event() const
-{
-  return event_;
-}
-
-}
+} // namespace CppEvent

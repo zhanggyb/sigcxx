@@ -24,7 +24,7 @@
  * SOFTWARE.
  */
 
-#include <cppevent/connection.hpp>
+#include <cppevent/slot.hpp>
 #include <cppevent/trackable.hpp>
 
 #ifdef DEBUG
@@ -34,67 +34,67 @@
 
 namespace CppEvent {
 
-Connection::~Connection ()
+Slot::~Slot ()
 {
   if (trackable_object_) {
 
-    trackable_object_->AuditDestroyingConnection(this);
+    trackable_object_->AuditDestroyingSlot(this);
 
-    if (previous_connection_)
-      previous_connection_->next_connection_ = next_connection_;
+    if (previous_)
+      previous_->next_ = next_;
     else
-      trackable_object_->head_connection_ = next_connection_;
+      trackable_object_->head_slot_ = next_;
 
-    if (next_connection_)
-      next_connection_->previous_connection_ = previous_connection_;
+    if (next_)
+      next_->previous_ = previous_;
     else
-      trackable_object_->tail_connection_ = previous_connection_;
+      trackable_object_->tail_slot_ = previous_;
 
-    trackable_object_->connection_count_--;
+    trackable_object_->slot_count_--;
     trackable_object_ = 0;
 
   } else {
 
-    if (previous_connection_) previous_connection_->next_connection_ =
-        next_connection_;
-    if (next_connection_) next_connection_->previous_connection_ =
-        previous_connection_;
+    if (previous_) previous_->next_ =
+        next_;
+    if (next_) next_->previous_ =
+        previous_;
 
   }
 
-  previous_connection_ = 0;
-  next_connection_ = 0;
+  previous_ = 0;
+  next_ = 0;
 
-  if (upstream_connection_) {
+  if (upstream_) {
 #ifdef DEBUG
-    assert(upstream_connection_->downstream_connection_ == this);
+    assert(upstream_->downstream_ == this);
 #endif
-    upstream_connection_->downstream_connection_ = 0;
-    delete upstream_connection_;
-    upstream_connection_ = 0;
+    upstream_->downstream_ = 0;
+    delete upstream_;
+    upstream_ = 0;
   }
 
-  if (downstream_connection_) {
+  if (downstream_) {
 #ifdef DEBUG
-    assert(downstream_connection_->upstream_connection_ == this);
+    assert(downstream_->upstream_ == this);
 #endif
-    downstream_connection_->upstream_connection_ = 0;
-    delete downstream_connection_;
-    downstream_connection_ = 0;
+    downstream_->upstream_ = 0;
+    delete downstream_;
+    downstream_ = 0;
   }
 }
 
-bool Connection::Link (Connection* upstream, Connection* downstream)
+bool Slot::Link (Slot* upstream, Slot* downstream)
 {
   if (upstream == downstream) return false;
   if ((upstream == 0) || (downstream == 0)) return false;
 
 #ifdef DEBUG
-  assert((upstream->downstream_connection_ == 0) && (downstream->upstream_connection_ == 0));
+  assert((upstream->downstream_ == 0) && (downstream->upstream_ == 0));
 #endif
 
-  upstream->downstream_connection_ = downstream;
-  downstream->upstream_connection_ = upstream;
+  upstream->downstream_ = downstream;
+  downstream->upstream_ = upstream;
 
   return true;
 }
