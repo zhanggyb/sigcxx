@@ -1,8 +1,4 @@
 /*
- * event-consumer.hpp
- *
- *  Created on: 2015年4月11日
- *      Author: zhanggy
  */
 
 #pragma once
@@ -27,7 +23,7 @@ public:
 
   void DisconnectAll ()
   {
-    RemoveAllConnections();
+    RemoveAllSlots();
   }
 
   void OnTest1 (int n)
@@ -80,7 +76,7 @@ public:
 
   void DisconnectAll ()
   {
-    RemoveAllConnections();
+    RemoveAllSlots();
   }
 
   void OnTest0 ()

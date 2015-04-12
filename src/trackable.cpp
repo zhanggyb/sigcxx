@@ -30,10 +30,10 @@ namespace CppEvent {
 
 Trackable::~Trackable ()
 {
-    RemoveAllConnections();
+    RemoveAllSlots();
 }
 
-void Trackable::AuditDestroyingConnection (Connection* node)
+void Trackable::AuditDestroyingSlot (Slot* node)
 {
   // Nothing to do
 }

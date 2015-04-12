@@ -28,69 +28,69 @@
 
 namespace CppEvent {
 
-class Connection;
+class Slot;
 
 /**
  * @brief Abstract class for event
  */
 class AbstractTrackable
 {
-  friend class Connection;
+  friend class Slot;
 
 public:
 
   inline AbstractTrackable ()
-      : head_connection_(0), tail_connection_(0), connection_count_(0)
+      : head_slot_(0), tail_slot_(0), slot_count_(0)
   {
   }
 
   virtual ~AbstractTrackable ();
 
-  inline int connection_count () const
+  inline int slot_count () const
   {
-    return connection_count_;
+    return slot_count_;
   }
 
 protected:
 
-  virtual void AuditDestroyingConnection (Connection* node) = 0;
+  virtual void AuditDestroyingSlot (Slot* node) = 0;
 
-  void PushBackConnection (Connection* node);
+  void PushBackSlot (Slot* node);
 
-  void PushFrontConnection (Connection* node);
+  void PushFrontSlot (Slot* node);
 
-  void InsertConnection (int index, Connection* node);
+  void InsertSlot (int index, Slot* node);
 
-  void RemoveAllConnections ();
+  void RemoveAllSlots ();
 
-  inline Connection* head_connection () const
+  inline Slot* head_slot () const
   {
-    return head_connection_;
+    return head_slot_;
   }
 
-  inline Connection* tail_connection () const
+  inline Slot* tail_slot () const
   {
-    return tail_connection_;
+    return tail_slot_;
   }
 
-  static inline void add_connection (AbstractTrackable* trackable,
-                                     Connection* conn)
+  static inline void add_slot (AbstractTrackable* trackable,
+                                     Slot* conn)
   {
-    trackable->PushBackConnection(conn);
+    trackable->PushBackSlot(conn);
   }
 
-  static inline void insert_connection (AbstractTrackable* trackable,
-                                        Connection* conn,
+  static inline void insert_slot (AbstractTrackable* trackable,
+                                        Slot* conn,
                                         int index = 0)
   {
-    trackable->InsertConnection(index, conn);
+    trackable->InsertSlot(index, conn);
   }
 
 private:
 
-  Connection* head_connection_;
-  Connection* tail_connection_;
-  int connection_count_;
+  Slot* head_slot_;
+  Slot* tail_slot_;
+  int slot_count_;
 };
 
 }

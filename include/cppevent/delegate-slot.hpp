@@ -27,20 +27,20 @@
 #pragma once
 
 #include <cppevent/delegate.hpp>
-#include <cppevent/invokable-connection.hpp>
+#include <cppevent/invokable-slot.hpp>
 
 namespace CppEvent {
 
 template<typename ... ParamTypes>
-class DelegateConnection : public InvokableConnection < ParamTypes... >
+class DelegateSlot : public InvokableSlot < ParamTypes... >
 {
 public:
 
-  DelegateConnection() = delete;
+  DelegateSlot() = delete;
 
-  inline DelegateConnection(const Delegate<void, ParamTypes...>& d);
+  inline DelegateSlot(const Delegate<void, ParamTypes...>& d);
 
-  virtual ~DelegateConnection();
+  virtual ~DelegateSlot();
 
   virtual void Invoke(ParamTypes... Args) override;
 
@@ -56,18 +56,18 @@ private:
 };
 
 template<typename ... ParamTypes>
-inline DelegateConnection<ParamTypes...>::DelegateConnection(const Delegate<void, ParamTypes...>& d)
-  : InvokableConnection<ParamTypes...>(), delegate_(d)
+inline DelegateSlot<ParamTypes...>::DelegateSlot(const Delegate<void, ParamTypes...>& d)
+  : InvokableSlot<ParamTypes...>(), delegate_(d)
 {
 }
 
 template<typename ... ParamTypes>
-DelegateConnection<ParamTypes...>::~DelegateConnection()
+DelegateSlot<ParamTypes...>::~DelegateSlot()
 {
 }
 
 template<typename ... ParamTypes>
-void DelegateConnection<ParamTypes...>::Invoke(ParamTypes... Args)
+void DelegateSlot<ParamTypes...>::Invoke(ParamTypes... Args)
 {
   delegate_(Args...);
 }

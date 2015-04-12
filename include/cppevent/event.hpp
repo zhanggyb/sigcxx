@@ -28,8 +28,8 @@
 
 #include <cppevent/abstract-trackable.hpp>
 #include <cppevent/trackable.hpp>
-#include <cppevent/delegate-connection.hpp>
-#include <cppevent/chain-connection.hpp>
+#include <cppevent/delegate-slot.hpp>
+#include <cppevent/event-slot.hpp>
 
 namespace CppEvent {
 
@@ -78,11 +78,11 @@ public:
 
 protected:
 
-  virtual void AuditDestroyingConnection (Connection* node) final;
+  virtual void AuditDestroyingSlot (Slot* node) final;
 
 private:
 
-  Connection* iterator_;  // a pointer to iterate through all connections
+  Slot* iterator_;  // a pointer to iterate through all connections
   bool iterator_removed_;
 
 };
@@ -96,7 +96,7 @@ inline Event<ParamTypes...>::Event ()
 template<typename ... ParamTypes>
 Event<ParamTypes...>::~Event ()
 {
-    RemoveAllConnections();
+    RemoveAllSlots();
 }
 
 template<typename ... ParamTypes>
@@ -106,17 +106,17 @@ void Event<ParamTypes...>::Connect (T* obj)
   Trackable* trackable_object = dynamic_cast<Trackable*>(obj);
   if (trackable_object) {
 
-    Connection* downstream = new Connection;
+    Slot* downstream = new Slot;
 
     Delegate<void, ParamTypes...> d =
         Delegate<void, ParamTypes...>::template from_method<T, TMethod>(obj);
-    DelegateConnection<ParamTypes...>* upstream = new DelegateConnection<
+    DelegateSlot<ParamTypes...>* upstream = new DelegateSlot<
         ParamTypes...>(d);
 
-    Connection::Link(upstream, downstream);
+    Slot::Link(upstream, downstream);
 
-    this->PushBackConnection(upstream);
-    add_connection(trackable_object, downstream);
+    this->PushBackSlot(upstream);
+    add_slot(trackable_object, downstream);
 
     return;
   }
@@ -129,18 +129,18 @@ void Event<ParamTypes...>::Connect (T* obj)
   Trackable* trackable_object = dynamic_cast<Trackable*>(obj);
   if (trackable_object) {
 
-    Connection* downstream = new Connection;
+    Slot* downstream = new Slot;
 
     Delegate<void, ParamTypes...> d =
         Delegate<void, ParamTypes...>::template from_const_method<T, TMethod>(
             obj);
-    DelegateConnection<ParamTypes...>* upstream = new DelegateConnection<
+    DelegateSlot<ParamTypes...>* upstream = new DelegateSlot<
         ParamTypes...>(d);
 
-    Connection::Link(upstream, downstream);
+    Slot::Link(upstream, downstream);
 
-    this->PushBackConnection(upstream);
-    add_connection(trackable_object, downstream);
+    this->PushBackSlot(upstream);
+    add_slot(trackable_object, downstream);
 
     return;
   }
@@ -149,13 +149,13 @@ void Event<ParamTypes...>::Connect (T* obj)
 template<typename ... ParamTypes>
 void Event<ParamTypes...>::Connect (Event<ParamTypes...>& other)
 {
-  ChainConnection<ParamTypes...>* upstream = new ChainConnection<ParamTypes...>(
+  EventSlot<ParamTypes...>* upstream = new EventSlot<ParamTypes...>(
       &other);
-  InvokableConnection<ParamTypes...>* downstream = new InvokableConnection<
+  InvokableSlot<ParamTypes...>* downstream = new InvokableSlot<
       ParamTypes...>;
-  Connection::Link(upstream, downstream);
-  this->PushBackConnection(upstream);
-  add_connection(&other, downstream);
+  Slot::Link(upstream, downstream);
+  this->PushBackSlot(upstream);
+  add_slot(&other, downstream);
 }
 
 template<typename ... ParamTypes>
@@ -164,9 +164,9 @@ void Event<ParamTypes...>::DisconnectOne (T* obj)
 {
   Trackable* trackable_object = dynamic_cast<Trackable*>(obj);
   if (trackable_object) {
-    DelegateConnection<ParamTypes...>* conn = 0;
-    for (Connection* p = tail_connection(); p; p = p->previous_connection()) {
-      conn = dynamic_cast<DelegateConnection<ParamTypes...>*>(p);
+    DelegateSlot<ParamTypes...>* conn = 0;
+    for (Slot* p = tail_slot(); p; p = p->previous()) {
+      conn = dynamic_cast<DelegateSlot<ParamTypes...>*>(p);
       if (conn && (conn->delegate().template equal<T, TMethod>(obj))) {
         delete conn;
         break;
@@ -183,9 +183,9 @@ void Event<ParamTypes...>::DisconnectAll (T* obj)
 {
   Trackable* trackable_object = dynamic_cast<Trackable*>(obj);
   if (trackable_object) {
-    DelegateConnection<ParamTypes...>* conn = 0;
-    for (Connection* p = tail_connection(); p; p = p->previous_connection()) {
-      conn = dynamic_cast<DelegateConnection<ParamTypes...>*>(p);
+    DelegateSlot<ParamTypes...>* conn = 0;
+    for (Slot* p = tail_slot(); p; p = p->previous()) {
+      conn = dynamic_cast<DelegateSlot<ParamTypes...>*>(p);
       if (conn && (conn->delegate().template equal<T, TMethod>(obj)))
         delete conn;
     }
@@ -200,9 +200,9 @@ void Event<ParamTypes...>::DisconnectOne (T* obj)
 {
   Trackable* trackable_object = dynamic_cast<Trackable*>(obj);
   if (trackable_object) {
-    DelegateConnection<ParamTypes...>* conn = 0;
-    for (Connection* p = tail_connection(); p; p = p->previous_connection()) {
-      conn = dynamic_cast<DelegateConnection<ParamTypes...>*>(p);
+    DelegateSlot<ParamTypes...>* conn = 0;
+    for (Slot* p = tail_slot(); p; p = p->previous()) {
+      conn = dynamic_cast<DelegateSlot<ParamTypes...>*>(p);
       if (conn && (conn->delegate().template equal<T, TMethod>(obj))) {
         delete conn;
         break;
@@ -218,9 +218,9 @@ void Event<ParamTypes...>::DisconnectAll (T* obj)
 {
   Trackable* trackable_object = dynamic_cast<Trackable*>(obj);
   if (trackable_object) {
-    DelegateConnection<ParamTypes...>* conn = 0;
-    for (Connection* p = tail_connection(); p; p = p->previous_connection()) {
-      conn = dynamic_cast<DelegateConnection<ParamTypes...>*>(p);
+    DelegateSlot<ParamTypes...>* conn = 0;
+    for (Slot* p = tail_slot(); p; p = p->previous()) {
+      conn = dynamic_cast<DelegateSlot<ParamTypes...>*>(p);
       if (conn && (conn->delegate().template equal<T, TMethod>(obj)))
         delete conn;
     }
@@ -231,9 +231,9 @@ void Event<ParamTypes...>::DisconnectAll (T* obj)
 template<typename ... ParamTypes>
 void Event<ParamTypes...>::DisconnectOne (Event<ParamTypes...>& other)
 {
-  ChainConnection<ParamTypes...>* conn = 0;
-  for (Connection* p = tail_connection(); p; p = p->previous_connection()) {
-    conn = dynamic_cast<ChainConnection<ParamTypes...>*>(p);
+  EventSlot<ParamTypes...>* conn = 0;
+  for (Slot* p = tail_slot(); p; p = p->previous()) {
+    conn = dynamic_cast<EventSlot<ParamTypes...>*>(p);
     if (conn && (conn->event() == (&other))) {
       delete conn;
       break;
@@ -244,9 +244,9 @@ void Event<ParamTypes...>::DisconnectOne (Event<ParamTypes...>& other)
 template<typename ... ParamTypes>
 void Event<ParamTypes...>::DisconnectAll (Event<ParamTypes...>& other)
 {
-  ChainConnection<ParamTypes...>* conn = 0;
-  for (Connection* p = tail_connection(); p; p = p->previous_connection()) {
-    conn = dynamic_cast<ChainConnection<ParamTypes...>*>(p);
+  EventSlot<ParamTypes...>* conn = 0;
+  for (Slot* p = tail_slot(); p; p = p->previous()) {
+    conn = dynamic_cast<EventSlot<ParamTypes...>*>(p);
     if (conn && (conn->event() == (&other))) delete conn;
   }
 }
@@ -254,33 +254,33 @@ void Event<ParamTypes...>::DisconnectAll (Event<ParamTypes...>& other)
 template<typename ... ParamTypes>
 void Event<ParamTypes...>::DisconnectAll ()
 {
-  RemoveAllConnections();
+  RemoveAllSlots();
 }
 
 template<typename ... ParamTypes>
 void Event<ParamTypes...>::Invoke (ParamTypes ... Args)
 {
-  iterator_ = this->head_connection();
+  iterator_ = this->head_slot();
   while (iterator_) {
-    static_cast<InvokableConnection<ParamTypes...>*>(iterator_)->Invoke(Args...);
+    static_cast<InvokableSlot<ParamTypes...>*>(iterator_)->Invoke(Args...);
 
     // check if iterator was deleted when being invoked
     // (iterator_removed_ was set via the virtual AuditDestroyingConnection()
     if (iterator_removed_)
       iterator_removed_ = false;
     else
-      iterator_ = iterator_->next_connection();
+      iterator_ = iterator_->next();
   }
   iterator_ = 0;
   iterator_removed_ = false;
 }
 
 template<typename ... ParamTypes>
-void Event<ParamTypes...>::AuditDestroyingConnection (Connection* node)
+void Event<ParamTypes...>::AuditDestroyingSlot (Slot* node)
 {
   if (node == iterator_) {
     iterator_removed_ = true;
-    iterator_ = iterator_->next_connection();
+    iterator_ = iterator_->next();
   }
 }
 

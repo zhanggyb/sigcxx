@@ -26,65 +26,55 @@
 
 #pragma once
 
+#include <cppevent/invokable-slot.hpp>
+
 namespace CppEvent {
 
 // forward declaration
-class AbstractTrackable;
+template<typename ... ParamTypes> class Event;
 
-/**
- * @brief The abstract event node
- */
-class Connection
+template<typename ... ParamTypes>
+class EventSlot : public InvokableSlot < ParamTypes... >
 {
 public:
 
-  inline Connection ()
-  : trackable_object_(0),
-    previous_connection_(0),
-    next_connection_(0),
-    upstream_connection_(0),
-    downstream_connection_(0)
-  {
-  }
+  EventSlot () = delete;
 
-  virtual ~Connection ();
+  inline EventSlot(Event<ParamTypes...>* event);
 
-  static bool Link (Connection* upstream, Connection* downstream);
+  virtual ~EventSlot();
 
-  inline AbstractTrackable* trackable_object () const
-  {
-    return trackable_object_;
-  }
+  virtual void Invoke(ParamTypes... Args) override;
 
-  inline Connection* previous_connection () const
-  {
-    return previous_connection_;
-  }
-
-  inline Connection* next_connection () const
-  {
-    return next_connection_;
-  }
-
-  inline Connection* upstream_connection () const
-  {
-    return upstream_connection_;
-  }
-
-  inline Connection* downstream_connection () const
-  {
-    return downstream_connection_;
-  }
+  inline const Event<ParamTypes...>* event () const;
 
 private:
 
-  friend class AbstractTrackable;
-
-  AbstractTrackable* trackable_object_;
-  Connection* previous_connection_;
-  Connection* next_connection_;
-  Connection* upstream_connection_;
-  Connection* downstream_connection_;
+  Event<ParamTypes...>* event_;
 };
 
-} // namespace CppEvent
+template<typename ... ParamTypes>
+inline EventSlot<ParamTypes...>::EventSlot (Event<
+    ParamTypes...>* event)
+    : InvokableSlot<ParamTypes...>(), event_(event)
+{
+}
+
+template<typename ... ParamTypes>
+EventSlot<ParamTypes...>::~EventSlot()
+{
+}
+
+template<typename ... ParamTypes>
+void EventSlot<ParamTypes...>::Invoke(ParamTypes... Args)
+{
+  event_->Invoke(Args...);
+}
+
+template<typename ... ParamTypes>
+inline const Event<ParamTypes...>* EventSlot<ParamTypes...>::event() const
+{
+  return event_;
+}
+
+}

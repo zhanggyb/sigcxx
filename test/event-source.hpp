@@ -1,8 +1,4 @@
 /*
- * event-source.hpp
- *
- *  Created on: 2015年4月11日
- *      Author: zhanggy
  */
 
 #pragma once
