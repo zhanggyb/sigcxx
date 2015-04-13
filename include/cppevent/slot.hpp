@@ -41,7 +41,6 @@ struct Slot
   : trackable_object(0),
     previous(0),
     next(0),
-    source_link(0),
     signal(0)
   {
   }
@@ -51,7 +50,6 @@ struct Slot
   AbstractTrackable* trackable_object;
   Slot* previous;
   Slot* next;
-  Slot* source_link;
   Signal* signal;
 };
 

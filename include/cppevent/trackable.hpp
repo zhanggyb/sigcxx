@@ -46,8 +46,6 @@ public:
 
 protected:
 
-  virtual void AuditDestroyingSlot (Slot* node) final;
-
   virtual void AuditDestroyingSignal (Signal* signal) final;
 
 };

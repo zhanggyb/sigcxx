@@ -24,12 +24,12 @@
  * SOFTWARE.
  */
 
+#include <cppevent/signal.hpp>
 #include <cppevent/slot.hpp>
-#include <cppevent/trackable.hpp>
+#include <cppevent/abstract-trackable.hpp>
 
 #ifdef DEBUG
 #include <cassert>
-#include <iostream> // for debug
 #endif
 
 namespace CppEvent {
@@ -37,8 +37,6 @@ namespace CppEvent {
 Slot::~Slot ()
 {
   if (trackable_object) {
-
-    trackable_object->AuditDestroyingSlot(this);
 
     if (previous)
       previous->next = next;
@@ -50,28 +48,23 @@ Slot::~Slot ()
     else
       trackable_object->tail_slot_ = previous;
 
-    trackable_object->slot_count_--;
-    trackable_object = 0;
-
   } else {
 
-    if (previous) previous->next =
-        next;
-    if (next) next->previous =
-        previous;
+    if (previous) previous->next = next;
+    if (next) next->previous = previous;
 
   }
 
   previous = 0;
   next = 0;
 
-  if (source_link) {
+  if (signal) {
 #ifdef DEBUG
-    assert(upstream_->downstream_ == this);
+    assert(signal->slot == this);
 #endif
-    source_link->source_link = 0;
-    delete source_link;
-    source_link = 0;
+    signal->slot = 0;
+    delete signal;
+    signal = 0;
   }
 }
 

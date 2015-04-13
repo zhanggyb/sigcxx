@@ -30,16 +30,11 @@ namespace CppEvent {
 
 Trackable::~Trackable ()
 {
-    RemoveAllSlots();
-}
-
-void Trackable::AuditDestroyingSlot (Slot* node)
-{
-  // Nothing to do
 }
 
 void Trackable::AuditDestroyingSignal (Signal* signal)
 {
+  // Nothing to do
 }
 
 } // namespace CppEvent

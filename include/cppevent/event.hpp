@@ -73,13 +73,13 @@ public:
 
   void DisconnectAll (Event<ParamTypes...>& other);
 
-  void DisconnectAll ();
+  void DisconnectAllSignals ();
+
+  void DisconnectAllSlots ();
 
   virtual void Invoke (ParamTypes ... Args);
 
 protected:
-
-  virtual void AuditDestroyingSlot (Slot* node) final;
 
   virtual void AuditDestroyingSignal (Signal* signal) final;
 
@@ -115,7 +115,6 @@ template<typename ... ParamTypes>
 Event<ParamTypes...>::~Event ()
 {
   RemoveAllSignals();
-  RemoveAllSlots();
 }
 
 template<typename ... ParamTypes>
@@ -183,7 +182,7 @@ void Event<ParamTypes...>::DisconnectOne (T* obj)
   Trackable* trackable_object = dynamic_cast<Trackable*>(obj);
   if (trackable_object) {
     DelegateSignal<ParamTypes...>* conn = 0;
-    for (Slot* p = tail_slot(); p; p = p->previous) {
+    for (Signal* p = tail_signal_; p; p = p->previous) {
       conn = dynamic_cast<DelegateSignal<ParamTypes...>*>(p);
       if (conn && (conn->delegate().template equal<T, TMethod>(obj))) {
         delete conn;
@@ -202,7 +201,7 @@ void Event<ParamTypes...>::DisconnectAll (T* obj)
   Trackable* trackable_object = dynamic_cast<Trackable*>(obj);
   if (trackable_object) {
     DelegateSignal<ParamTypes...>* conn = 0;
-    for (Slot* p = tail_slot(); p; p = p->previous) {
+    for (Signal* p = tail_signal_; p; p = p->previous) {
       conn = dynamic_cast<DelegateSignal<ParamTypes...>*>(p);
       if (conn && (conn->delegate().template equal<T, TMethod>(obj)))
         delete conn;
@@ -219,7 +218,7 @@ void Event<ParamTypes...>::DisconnectOne (T* obj)
   Trackable* trackable_object = dynamic_cast<Trackable*>(obj);
   if (trackable_object) {
     DelegateSignal<ParamTypes...>* conn = 0;
-    for (Slot* p = tail_slot(); p; p = p->previous) {
+    for (Signal* p = tail_signal_; p; p = p->previous) {
       conn = dynamic_cast<DelegateSignal<ParamTypes...>*>(p);
       if (conn && (conn->delegate().template equal<T, TMethod>(obj))) {
         delete conn;
@@ -237,7 +236,7 @@ void Event<ParamTypes...>::DisconnectAll (T* obj)
   Trackable* trackable_object = dynamic_cast<Trackable*>(obj);
   if (trackable_object) {
     DelegateSignal<ParamTypes...>* conn = 0;
-    for (Slot* p = tail_slot(); p; p = p->previous) {
+    for (Signal* p = tail_signal_; p; p = p->previous) {
       conn = dynamic_cast<DelegateSignal<ParamTypes...>*>(p);
       if (conn && (conn->delegate().template equal<T, TMethod>(obj)))
         delete conn;
@@ -250,7 +249,7 @@ template<typename ... ParamTypes>
 void Event<ParamTypes...>::DisconnectOne (Event<ParamTypes...>& other)
 {
   EventSignal<ParamTypes...>* conn = 0;
-  for (Slot* p = tail_slot(); p; p = p->previous) {
+  for (Signal* p = tail_signal_; p; p = p->previous) {
     conn = dynamic_cast<EventSignal<ParamTypes...>*>(p);
     if (conn && (conn->event() == (&other))) {
       delete conn;
@@ -263,14 +262,20 @@ template<typename ... ParamTypes>
 void Event<ParamTypes...>::DisconnectAll (Event<ParamTypes...>& other)
 {
   EventSignal<ParamTypes...>* conn = 0;
-  for (Slot* p = tail_slot(); p; p = p->previous) {
+  for (Signal* p = tail_signal_; p; p = p->previous) {
     conn = dynamic_cast<EventSignal<ParamTypes...>*>(p);
     if (conn && (conn->event() == (&other))) delete conn;
   }
 }
 
 template<typename ... ParamTypes>
-void Event<ParamTypes...>::DisconnectAll ()
+void Event<ParamTypes...>::DisconnectAllSignals()
+{
+  RemoveAllSignals();
+}
+
+template<typename ... ParamTypes>
+void Event<ParamTypes...>::DisconnectAllSlots ()
 {
   RemoveAllSlots();
 }
@@ -294,12 +299,6 @@ void Event<ParamTypes...>::Invoke (ParamTypes ... Args)
 }
 
 template<typename ... ParamTypes>
-void Event<ParamTypes...>::AuditDestroyingSlot (Slot* node)
-{
-
-}
-
-template<typename ... ParamTypes>
 void Event<ParamTypes...>::AuditDestroyingSignal (Signal* signal)
 {
   if (signal == head_signal_) {
@@ -313,7 +312,8 @@ void Event<ParamTypes...>::AuditDestroyingSignal (Signal* signal)
   if (signal == iterator_) {
     iterator_removed_ = true;
     iterator_ = iterator_->next;
-  }}
+  }
+}
 
 template<typename ... ParamTypes>
 void Event<ParamTypes...>::PushBackSignal(InvokableSignal<ParamTypes...>* signal)

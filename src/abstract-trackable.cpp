@@ -36,10 +36,7 @@ namespace CppEvent {
 
 AbstractTrackable::~AbstractTrackable ()
 {
-  // MUST call RemoveAllConnections() in sub class destructor
-#ifdef DEBUG
-  assert(slot_count_ == 0);
-#endif
+  RemoveAllSlots();
 }
 
 void AbstractTrackable::PushBackSlot (Slot* node)
@@ -61,7 +58,6 @@ void AbstractTrackable::PushBackSlot (Slot* node)
   tail_slot_ = node;
   node->next = 0;
   node->trackable_object = this;
-  slot_count_++;
 }
 
 void AbstractTrackable::PushFrontSlot (Slot* node)
@@ -84,12 +80,6 @@ void AbstractTrackable::PushFrontSlot (Slot* node)
 
   node->previous = 0;
   node->trackable_object = this;
-  slot_count_++;
-}
-
-void AbstractTrackable::AuditDestroyingSlot (Slot* node)
-{
-  // TODO: override this
 }
 
 void AbstractTrackable::InsertSlot (int index, Slot* node)
@@ -141,7 +131,6 @@ void AbstractTrackable::InsertSlot (int index, Slot* node)
     }
   }
   node->trackable_object = this;
-  slot_count_++;
 }
 
 void AbstractTrackable::RemoveAllSlots ()
@@ -154,8 +143,6 @@ void AbstractTrackable::RemoveAllSlots ()
     delete p;
     p = tmp;
   }
-
-  slot_count_ = 0;
 }
 
 bool AbstractTrackable::Link (Signal* source, Slot* consumer)

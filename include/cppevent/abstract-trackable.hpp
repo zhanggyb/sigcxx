@@ -42,22 +42,15 @@ class AbstractTrackable
 public:
 
   inline AbstractTrackable ()
-      : head_slot_(0), tail_slot_(0), slot_count_(0)
+      : head_slot_(0), tail_slot_(0)
   {
   }
 
   virtual ~AbstractTrackable ();
 
-  inline int slot_count () const
-  {
-    return slot_count_;
-  }
-
   static bool Link (Signal* source, Slot* consumer);
 
 protected:
-
-  virtual void AuditDestroyingSlot (Slot* node) = 0;
 
   virtual void AuditDestroyingSignal (Signal* signal) = 0;
 
@@ -96,7 +89,6 @@ private:
 
   Slot* head_slot_;
   Slot* tail_slot_;
-  int slot_count_;
 };
 
 }

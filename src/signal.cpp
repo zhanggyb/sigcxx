@@ -32,31 +32,10 @@ namespace CppEvent {
 
   Signal::~Signal()
   {
-    if (trackable_object) {
+    if (trackable_object) trackable_object->AuditDestroyingSignal(this);
 
-      trackable_object->AuditDestroyingSignal(this);
-
-      if (previous)
-        previous->next = next;
-//      else
-//        trackable_object_->head_slot_ = next_;
-
-      if (next)
-        next->previous = previous;
-//      else
-//        trackable_object_->tail_slot_ = previous_;
-
-      //trackable_object->slot_count_--;
-      trackable_object = 0;
-
-    } else {
-
-      if (previous) previous->next =
-          next;
-      if (next) next->previous =
-          previous;
-
-    }
+    if (previous) previous->next = next;
+    if (next) next->previous = previous;
 
     previous = 0;
     next = 0;
@@ -71,4 +50,4 @@ namespace CppEvent {
     }
   }
 
-}
+} // namespace CppEvent
