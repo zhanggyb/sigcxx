@@ -13,7 +13,7 @@
  *
  * The above copyright notice and this permission notice shall be
  * included in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
  * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
@@ -26,30 +26,37 @@
 
 #pragma once
 
-#include <cppevent/abstract-trackable.hpp>
+#include <cppevent/signal.hpp>
 
 namespace CppEvent {
 
-/**
- * @brief Abstract class for event
- */
-class Trackable: public AbstractTrackable
+template<typename ... ParamTypes>
+class InvokableSignal: public Signal
 {
 public:
 
-  inline Trackable ()
-      : AbstractTrackable()
-  {
-  }
+  inline InvokableSignal ();
 
-  virtual ~Trackable ();
+  virtual ~InvokableSignal ();
 
-protected:
-
-  virtual void AuditDestroyingSlot (Slot* node) final;
-
-  virtual void AuditDestroyingSignal (Signal* signal) final;
-
+  virtual void Invoke (ParamTypes ... Args);
 };
 
+template<typename ... ParamTypes>
+inline InvokableSignal<ParamTypes...>::InvokableSignal ()
+    : Signal()
+{
 }
+
+template<typename ... ParamTypes>
+InvokableSignal<ParamTypes...>::~InvokableSignal ()
+{
+}
+
+template<typename ... ParamTypes>
+void InvokableSignal<ParamTypes...>::Invoke (ParamTypes ... Args)
+{
+  // TODO: override this, or use this class for event chian load
+}
+
+} // namespace CppEvent

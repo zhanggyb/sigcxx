@@ -28,14 +28,16 @@
 
 namespace CppEvent {
 
-class Slot;
+struct Signal;
+struct Slot;
 
 /**
  * @brief Abstract class for event
  */
 class AbstractTrackable
 {
-  friend class Slot;
+  friend struct Slot;
+  friend struct Signal;
 
 public:
 
@@ -51,9 +53,13 @@ public:
     return slot_count_;
   }
 
+  static bool Link (Signal* source, Slot* consumer);
+
 protected:
 
   virtual void AuditDestroyingSlot (Slot* node) = 0;
+
+  virtual void AuditDestroyingSignal (Signal* signal) = 0;
 
   void PushBackSlot (Slot* node);
 

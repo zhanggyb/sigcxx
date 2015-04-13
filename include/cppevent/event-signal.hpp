@@ -26,50 +26,55 @@
 
 #pragma once
 
-#include <cppevent/delegate.hpp>
-#include <cppevent/invokable-slot.hpp>
+#include <cppevent/invokable-signal.hpp>
 
 namespace CppEvent {
 
+// forward declaration
+template<typename ... ParamTypes> class Event;
+
 template<typename ... ParamTypes>
-class DelegateSlot : public InvokableSlot < ParamTypes... >
+class EventSignal : public InvokableSignal < ParamTypes... >
 {
 public:
 
-  DelegateSlot() = delete;
+  EventSignal () = delete;
 
-  inline DelegateSlot(const Delegate<void, ParamTypes...>& d);
+  inline EventSignal(Event<ParamTypes...>* event);
 
-  virtual ~DelegateSlot();
+  virtual ~EventSignal();
 
   virtual void Invoke(ParamTypes... Args) override;
 
-  const Delegate<void, ParamTypes...>& delegate () const
-  {
-    return delegate_;
-  }
+  inline const Event<ParamTypes...>* event () const;
 
 private:
 
-  Delegate<void, ParamTypes...> delegate_;
-
+  Event<ParamTypes...>* event_;
 };
 
 template<typename ... ParamTypes>
-inline DelegateSlot<ParamTypes...>::DelegateSlot(const Delegate<void, ParamTypes...>& d)
-  : InvokableSlot<ParamTypes...>(), delegate_(d)
+inline EventSignal<ParamTypes...>::EventSignal (Event<
+    ParamTypes...>* event)
+    : InvokableSignal<ParamTypes...>(), event_(event)
 {
 }
 
 template<typename ... ParamTypes>
-DelegateSlot<ParamTypes...>::~DelegateSlot()
+EventSignal<ParamTypes...>::~EventSignal()
 {
 }
 
 template<typename ... ParamTypes>
-void DelegateSlot<ParamTypes...>::Invoke(ParamTypes... Args)
+void EventSignal<ParamTypes...>::Invoke(ParamTypes... Args)
 {
-  delegate_(Args...);
+  event_->Invoke(Args...);
 }
 
-} // namespace CppEvent
+template<typename ... ParamTypes>
+inline const Event<ParamTypes...>* EventSignal<ParamTypes...>::event() const
+{
+  return event_;
+}
+
+}

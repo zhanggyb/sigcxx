@@ -38,4 +38,8 @@ void Trackable::AuditDestroyingSlot (Slot* node)
   // Nothing to do
 }
 
+void Trackable::AuditDestroyingSignal (Signal* signal)
+{
+}
+
 } // namespace CppEvent

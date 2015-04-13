@@ -36,67 +36,43 @@ namespace CppEvent {
 
 Slot::~Slot ()
 {
-  if (trackable_object_) {
+  if (trackable_object) {
 
-    trackable_object_->AuditDestroyingSlot(this);
+    trackable_object->AuditDestroyingSlot(this);
 
-    if (previous_)
-      previous_->next_ = next_;
+    if (previous)
+      previous->next = next;
     else
-      trackable_object_->head_slot_ = next_;
+      trackable_object->head_slot_ = next;
 
-    if (next_)
-      next_->previous_ = previous_;
+    if (next)
+      next->previous = previous;
     else
-      trackable_object_->tail_slot_ = previous_;
+      trackable_object->tail_slot_ = previous;
 
-    trackable_object_->slot_count_--;
-    trackable_object_ = 0;
+    trackable_object->slot_count_--;
+    trackable_object = 0;
 
   } else {
 
-    if (previous_) previous_->next_ =
-        next_;
-    if (next_) next_->previous_ =
-        previous_;
+    if (previous) previous->next =
+        next;
+    if (next) next->previous =
+        previous;
 
   }
 
-  previous_ = 0;
-  next_ = 0;
+  previous = 0;
+  next = 0;
 
-  if (upstream_) {
+  if (source_link) {
 #ifdef DEBUG
     assert(upstream_->downstream_ == this);
 #endif
-    upstream_->downstream_ = 0;
-    delete upstream_;
-    upstream_ = 0;
+    source_link->source_link = 0;
+    delete source_link;
+    source_link = 0;
   }
-
-  if (downstream_) {
-#ifdef DEBUG
-    assert(downstream_->upstream_ == this);
-#endif
-    downstream_->upstream_ = 0;
-    delete downstream_;
-    downstream_ = 0;
-  }
-}
-
-bool Slot::Link (Slot* upstream, Slot* downstream)
-{
-  if (upstream == downstream) return false;
-  if ((upstream == 0) || (downstream == 0)) return false;
-
-#ifdef DEBUG
-  assert((upstream->downstream_ == 0) && (downstream->upstream_ == 0));
-#endif
-
-  upstream->downstream_ = downstream;
-  downstream->upstream_ = upstream;
-
-  return true;
 }
 
 }

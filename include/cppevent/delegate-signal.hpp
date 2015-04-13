@@ -13,7 +13,7 @@
  *
  * The above copyright notice and this permission notice shall be
  * included in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
  * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
@@ -26,30 +26,50 @@
 
 #pragma once
 
-#include <cppevent/abstract-trackable.hpp>
+#include <cppevent/delegate.hpp>
+#include <cppevent/invokable-signal.hpp>
 
 namespace CppEvent {
 
-/**
- * @brief Abstract class for event
- */
-class Trackable: public AbstractTrackable
+template<typename ... ParamTypes>
+class DelegateSignal : public InvokableSignal < ParamTypes... >
 {
 public:
 
-  inline Trackable ()
-      : AbstractTrackable()
+  DelegateSignal() = delete;
+
+  inline DelegateSignal(const Delegate<void, ParamTypes...>& d);
+
+  virtual ~DelegateSignal();
+
+  virtual void Invoke(ParamTypes... Args) override;
+
+  const Delegate<void, ParamTypes...>& delegate () const
   {
+    return delegate_;
   }
 
-  virtual ~Trackable ();
+private:
 
-protected:
-
-  virtual void AuditDestroyingSlot (Slot* node) final;
-
-  virtual void AuditDestroyingSignal (Signal* signal) final;
+  Delegate<void, ParamTypes...> delegate_;
 
 };
 
+template<typename ... ParamTypes>
+inline DelegateSignal<ParamTypes...>::DelegateSignal(const Delegate<void, ParamTypes...>& d)
+  : InvokableSignal<ParamTypes...>(), delegate_(d)
+{
 }
+
+template<typename ... ParamTypes>
+DelegateSignal<ParamTypes...>::~DelegateSignal()
+{
+}
+
+template<typename ... ParamTypes>
+void DelegateSignal<ParamTypes...>::Invoke(ParamTypes... Args)
+{
+  delegate_(Args...);
+}
+
+} // namespace CppEvent

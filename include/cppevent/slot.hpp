@@ -30,61 +30,29 @@ namespace CppEvent {
 
 // forward declaration
 class AbstractTrackable;
+struct Signal; // the event source
 
 /**
  * @brief The abstract event node
  */
-class Slot
+struct Slot
 {
-public:
-
   inline Slot ()
-  : trackable_object_(0),
-    previous_(0),
-    next_(0),
-    upstream_(0),
-    downstream_(0)
+  : trackable_object(0),
+    previous(0),
+    next(0),
+    source_link(0),
+    signal(0)
   {
   }
 
   virtual ~Slot ();
 
-  static bool Link (Slot* upstream, Slot* downstream);
-
-  inline AbstractTrackable* trackable_object () const
-  {
-    return trackable_object_;
-  }
-
-  inline Slot* previous () const
-  {
-    return previous_;
-  }
-
-  inline Slot* next () const
-  {
-    return next_;
-  }
-
-  inline Slot* upstream () const
-  {
-    return upstream_;
-  }
-
-  inline Slot* downstream () const
-  {
-    return downstream_;
-  }
-
-private:
-
-  friend class AbstractTrackable;
-
-  AbstractTrackable* trackable_object_;
-  Slot* previous_;
-  Slot* next_;
-  Slot* upstream_;
-  Slot* downstream_;
+  AbstractTrackable* trackable_object;
+  Slot* previous;
+  Slot* next;
+  Slot* source_link;
+  Signal* signal;
 };
 
 } // namespace CppEvent
