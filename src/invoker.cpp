@@ -25,12 +25,12 @@
  */
 
 #include <cppevent/abstract-trackable.hpp>
+#include <cppevent/invoker.hpp>
 #include <cppevent/slot.hpp>
-#include <cppevent/signal.hpp>
 
 namespace CppEvent {
 
-  Signal::~Signal()
+  Invoker::~Invoker()
   {
     if (trackable_object) trackable_object->AuditDestroyingSignal(this);
 
@@ -42,9 +42,9 @@ namespace CppEvent {
 
     if (slot) {
   #ifdef DEBUG
-      assert(slot->signal == this);
+      assert(slot->invoker == this);
   #endif
-      slot->signal = 0;
+      slot->invoker = 0;
       delete slot;
       slot = 0;
     }

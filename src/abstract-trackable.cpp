@@ -25,7 +25,7 @@
  */
 
 #include <cppevent/abstract-trackable.hpp>
-#include <cppevent/signal.hpp>
+#include <cppevent/invoker.hpp>
 #include <cppevent/slot.hpp>
 
 #ifdef DEBUG
@@ -145,16 +145,16 @@ void AbstractTrackable::RemoveAllSlots ()
   }
 }
 
-bool AbstractTrackable::Link (Signal* source, Slot* consumer)
+bool AbstractTrackable::Link (Invoker* source, Slot* consumer)
 {
   if ((source == 0) || (consumer == 0)) return false;
 
 #ifdef DEBUG
-  assert((source->slot == 0) && (consumer->signal == 0));
+  assert((source->slot == 0) && (consumer->invoker == 0));
 #endif
 
   source->slot = consumer;
-  consumer->signal = source;
+  consumer->invoker = source;
 
   return true;
 }

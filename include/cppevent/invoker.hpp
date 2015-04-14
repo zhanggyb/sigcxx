@@ -35,9 +35,9 @@ struct Slot;
 /**
  * @brief The event source
  */
-struct Signal
+struct Invoker
 {
-  inline Signal ()
+  inline Invoker ()
   : trackable_object(0),
     previous(0),
     next(0),
@@ -45,11 +45,11 @@ struct Signal
   {
   }
 
-  virtual ~Signal ();
+  virtual ~Invoker ();
 
   AbstractTrackable* trackable_object;
-  Signal* previous;
-  Signal* next;
+  Invoker* previous;
+  Invoker* next;
   Slot* slot;
 
 };

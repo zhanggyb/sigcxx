@@ -24,9 +24,9 @@
  * SOFTWARE.
  */
 
-#include <cppevent/signal.hpp>
 #include <cppevent/slot.hpp>
 #include <cppevent/abstract-trackable.hpp>
+#include <cppevent/invoker.hpp>
 
 #ifdef DEBUG
 #include <cassert>
@@ -58,13 +58,13 @@ Slot::~Slot ()
   previous = 0;
   next = 0;
 
-  if (signal) {
+  if (invoker) {
 #ifdef DEBUG
-    assert(signal->slot == this);
+    assert(invoker->slot == this);
 #endif
-    signal->slot = 0;
-    delete signal;
-    signal = 0;
+    invoker->slot = 0;
+    delete invoker;
+    invoker = 0;
   }
 }
 

@@ -28,7 +28,7 @@
 
 namespace CppEvent {
 
-struct Signal;
+struct Invoker;
 struct Slot;
 
 /**
@@ -37,7 +37,7 @@ struct Slot;
 class AbstractTrackable
 {
   friend struct Slot;
-  friend struct Signal;
+  friend struct Invoker;
 
 public:
 
@@ -48,11 +48,11 @@ public:
 
   virtual ~AbstractTrackable ();
 
-  static bool Link (Signal* source, Slot* consumer);
+  static bool Link (Invoker* source, Slot* consumer);
 
 protected:
 
-  virtual void AuditDestroyingSignal (Signal* signal) = 0;
+  virtual void AuditDestroyingSignal (Invoker* signal) = 0;
 
   void PushBackSlot (Slot* node);
 

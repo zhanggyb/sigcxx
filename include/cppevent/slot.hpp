@@ -30,7 +30,7 @@ namespace CppEvent {
 
 // forward declaration
 class AbstractTrackable;
-struct Signal; // the event source
+struct Invoker; // the event source
 
 /**
  * @brief The abstract event node
@@ -41,7 +41,7 @@ struct Slot
   : trackable_object(0),
     previous(0),
     next(0),
-    signal(0)
+    invoker(0)
   {
   }
 
@@ -50,7 +50,7 @@ struct Slot
   AbstractTrackable* trackable_object;
   Slot* previous;
   Slot* next;
-  Signal* signal;
+  Invoker* invoker;
 };
 
 } // namespace CppEvent

@@ -26,35 +26,35 @@
 
 #pragma once
 
-#include <cppevent/signal.hpp>
+#include <cppevent/invoker.hpp>
 
 namespace CppEvent {
 
 template<typename ... ParamTypes>
-class InvokableSignal: public Signal
+class PracticalbeInvoker: public Invoker
 {
 public:
 
-  inline InvokableSignal ();
+  inline PracticalbeInvoker ();
 
-  virtual ~InvokableSignal ();
+  virtual ~PracticalbeInvoker ();
 
   virtual void Invoke (ParamTypes ... Args);
 };
 
 template<typename ... ParamTypes>
-inline InvokableSignal<ParamTypes...>::InvokableSignal ()
-    : Signal()
+inline PracticalbeInvoker<ParamTypes...>::PracticalbeInvoker ()
+    : Invoker()
 {
 }
 
 template<typename ... ParamTypes>
-InvokableSignal<ParamTypes...>::~InvokableSignal ()
+PracticalbeInvoker<ParamTypes...>::~PracticalbeInvoker ()
 {
 }
 
 template<typename ... ParamTypes>
-void InvokableSignal<ParamTypes...>::Invoke (ParamTypes ... Args)
+void PracticalbeInvoker<ParamTypes...>::Invoke (ParamTypes ... Args)
 {
   // TODO: override this, or use this class for event chian load
 }

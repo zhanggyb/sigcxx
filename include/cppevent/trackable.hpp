@@ -46,7 +46,7 @@ public:
 
 protected:
 
-  virtual void AuditDestroyingSignal (Signal* signal) final;
+  virtual void AuditDestroyingSignal (Invoker* signal) final;
 
 };
 

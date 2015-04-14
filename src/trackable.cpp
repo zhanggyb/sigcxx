@@ -32,7 +32,7 @@ Trackable::~Trackable ()
 {
 }
 
-void Trackable::AuditDestroyingSignal (Signal* signal)
+void Trackable::AuditDestroyingSignal (Invoker* signal)
 {
   // Nothing to do
 }

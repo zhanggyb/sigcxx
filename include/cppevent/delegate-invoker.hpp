@@ -26,55 +26,50 @@
 
 #pragma once
 
-#include <cppevent/invokable-signal.hpp>
+#include <cppevent/delegate.hpp>
+#include <cppevent/practicalbe-invoker.hpp>
 
 namespace CppEvent {
 
-// forward declaration
-template<typename ... ParamTypes> class Event;
-
 template<typename ... ParamTypes>
-class EventSignal : public InvokableSignal < ParamTypes... >
+class DelegateInvoker : public PracticalbeInvoker < ParamTypes... >
 {
 public:
 
-  EventSignal () = delete;
+  DelegateInvoker() = delete;
 
-  inline EventSignal(Event<ParamTypes...>* event);
+  inline DelegateInvoker(const Delegate<void, ParamTypes...>& d);
 
-  virtual ~EventSignal();
+  virtual ~DelegateInvoker();
 
   virtual void Invoke(ParamTypes... Args) override;
 
-  inline const Event<ParamTypes...>* event () const;
+  const Delegate<void, ParamTypes...>& delegate () const
+  {
+    return delegate_;
+  }
 
 private:
 
-  Event<ParamTypes...>* event_;
+  Delegate<void, ParamTypes...> delegate_;
+
 };
 
 template<typename ... ParamTypes>
-inline EventSignal<ParamTypes...>::EventSignal (Event<
-    ParamTypes...>* event)
-    : InvokableSignal<ParamTypes...>(), event_(event)
+inline DelegateInvoker<ParamTypes...>::DelegateInvoker(const Delegate<void, ParamTypes...>& d)
+  : PracticalbeInvoker<ParamTypes...>(), delegate_(d)
 {
 }
 
 template<typename ... ParamTypes>
-EventSignal<ParamTypes...>::~EventSignal()
+DelegateInvoker<ParamTypes...>::~DelegateInvoker()
 {
 }
 
 template<typename ... ParamTypes>
-void EventSignal<ParamTypes...>::Invoke(ParamTypes... Args)
+void DelegateInvoker<ParamTypes...>::Invoke(ParamTypes... Args)
 {
-  event_->Invoke(Args...);
+  delegate_(Args...);
 }
 
-template<typename ... ParamTypes>
-inline const Event<ParamTypes...>* EventSignal<ParamTypes...>::event() const
-{
-  return event_;
-}
-
-}
+} // namespace CppEvent
