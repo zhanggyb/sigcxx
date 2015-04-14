@@ -28,32 +28,31 @@
 
 namespace CppEvent {
 
-class Slot;
+struct Invoker;
+struct Slot;
 
 /**
  * @brief Abstract class for event
  */
 class AbstractTrackable
 {
-  friend class Slot;
+  friend struct Slot;
+  friend struct Invoker;
 
 public:
 
   inline AbstractTrackable ()
-      : head_slot_(0), tail_slot_(0), slot_count_(0)
+      : head_slot_(0), tail_slot_(0)
   {
   }
 
   virtual ~AbstractTrackable ();
 
-  inline int slot_count () const
-  {
-    return slot_count_;
-  }
+  static bool Link (Invoker* source, Slot* consumer);
 
 protected:
 
-  virtual void AuditDestroyingSlot (Slot* node) = 0;
+  virtual void AuditDestroyingSignal (Invoker* signal) = 0;
 
   void PushBackSlot (Slot* node);
 
@@ -90,7 +89,6 @@ private:
 
   Slot* head_slot_;
   Slot* tail_slot_;
-  int slot_count_;
 };
 
 }

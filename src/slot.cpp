@@ -25,78 +25,47 @@
  */
 
 #include <cppevent/slot.hpp>
-#include <cppevent/trackable.hpp>
+#include <cppevent/abstract-trackable.hpp>
+#include <cppevent/invoker.hpp>
 
 #ifdef DEBUG
 #include <cassert>
-#include <iostream> // for debug
 #endif
 
 namespace CppEvent {
 
 Slot::~Slot ()
 {
-  if (trackable_object_) {
+  if (trackable_object) {
 
-    trackable_object_->AuditDestroyingSlot(this);
-
-    if (previous_)
-      previous_->next_ = next_;
+    if (previous)
+      previous->next = next;
     else
-      trackable_object_->head_slot_ = next_;
+      trackable_object->head_slot_ = next;
 
-    if (next_)
-      next_->previous_ = previous_;
+    if (next)
+      next->previous = previous;
     else
-      trackable_object_->tail_slot_ = previous_;
-
-    trackable_object_->slot_count_--;
-    trackable_object_ = 0;
+      trackable_object->tail_slot_ = previous;
 
   } else {
 
-    if (previous_) previous_->next_ =
-        next_;
-    if (next_) next_->previous_ =
-        previous_;
+    if (previous) previous->next = next;
+    if (next) next->previous = previous;
 
   }
 
-  previous_ = 0;
-  next_ = 0;
+  previous = 0;
+  next = 0;
 
-  if (upstream_) {
+  if (invoker) {
 #ifdef DEBUG
-    assert(upstream_->downstream_ == this);
+    assert(invoker->slot == this);
 #endif
-    upstream_->downstream_ = 0;
-    delete upstream_;
-    upstream_ = 0;
+    invoker->slot = 0;
+    delete invoker;
+    invoker = 0;
   }
-
-  if (downstream_) {
-#ifdef DEBUG
-    assert(downstream_->upstream_ == this);
-#endif
-    downstream_->upstream_ = 0;
-    delete downstream_;
-    downstream_ = 0;
-  }
-}
-
-bool Slot::Link (Slot* upstream, Slot* downstream)
-{
-  if (upstream == downstream) return false;
-  if ((upstream == 0) || (downstream == 0)) return false;
-
-#ifdef DEBUG
-  assert((upstream->downstream_ == 0) && (downstream->upstream_ == 0));
-#endif
-
-  upstream->downstream_ = downstream;
-  downstream->upstream_ = upstream;
-
-  return true;
 }
 
 }

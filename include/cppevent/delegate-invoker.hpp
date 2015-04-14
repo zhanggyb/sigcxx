@@ -27,20 +27,20 @@
 #pragma once
 
 #include <cppevent/delegate.hpp>
-#include <cppevent/invokable-slot.hpp>
+#include <cppevent/practicalbe-invoker.hpp>
 
 namespace CppEvent {
 
 template<typename ... ParamTypes>
-class DelegateSlot : public InvokableSlot < ParamTypes... >
+class DelegateInvoker : public PracticalbeInvoker < ParamTypes... >
 {
 public:
 
-  DelegateSlot() = delete;
+  DelegateInvoker() = delete;
 
-  inline DelegateSlot(const Delegate<void, ParamTypes...>& d);
+  inline DelegateInvoker(const Delegate<void, ParamTypes...>& d);
 
-  virtual ~DelegateSlot();
+  virtual ~DelegateInvoker();
 
   virtual void Invoke(ParamTypes... Args) override;
 
@@ -56,18 +56,18 @@ private:
 };
 
 template<typename ... ParamTypes>
-inline DelegateSlot<ParamTypes...>::DelegateSlot(const Delegate<void, ParamTypes...>& d)
-  : InvokableSlot<ParamTypes...>(), delegate_(d)
+inline DelegateInvoker<ParamTypes...>::DelegateInvoker(const Delegate<void, ParamTypes...>& d)
+  : PracticalbeInvoker<ParamTypes...>(), delegate_(d)
 {
 }
 
 template<typename ... ParamTypes>
-DelegateSlot<ParamTypes...>::~DelegateSlot()
+DelegateInvoker<ParamTypes...>::~DelegateInvoker()
 {
 }
 
 template<typename ... ParamTypes>
-void DelegateSlot<ParamTypes...>::Invoke(ParamTypes... Args)
+void DelegateInvoker<ParamTypes...>::Invoke(ParamTypes... Args)
 {
   delegate_(Args...);
 }

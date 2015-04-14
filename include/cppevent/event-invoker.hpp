@@ -26,31 +26,55 @@
 
 #pragma once
 
+#include <cppevent/practicalbe-invoker.hpp>
+
 namespace CppEvent {
 
 // forward declaration
-class AbstractTrackable;
-struct Invoker; // the event source
+template<typename ... ParamTypes> class Event;
 
-/**
- * @brief The abstract event node
- */
-struct Slot
+template<typename ... ParamTypes>
+class EventInvoker : public PracticalbeInvoker < ParamTypes... >
 {
-  inline Slot ()
-  : trackable_object(0),
-    previous(0),
-    next(0),
-    invoker(0)
-  {
-  }
+public:
 
-  virtual ~Slot ();
+  EventInvoker () = delete;
 
-  AbstractTrackable* trackable_object;
-  Slot* previous;
-  Slot* next;
-  Invoker* invoker;
+  inline EventInvoker(Event<ParamTypes...>* event);
+
+  virtual ~EventInvoker();
+
+  virtual void Invoke(ParamTypes... Args) override;
+
+  inline const Event<ParamTypes...>* event () const;
+
+private:
+
+  Event<ParamTypes...>* event_;
 };
 
-} // namespace CppEvent
+template<typename ... ParamTypes>
+inline EventInvoker<ParamTypes...>::EventInvoker (Event<
+    ParamTypes...>* event)
+    : PracticalbeInvoker<ParamTypes...>(), event_(event)
+{
+}
+
+template<typename ... ParamTypes>
+EventInvoker<ParamTypes...>::~EventInvoker()
+{
+}
+
+template<typename ... ParamTypes>
+void EventInvoker<ParamTypes...>::Invoke(ParamTypes... Args)
+{
+  event_->Invoke(Args...);
+}
+
+template<typename ... ParamTypes>
+inline const Event<ParamTypes...>* EventInvoker<ParamTypes...>::event() const
+{
+  return event_;
+}
+
+}

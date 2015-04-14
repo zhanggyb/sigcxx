@@ -26,37 +26,32 @@
 
 #pragma once
 
-#include <cppevent/slot.hpp>
-
 namespace CppEvent {
 
-template<typename ... ParamTypes>
-class InvokableSlot: public Slot
+// forward declaration
+class AbstractTrackable;
+struct Slot;
+
+/**
+ * @brief The event source
+ */
+struct Invoker
 {
-public:
+  inline Invoker ()
+  : trackable_object(0),
+    previous(0),
+    next(0),
+    slot(0)
+  {
+  }
 
-  inline InvokableSlot ();
+  virtual ~Invoker ();
 
-  virtual ~InvokableSlot ();
+  AbstractTrackable* trackable_object;
+  Invoker* previous;
+  Invoker* next;
+  Slot* slot;
 
-  virtual void Invoke (ParamTypes ... Args);
 };
 
-template<typename ... ParamTypes>
-inline InvokableSlot<ParamTypes...>::InvokableSlot ()
-    : Slot()
-{
 }
-
-template<typename ... ParamTypes>
-InvokableSlot<ParamTypes...>::~InvokableSlot ()
-{
-}
-
-template<typename ... ParamTypes>
-void InvokableSlot<ParamTypes...>::Invoke (ParamTypes ... Args)
-{
-  // TODO: override this, or use this class for event chian load
-}
-
-} // namespace CppEvent

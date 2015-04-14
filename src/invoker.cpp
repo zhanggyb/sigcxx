@@ -24,57 +24,30 @@
  * SOFTWARE.
  */
 
-#pragma once
-
-#include <cppevent/invokable-slot.hpp>
+#include <cppevent/abstract-trackable.hpp>
+#include <cppevent/invoker.hpp>
+#include <cppevent/slot.hpp>
 
 namespace CppEvent {
 
-// forward declaration
-template<typename ... ParamTypes> class Event;
+  Invoker::~Invoker()
+  {
+    if (trackable_object) trackable_object->AuditDestroyingSignal(this);
 
-template<typename ... ParamTypes>
-class EventSlot : public InvokableSlot < ParamTypes... >
-{
-public:
+    if (previous) previous->next = next;
+    if (next) next->previous = previous;
 
-  EventSlot () = delete;
+    previous = 0;
+    next = 0;
 
-  inline EventSlot(Event<ParamTypes...>* event);
+    if (slot) {
+  #ifdef DEBUG
+      assert(slot->invoker == this);
+  #endif
+      slot->invoker = 0;
+      delete slot;
+      slot = 0;
+    }
+  }
 
-  virtual ~EventSlot();
-
-  virtual void Invoke(ParamTypes... Args) override;
-
-  inline const Event<ParamTypes...>* event () const;
-
-private:
-
-  Event<ParamTypes...>* event_;
-};
-
-template<typename ... ParamTypes>
-inline EventSlot<ParamTypes...>::EventSlot (Event<
-    ParamTypes...>* event)
-    : InvokableSlot<ParamTypes...>(), event_(event)
-{
-}
-
-template<typename ... ParamTypes>
-EventSlot<ParamTypes...>::~EventSlot()
-{
-}
-
-template<typename ... ParamTypes>
-void EventSlot<ParamTypes...>::Invoke(ParamTypes... Args)
-{
-  event_->Invoke(Args...);
-}
-
-template<typename ... ParamTypes>
-inline const Event<ParamTypes...>* EventSlot<ParamTypes...>::event() const
-{
-  return event_;
-}
-
-}
+} // namespace CppEvent

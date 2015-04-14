@@ -26,31 +26,37 @@
 
 #pragma once
 
+#include <cppevent/invoker.hpp>
+
 namespace CppEvent {
 
-// forward declaration
-class AbstractTrackable;
-struct Invoker; // the event source
-
-/**
- * @brief The abstract event node
- */
-struct Slot
+template<typename ... ParamTypes>
+class PracticalbeInvoker: public Invoker
 {
-  inline Slot ()
-  : trackable_object(0),
-    previous(0),
-    next(0),
-    invoker(0)
-  {
-  }
+public:
 
-  virtual ~Slot ();
+  inline PracticalbeInvoker ();
 
-  AbstractTrackable* trackable_object;
-  Slot* previous;
-  Slot* next;
-  Invoker* invoker;
+  virtual ~PracticalbeInvoker ();
+
+  virtual void Invoke (ParamTypes ... Args);
 };
+
+template<typename ... ParamTypes>
+inline PracticalbeInvoker<ParamTypes...>::PracticalbeInvoker ()
+    : Invoker()
+{
+}
+
+template<typename ... ParamTypes>
+PracticalbeInvoker<ParamTypes...>::~PracticalbeInvoker ()
+{
+}
+
+template<typename ... ParamTypes>
+void PracticalbeInvoker<ParamTypes...>::Invoke (ParamTypes ... Args)
+{
+  // TODO: override this, or use this class for event chian load
+}
 
 } // namespace CppEvent

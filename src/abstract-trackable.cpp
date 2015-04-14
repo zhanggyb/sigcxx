@@ -25,6 +25,7 @@
  */
 
 #include <cppevent/abstract-trackable.hpp>
+#include <cppevent/invoker.hpp>
 #include <cppevent/slot.hpp>
 
 #ifdef DEBUG
@@ -35,66 +36,56 @@ namespace CppEvent {
 
 AbstractTrackable::~AbstractTrackable ()
 {
-  // MUST call RemoveAllConnections() in sub class destructor
-#ifdef DEBUG
-  assert(slot_count_ == 0);
-#endif
+  RemoveAllSlots();
 }
 
 void AbstractTrackable::PushBackSlot (Slot* node)
 {
 #ifdef DEBUG
-  assert(node->trackable_object_ == 0);
+  assert(node->trackable_object == 0);
 #endif
 
   if (tail_slot_) {
-    tail_slot_->next_ = node;
-    node->previous_ = tail_slot_;
+    tail_slot_->next = node;
+    node->previous = tail_slot_;
   } else {
 #ifdef DEBUG
     assert(head_slot_ == 0);
 #endif
-    node->previous_ = 0;
+    node->previous = 0;
     head_slot_ = node;
   }
   tail_slot_ = node;
-  node->next_ = 0;
-  node->trackable_object_ = this;
-  slot_count_++;
+  node->next = 0;
+  node->trackable_object = this;
 }
 
 void AbstractTrackable::PushFrontSlot (Slot* node)
 {
 #ifdef DEBUG
-  assert(node->trackable_object_ == 0);
+  assert(node->trackable_object == 0);
 #endif
 
   if (head_slot_) {
-    head_slot_->previous_ = node;
-    node->next_ = head_slot_;
+    head_slot_->previous = node;
+    node->next = head_slot_;
   } else {
 #ifdef DEBUG
     assert(tail_slot_ == 0);
 #endif
-    node->next_ = 0;
+    node->next = 0;
     tail_slot_ = node;
   }
   head_slot_ = node;
 
-  node->previous_ = 0;
-  node->trackable_object_ = this;
-  slot_count_++;
-}
-
-void AbstractTrackable::AuditDestroyingSlot (Slot* node)
-{
-  // TODO: override this
+  node->previous = 0;
+  node->trackable_object = this;
 }
 
 void AbstractTrackable::InsertSlot (int index, Slot* node)
 {
 #ifdef DEBUG
-  assert(node->trackable_object_ == 0);
+  assert(node->trackable_object == 0);
 #endif
 
   if (head_slot_ == 0) {
@@ -102,45 +93,44 @@ void AbstractTrackable::InsertSlot (int index, Slot* node)
     assert(tail_slot_ == 0);
 #endif
 
-    node->next_ = 0;
+    node->next = 0;
     tail_slot_ = node;
     head_slot_ = node;
-    node->previous_ = 0;
+    node->previous = 0;
   } else {
     if (index > 0) {
 
       Slot* p = head_slot_;
 
       while (p && (index > 0)) {
-        if (p->next_ == 0) break;
-        p = p->next_;
+        if (p->next == 0) break;
+        p = p->next;
         index--;
       }
 
       if (index == 0) {  // insert
-        node->previous_ = p->previous_;
-        node->next_ = p;
-        p->previous_->next_ = node;
-        p->previous_ = node;
+        node->previous = p->previous;
+        node->next = p;
+        p->previous->next = node;
+        p->previous = node;
       } else {  // same as push back
 #ifdef DEBUG
         assert(p == tail_slot_);
 #endif
-        tail_slot_->next_ = node;
-        node->previous_ = tail_slot_;
+        tail_slot_->next = node;
+        node->previous = tail_slot_;
         tail_slot_ = node;
-        node->next_ = 0;
+        node->next = 0;
       }
 
     } else {  // same as push front
-      head_slot_->previous_ = node;
-      node->next_ = head_slot_;
+      head_slot_->previous = node;
+      node->next = head_slot_;
       head_slot_ = node;
-      node->previous_ = 0;
+      node->previous = 0;
     }
   }
-  node->trackable_object_ = this;
-  slot_count_++;
+  node->trackable_object = this;
 }
 
 void AbstractTrackable::RemoveAllSlots ()
@@ -149,12 +139,24 @@ void AbstractTrackable::RemoveAllSlots ()
   Slot* p = head_slot_;
 
   while (p) {
-    tmp = p->next_;
+    tmp = p->next;
     delete p;
     p = tmp;
   }
+}
 
-  slot_count_ = 0;
+bool AbstractTrackable::Link (Invoker* source, Slot* consumer)
+{
+  if ((source == 0) || (consumer == 0)) return false;
+
+#ifdef DEBUG
+  assert((source->slot == 0) && (consumer->invoker == 0));
+#endif
+
+  source->slot = consumer;
+  consumer->invoker = source;
+
+  return true;
 }
 
 } // namespace CppEvent
