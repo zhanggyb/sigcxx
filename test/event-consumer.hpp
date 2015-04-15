@@ -4,7 +4,7 @@
 #pragma once
 
 #include <iostream>
-#include <cppevent/trackable.hpp>
+#include <cppevent/event.hpp>
 
 class EventConsumer: public CppEvent::Trackable
 {

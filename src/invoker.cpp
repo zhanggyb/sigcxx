@@ -32,7 +32,7 @@ namespace CppEvent {
 
   Invoker::~Invoker()
   {
-    if (trackable_object) trackable_object->AuditDestroyingSignal(this);
+    if (trackable_object) trackable_object->AuditDestroyingInvoker(this);
 
     if (previous) previous->next = next;
     if (next) next->previous = previous;

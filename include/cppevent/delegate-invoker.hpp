@@ -34,7 +34,7 @@ namespace CppEvent {
 template<typename ... ParamTypes>
 class DelegateInvoker : public PracticalbeInvoker < ParamTypes... >
 {
-public:
+ public:
 
   DelegateInvoker() = delete;
 
@@ -49,7 +49,7 @@ public:
     return delegate_;
   }
 
-private:
+ private:
 
   Delegate<void, ParamTypes...> delegate_;
 
@@ -57,7 +57,7 @@ private:
 
 template<typename ... ParamTypes>
 inline DelegateInvoker<ParamTypes...>::DelegateInvoker(const Delegate<void, ParamTypes...>& d)
-  : PracticalbeInvoker<ParamTypes...>(), delegate_(d)
+    : PracticalbeInvoker<ParamTypes...>(), delegate_(d)
 {
 }
 

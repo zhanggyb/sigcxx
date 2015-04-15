@@ -7,7 +7,7 @@ using namespace CppEvent;
 
 class TestClassBase
 {
-public:
+ public:
 
   TestClassBase ()
   {
@@ -35,14 +35,14 @@ public:
   virtual void Method2 (int p0, int p1) const
   {
     std::cout << "const Method2 in base class, param0: " << p0 << " param1: "
-        << p1 << std::endl;
+              << p1 << std::endl;
   }
 
 };
 
 class TestClassDerived: public TestClassBase
 {
-public:
+ public:
 
   TestClassDerived ()
       : TestClassBase()
@@ -82,9 +82,26 @@ static void test_delegate01()
 static void test_delegate02()
 {
   TestClassBase obj1;
-  Delegate<void, int> d = Delegate<void, int>::from_method(&obj1, &TestClassBase::ConstMethod1);
+  Delegate<void, int> d1 = Delegate<void, int>::from_method(&obj1, &TestClassBase::ConstMethod1);
+  Delegate<void, int> d2 = Delegate<void, int>::from_method(&obj1, &TestClassBase::Method1);
 
-  d(1);
+  if (d1 == d2) {
+    std::cout << "2 delegates equal" << std::endl;
+  }
+
+  if (d1 != d2) {
+    std::cout << " not equal" << std::endl;
+  }
+
+  if (d1 < d2) {
+    std::cout << " less then " << std::endl;
+  }
+
+  if (d1 > d2) {
+    std::cout << " great then " << std::endl;
+  }
+  
+  d1(1);
 }
 
 int main (int argc, char* argv[])

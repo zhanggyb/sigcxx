@@ -52,7 +52,7 @@ public:
 
 protected:
 
-  virtual void AuditDestroyingSignal (Invoker* signal) = 0;
+  virtual void AuditDestroyingInvoker (Invoker* signal) = 0;
 
   void PushBackSlot (Slot* node);
 
