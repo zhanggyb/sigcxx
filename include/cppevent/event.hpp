@@ -46,28 +46,16 @@ public:
   /**
    * @brief Connect this event to a method of trackable object
    */
-  template<typename T, void (T::*TMethod) (ParamTypes...)>
-  void Connect (T* obj);
-
-  /**
-   * @brief Connect this event to a const method of trackable object
-   */
-  template<typename T, void (T::*TMethod) (ParamTypes...) const>
-  void Connect (T* obj);
+  template<typename T>
+  void Connect (T* obj, void (T::*TMethod) (ParamTypes...));
 
   void Connect (Event<ParamTypes...>& other);
 
-  template<typename T, void (T::*TMethod) (ParamTypes...)>
-  void DisconnectOne (T* obj);
+  template<typename T>
+  void DisconnectOne (T* obj, void (T::*TMethod) (ParamTypes...));
 
-  template<typename T, void (T::*TMethod) (ParamTypes...)>
-  void DisconnectAll (T* obj);
-
-  template<typename T, void (T::*TMethod) (ParamTypes...) const>
-  void DisconnectOne (T* obj);
-
-  template<typename T, void (T::*TMethod) (ParamTypes...) const>
-  void DisconnectAll (T* obj);
+  template<typename T>
+  void DisconnectAll (T* obj, void (T::*TMethod) (ParamTypes...));
 
   void DisconnectOne (Event<ParamTypes...>& other);
 
@@ -83,13 +71,13 @@ protected:
 
   virtual void AuditDestroyingSignal (Invoker* signal) final;
 
-  void PushBackSignal (PracticalbeInvoker<ParamTypes...>* signal);
+  void PushBackInvoker (PracticalbeInvoker<ParamTypes...>* signal);
 
-  void PushFrontSignal (PracticalbeInvoker<ParamTypes...>* signal);
+  void PushFrontInvoker (PracticalbeInvoker<ParamTypes...>* signal);
 
-  void InsertSignal (int index, PracticalbeInvoker<ParamTypes...>* signal);
+  void InsertInvoker (int index, PracticalbeInvoker<ParamTypes...>* signal);
 
-  void RemoveAllSignals ();
+  void RemoveAllInvokers ();
 
 private:
 
@@ -114,12 +102,12 @@ inline Event<ParamTypes...>::Event ()
 template<typename ... ParamTypes>
 Event<ParamTypes...>::~Event ()
 {
-  RemoveAllSignals();
+  RemoveAllInvokers();
 }
 
 template<typename ... ParamTypes>
-template<typename T, void (T::*TMethod) (ParamTypes...)>
-void Event<ParamTypes...>::Connect (T* obj)
+template<typename T>
+void Event<ParamTypes...>::Connect (T* obj, void (T::*method) (ParamTypes...))
 {
   Trackable* trackable_object = dynamic_cast<Trackable*>(obj);
   if (trackable_object) {
@@ -127,37 +115,13 @@ void Event<ParamTypes...>::Connect (T* obj)
     Slot* downstream = new Slot;
 
     Delegate<void, ParamTypes...> d =
-        Delegate<void, ParamTypes...>::template from_method<T, TMethod>(obj);
+        Delegate<void, ParamTypes...>::template from_method<T>(obj, method);
     DelegateInvoker<ParamTypes...>* upstream = new DelegateInvoker<
         ParamTypes...>(d);
 
     Link(upstream, downstream);
 
-    this->PushBackSignal(upstream);
-    add_slot(trackable_object, downstream);
-
-    return;
-  }
-}
-
-template<typename ... ParamTypes>
-template<typename T, void (T::*TMethod) (ParamTypes...) const>
-void Event<ParamTypes...>::Connect (T* obj)
-{
-  Trackable* trackable_object = dynamic_cast<Trackable*>(obj);
-  if (trackable_object) {
-
-    Slot* downstream = new Slot;
-
-    Delegate<void, ParamTypes...> d =
-        Delegate<void, ParamTypes...>::template from_const_method<T, TMethod>(
-            obj);
-    DelegateInvoker<ParamTypes...>* upstream = new DelegateInvoker<
-        ParamTypes...>(d);
-
-    Link(upstream, downstream);
-
-    this->PushBackSignal(upstream);
+    this->PushBackInvoker(upstream);
     add_slot(trackable_object, downstream);
 
     return;
@@ -171,20 +135,20 @@ void Event<ParamTypes...>::Connect (Event<ParamTypes...>& other)
       &other);
   Slot* downstream = new Slot;
   Link(upstream, downstream);
-  this->PushBackSignal(upstream);
+  this->PushBackInvoker(upstream);
   add_slot(&other, downstream);
 }
 
 template<typename ... ParamTypes>
-template<typename T, void (T::*TMethod) (ParamTypes...)>
-void Event<ParamTypes...>::DisconnectOne (T* obj)
+template<typename T>
+void Event<ParamTypes...>::DisconnectOne (T* obj, void (T::*method) (ParamTypes...))
 {
   Trackable* trackable_object = dynamic_cast<Trackable*>(obj);
   if (trackable_object) {
     DelegateInvoker<ParamTypes...>* conn = 0;
     for (Invoker* p = tail_signal_; p; p = p->previous) {
       conn = dynamic_cast<DelegateInvoker<ParamTypes...>*>(p);
-      if (conn && (conn->delegate().template equal<T, TMethod>(obj))) {
+      if (conn && (conn->delegate().template equal<T>(obj, method))) {
         delete conn;
         break;
       }
@@ -195,52 +159,18 @@ void Event<ParamTypes...>::DisconnectOne (T* obj)
 }
 
 template<typename ... ParamTypes>
-template<typename T, void (T::*TMethod) (ParamTypes...)>
-void Event<ParamTypes...>::DisconnectAll (T* obj)
+template<typename T>
+void Event<ParamTypes...>::DisconnectAll (T* obj, void (T::*method) (ParamTypes...))
 {
   Trackable* trackable_object = dynamic_cast<Trackable*>(obj);
   if (trackable_object) {
     DelegateInvoker<ParamTypes...>* conn = 0;
     for (Invoker* p = tail_signal_; p; p = p->previous) {
       conn = dynamic_cast<DelegateInvoker<ParamTypes...>*>(p);
-      if (conn && (conn->delegate().template equal<T, TMethod>(obj)))
+      if (conn && (conn->delegate().template equal<T>(obj, method)))
         delete conn;
     }
 
-    return;
-  }
-}
-
-template<typename ... ParamTypes>
-template<typename T, void (T::*TMethod) (ParamTypes...) const>
-void Event<ParamTypes...>::DisconnectOne (T* obj)
-{
-  Trackable* trackable_object = dynamic_cast<Trackable*>(obj);
-  if (trackable_object) {
-    DelegateInvoker<ParamTypes...>* conn = 0;
-    for (Invoker* p = tail_signal_; p; p = p->previous) {
-      conn = dynamic_cast<DelegateInvoker<ParamTypes...>*>(p);
-      if (conn && (conn->delegate().template equal<T, TMethod>(obj))) {
-        delete conn;
-        break;
-      }
-    }
-    return;
-  }
-}
-
-template<typename ... ParamTypes>
-template<typename T, void (T::*TMethod) (ParamTypes...) const>
-void Event<ParamTypes...>::DisconnectAll (T* obj)
-{
-  Trackable* trackable_object = dynamic_cast<Trackable*>(obj);
-  if (trackable_object) {
-    DelegateInvoker<ParamTypes...>* conn = 0;
-    for (Invoker* p = tail_signal_; p; p = p->previous) {
-      conn = dynamic_cast<DelegateInvoker<ParamTypes...>*>(p);
-      if (conn && (conn->delegate().template equal<T, TMethod>(obj)))
-        delete conn;
-    }
     return;
   }
 }
@@ -271,7 +201,7 @@ void Event<ParamTypes...>::DisconnectAll (Event<ParamTypes...>& other)
 template<typename ... ParamTypes>
 void Event<ParamTypes...>::DisconnectAllSignals()
 {
-  RemoveAllSignals();
+  RemoveAllInvokers();
 }
 
 template<typename ... ParamTypes>
@@ -316,7 +246,7 @@ void Event<ParamTypes...>::AuditDestroyingSignal (Invoker* signal)
 }
 
 template<typename ... ParamTypes>
-void Event<ParamTypes...>::PushBackSignal(PracticalbeInvoker<ParamTypes...>* signal)
+void Event<ParamTypes...>::PushBackInvoker(PracticalbeInvoker<ParamTypes...>* signal)
 {
 #ifdef DEBUG
   assert(signal->trackable_object == 0);
@@ -338,7 +268,7 @@ void Event<ParamTypes...>::PushBackSignal(PracticalbeInvoker<ParamTypes...>* sig
 }
 
 template<typename ... ParamTypes>
-void Event<ParamTypes...>::PushFrontSignal(PracticalbeInvoker<ParamTypes...>* signal)
+void Event<ParamTypes...>::PushFrontInvoker(PracticalbeInvoker<ParamTypes...>* signal)
 {
 #ifdef DEBUG
   assert(node->trackable_object == 0);
@@ -361,7 +291,7 @@ void Event<ParamTypes...>::PushFrontSignal(PracticalbeInvoker<ParamTypes...>* si
 }
 
 template<typename ... ParamTypes>
-void Event<ParamTypes...>::InsertSignal(int index, PracticalbeInvoker<ParamTypes...>* signal)
+void Event<ParamTypes...>::InsertInvoker(int index, PracticalbeInvoker<ParamTypes...>* signal)
 {
 #ifdef DEBUG
   assert(signal->trackable_object == 0);
@@ -413,7 +343,7 @@ void Event<ParamTypes...>::InsertSignal(int index, PracticalbeInvoker<ParamTypes
 }
 
 template<typename ... ParamTypes>
-void Event<ParamTypes...>::RemoveAllSignals()
+void Event<ParamTypes...>::RemoveAllInvokers()
 {
   Invoker* tmp = 0;
   Invoker* p = head_signal_;

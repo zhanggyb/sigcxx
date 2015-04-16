@@ -82,7 +82,7 @@ public:
   void OnTest0 ()
   {
     std::cout << "Delete the connection" << std::endl;
-    event0_.DisconnectOne<EventSelfConsumer, &EventSelfConsumer::OnTest0>(this);
+    event0_.DisconnectOne(this, &EventSelfConsumer::OnTest0);
   }
 
   void OnTest1 (int n)

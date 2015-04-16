@@ -27,6 +27,11 @@ public:
     std::cout << "Method1 in base class, param0: " << p0 << std::endl;
   }
 
+  virtual void ConstMethod1 (int p0)
+  {
+    std::cout << "ConstMethod1 in base class, param0: " << p0 << std::endl;
+  }
+
   virtual void Method2 (int p0, int p1) const
   {
     std::cout << "const Method2 in base class, param0: " << p0 << " param1: "
@@ -65,35 +70,28 @@ static void test_delegate01()
 {
   TestClassBase obj1;
 
-  Delegate<void, int> d = Delegate<void, int>::from_method<TestClassBase, &TestClassBase::Method1>(&obj1);
+  Delegate<void, int> d = Delegate<void, int>::from_method(&obj1, &TestClassBase::Method1);
 
-  bool result = d.equal<TestClassBase, &TestClassBase::Method1>(&obj1);
+  // bool result = d.equal<TestClassBase, &TestClassBase::Method1>(&obj1);
 
-  assert(result);
+  // assert(result);
 
   d(1);
 }
 
-static void test_event01()
+static void test_delegate02()
 {
   TestClassBase obj1;
+  Delegate<void, int> d = Delegate<void, int>::from_method(&obj1, &TestClassBase::ConstMethod1);
 
-  Event<int> event;
-  event.Connect<TestClassBase, &TestClassBase::Method1>(&obj1);
-  event.Invoke(1);
-
-  std::cout << "size of AbstractEvent: " << sizeof(event) << std::endl;
-}
-
-void test_event02()
-{
-
+  d(1);
 }
 
 int main (int argc, char* argv[])
 {
   test_delegate01();
-  test_event01();
+
+  test_delegate02();
 
   return 0;
 }
