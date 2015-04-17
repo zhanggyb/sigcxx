@@ -4,7 +4,7 @@
 
 ## Overview
 
-A simple/header-only C++11 event/delegate framework based on fast C++ delegates.
+A simple C++11 event/delegate framework based on fast C++ delegates.
 
 This project is inspired by:
   * [Member Function Pointers and the Fastest Possible C++ Delegates](http://www.codeproject.com/Articles/7150/Member-Function-Pointers-and-the-Fastest-Possible) by Don Clugston
@@ -19,8 +19,7 @@ CppEvent currently lives on [GitHub](https://github.com/zhanggyb/CppEvent).
 > Note: this project currently does not support MSVC, will be fixed later
 
 * Checkout this repository
-* Copy *include/cppevent* into your C++ project
-* configure the correct include directory
+* Copy *include/cppevent* and *src/\** into your C++ project
 
 ## Basic Usage
 

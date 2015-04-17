@@ -3,7 +3,7 @@
 
 cmake_minimum_required(VERSION 2.8.11)
 
-project(CppEvent)
+project(libCppEvent)
 
 if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
 set(CMAKE_CXX_FLAGS	"/W4")
@@ -17,6 +17,7 @@ endif()
 
 include_directories(${PROJECT_SOURCE_DIR}/include)
 
+add_subdirectory(src)
 add_subdirectory(test)
 
 install(DIRECTORY "${PROJECT_SOURCE_DIR}/include/cppevent" DESTINATION include)

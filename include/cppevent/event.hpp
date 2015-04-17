@@ -346,7 +346,7 @@ template<typename ... ParamTypes>
 void Event<ParamTypes...>::PushFrontToken(InvokableToken<ParamTypes...>* token)
 {
 #ifdef DEBUG
-  assert(node->trackable_object == 0);
+  assert(token->trackable_object == 0);
 #endif
 
   if (first_token_) {
