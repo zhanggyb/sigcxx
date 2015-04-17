@@ -1,29 +1,26 @@
-# libCppEvent
+# CppEvent
 
 ------
 
 ## Overview
 
-A simple C++11 event/delegate framework based on fast C++ delegates.
+A simple/header-only C++11 event/delegate framework based on fast C++ delegates.
 
 This project is inspired by:
   * [Member Function Pointers and the Fastest Possible C++ Delegates](http://www.codeproject.com/Articles/7150/Member-Function-Pointers-and-the-Fastest-Possible) by Don Clugston
   * [The Impossibly Fast C++ Delegates](http://www.codeproject.com/Articles/11015/The-Impossibly-Fast-C-Delegates) by by Sergey Ryazanov
   * [Fast C++ Delegate: Boost.Function 'drop-in' replacement and multicast](http://www.codeproject.com/Articles/18389/Fast-C-Delegate-Boost-Function-drop-in-replacement) by JaeWook Choi
+  * [CppEvents](http://code.google.com/p/cpp-events/) by Nickolas V. Pohilets
 
-## Build and Installation
+CppEvent currently lives on [GitHub](https://github.com/zhanggyb/CppEvent).
+
+## Download and Install
 
 > Note: this project currently does not support MSVC, will be fixed later
 
-1. Use cmake to configure and build the source code:
-```shell
-$ cd <folder you checkout the code>
-$ mkdir build
-$ cd build
-$ cmake .. && make
-$ make install # install header and binary to the default CMAKE_INSTALL_PREFIX folder.
-```
-2. Or just copy the header and source files to your project
+* Checkout this repository
+* Copy *include/cppevent* into your C++ project
+* configure the correct include directory
 
 ## Basic Usage
 
@@ -56,9 +53,14 @@ public:
 
   // other code
 
-  CppEvent::Event<int, int>& sum_event ()
+  CppEvent::EventRef<int, int>& sum_event ()
   {
     return sum_event_;
+  }
+
+  void DoSum ()
+  {
+    sum_event_.Invoke(1, 2);
   }
 
 private:
@@ -76,11 +78,9 @@ void main (void)
     // connect event to an trackable object
     source.sum_event().Connect(&consum, &Consumer::OnDoSum);
 
-    source.sum_event().Invoke(1, 2);  // this will call Consumer::OnDoSum()
+    source.DoSum();
 
     source.sum_event().Disconnect(&consum, &Consumer::OnDoSum);
-
-    source.sum_event().Invoke(1, 2);  // nothing happens
 }
 ```
 
