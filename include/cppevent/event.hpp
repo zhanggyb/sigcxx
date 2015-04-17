@@ -27,7 +27,6 @@
 #pragma once
 
 #include <cppevent/abstract-trackable.hpp>
-#include <cppevent/binding.hpp>
 #include <cppevent/delegate-token.hpp>
 #include <cppevent/event-token.hpp>
 
@@ -156,9 +155,15 @@ public:
   template<typename T>
   inline void disconnect1 (T* obj, void (T::*method)(ParamTypes...))
   {
-    event_->Disconnect1 (obj, method);
+    event_->Disconnect1(obj, method);
   }
 
+  template<typename T>
+  inline void disconnect (T* obj, void (T::*method)(ParamTypes...))
+  {
+    event_->Disconnect(obj, method);
+  }
+  
   inline void connect (const EventRef<ParamTypes...>& other)
   {
     event_->Connect(*other.event_);
@@ -167,6 +172,11 @@ public:
   inline void disconnect1 (const EventRef<ParamTypes...>& other)
   {
     event_->Disconnect1(*other.event_);
+  }
+
+  inline void disconnect (const EventRef<ParamTypes...>& other)
+  {
+    event_->Disconnect(*other.event_);
   }
 
 private:
@@ -203,7 +213,7 @@ void Event<ParamTypes...>::Connect (T* obj, void (T::*method) (ParamTypes...))
   DelegateToken<ParamTypes...>* upstream = new DelegateToken<
     ParamTypes...>(d);
 
-  Link(upstream, downstream);
+  link(upstream, downstream);
 
   this->PushBackToken(upstream);
   add_binding(obj, downstream);
@@ -215,7 +225,7 @@ void Event<ParamTypes...>::Connect (Event<ParamTypes...>& other)
   EventToken<ParamTypes...>* upstream = new EventToken<ParamTypes...>(
       other);
   Binding* downstream = new Binding;
-  Link(upstream, downstream);
+  link(upstream, downstream);
   this->PushBackToken(upstream);
   add_binding(&other, downstream);
 }

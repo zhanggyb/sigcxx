@@ -5,7 +5,7 @@
 set(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)
 
 add_executable(delegate delegate.cpp)
-target_link_libraries(delegate cppevent)
+target_link_libraries(delegate)
 
 add_executable(simple simple.cpp)
-target_link_libraries(simple cppevent)
+target_link_libraries(simple)
