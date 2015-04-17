@@ -27,12 +27,12 @@ public:
     event2_.Invoke(n1, n2);
   }
 
-  CppEvent::Event<int>& event1 ()
+  inline CppEvent::EventRef<int> event1 ()
   {
     return event1_;
   }
 
-  CppEvent::Event<int, int>& event2 ()
+  inline CppEvent::EventRef<int, int> event2 ()
   {
     return event2_;
   }

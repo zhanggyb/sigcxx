@@ -40,7 +40,7 @@ public:
 
   EventToken () = delete;
 
-  inline EventToken(Event<ParamTypes...>* event);
+  inline EventToken(Event<ParamTypes...>& event);
 
   virtual ~EventToken();
 
@@ -55,8 +55,8 @@ private:
 
 template<typename ... ParamTypes>
 inline EventToken<ParamTypes...>::EventToken (Event<
-    ParamTypes...>* event)
-    : InvokableToken<ParamTypes...>(), event_(event)
+    ParamTypes...>& event)
+    : InvokableToken<ParamTypes...>(), event_(&event)
 {
 }
 

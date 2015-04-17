@@ -39,21 +39,21 @@ namespace CppEvent {
 class Trackable: public AbstractTrackable
 {
  public:
-  
+
   inline Trackable ()
       : AbstractTrackable()
   { }
-  
+
   virtual ~Trackable ()
   { }
-  
+
  protected:
-  
+
   virtual void AuditDestroyingToken (Token* token) final
   { }
 };
 
-// ---------
+// Event declaration:
 
 template<typename ... ParamTypes>
 class Event: public AbstractTrackable
@@ -68,23 +68,35 @@ class Event: public AbstractTrackable
    * @brief Connect this event to a method of trackable object
    */
   template<typename T>
-  void Connect (T* obj, void (T::*TMethod) (ParamTypes...));
+  void Connect (T* obj, void (T::*method) (ParamTypes...));
 
   void Connect (Event<ParamTypes...>& other);
 
+  /**
+   * @brief Disconnect the last delegate to a method
+   */
   template<typename T>
-  void DisconnectOne (T* obj, void (T::*TMethod) (ParamTypes...));
+  void Disconnect1 (T* obj, void (T::*method) (ParamTypes...));
 
+  /**
+   * @brief Disconnect all delegates to a method
+   */
   template<typename T>
-  void DisconnectAll (T* obj, void (T::*TMethod) (ParamTypes...));
+  void Disconnect (T* obj, void (T::*method) (ParamTypes...));
 
-  void DisconnectOne (Event<ParamTypes...>& other);
+  /**
+   * @brief Disconnect the last event bound
+   */
+  void Disconnect1 (Event<ParamTypes...>& other);
 
-  void DisconnectAll (Event<ParamTypes...>& other);
+  /**
+   * @brief Disconnect all events
+   */
+  void Disconnect (Event<ParamTypes...>& other);
 
-  void DisconnectAllInvokers ();
+  void DisconnectTokens ();
 
-  void DisconnectAllSlots ();
+  void DisconnectFromEvents ();
 
   virtual void Invoke (ParamTypes ... Args);
 
@@ -110,6 +122,60 @@ class Event: public AbstractTrackable
 
 };
 
+// EventRef declaration:
+
+template<typename ... ParamTypes>
+class EventRef
+{
+public:
+
+  EventRef () = delete;
+
+  inline EventRef(Event<ParamTypes...>& event)
+  : event_(&event)
+  {}
+
+  inline EventRef(const EventRef<ParamTypes...>& orig)
+  : event_(orig.event_)
+  {}
+
+  ~EventRef() {}
+
+  EventRef<ParamTypes...>& operator = (const EventRef<ParamTypes...>& orig)
+  {
+    event_ = orig.event_;
+    return *this;
+  }
+
+  template<typename T>
+  inline void connect (T* obj, void (T::*method)(ParamTypes...))
+  {
+    event_->Connect(obj, method);
+  }
+
+  template<typename T>
+  inline void disconnect1 (T* obj, void (T::*method)(ParamTypes...))
+  {
+    event_->Disconnect1 (obj, method);
+  }
+
+  inline void connect (const EventRef<ParamTypes...>& other)
+  {
+    event_->Connect(*other.event_);
+  }
+
+  inline void disconnect1 (const EventRef<ParamTypes...>& other)
+  {
+    event_->Disconnect1(*other.event_);
+  }
+
+private:
+
+  Event<ParamTypes...>* event_;
+};
+
+// Event implementation:
+
 template<typename ... ParamTypes>
 inline Event<ParamTypes...>::Event ()
     : AbstractTrackable(),
@@ -130,30 +196,24 @@ template<typename ... ParamTypes>
 template<typename T>
 void Event<ParamTypes...>::Connect (T* obj, void (T::*method) (ParamTypes...))
 {
-  Trackable* trackable_object = dynamic_cast<Trackable*>(obj);
-  if (trackable_object) {
+  Binding* downstream = new Binding;
 
-    Binding* downstream = new Binding;
+  Delegate<void, ParamTypes...> d =
+      Delegate<void, ParamTypes...>::template from_method<T>(obj, method);
+  DelegateToken<ParamTypes...>* upstream = new DelegateToken<
+    ParamTypes...>(d);
 
-    Delegate<void, ParamTypes...> d =
-        Delegate<void, ParamTypes...>::template from_method<T>(obj, method);
-    DelegateToken<ParamTypes...>* upstream = new DelegateToken<
-      ParamTypes...>(d);
+  Link(upstream, downstream);
 
-    Link(upstream, downstream);
-
-    this->PushBackToken(upstream);
-    add_binding(trackable_object, downstream);
-
-    return;
-  }
+  this->PushBackToken(upstream);
+  add_binding(obj, downstream);
 }
 
 template<typename ... ParamTypes>
 void Event<ParamTypes...>::Connect (Event<ParamTypes...>& other)
 {
   EventToken<ParamTypes...>* upstream = new EventToken<ParamTypes...>(
-      &other);
+      other);
   Binding* downstream = new Binding;
   Link(upstream, downstream);
   this->PushBackToken(upstream);
@@ -162,42 +222,32 @@ void Event<ParamTypes...>::Connect (Event<ParamTypes...>& other)
 
 template<typename ... ParamTypes>
 template<typename T>
-void Event<ParamTypes...>::DisconnectOne (T* obj, void (T::*method) (ParamTypes...))
+void Event<ParamTypes...>::Disconnect1 (T* obj, void (T::*method) (ParamTypes...))
 {
-  Trackable* trackable_object = dynamic_cast<Trackable*>(obj);
-  if (trackable_object) {
-    DelegateToken<ParamTypes...>* conn = 0;
-    for (Token* p = last_token_; p; p = p->previous) {
-      conn = dynamic_cast<DelegateToken<ParamTypes...>*>(p);
-      if (conn && (conn->delegate().template equal<T>(obj, method))) {
-        delete conn;
-        break;
-      }
+  DelegateToken<ParamTypes...>* conn = 0;
+  for (Token* p = last_token_; p; p = p->previous) {
+    conn = dynamic_cast<DelegateToken<ParamTypes...>*>(p);
+    if (conn && (conn->delegate().template equal<T>(obj, method))) {
+      delete conn;
+      break;
     }
-
-    return;
   }
 }
 
 template<typename ... ParamTypes>
 template<typename T>
-void Event<ParamTypes...>::DisconnectAll (T* obj, void (T::*method) (ParamTypes...))
+void Event<ParamTypes...>::Disconnect (T* obj, void (T::*method) (ParamTypes...))
 {
-  Trackable* trackable_object = dynamic_cast<Trackable*>(obj);
-  if (trackable_object) {
-    DelegateToken<ParamTypes...>* conn = 0;
-    for (Token* p = last_token_; p; p = p->previous) {
-      conn = dynamic_cast<DelegateToken<ParamTypes...>*>(p);
-      if (conn && (conn->delegate().template equal<T>(obj, method)))
-        delete conn;
-    }
-
-    return;
+  DelegateToken<ParamTypes...>* conn = 0;
+  for (Token* p = last_token_; p; p = p->previous) {
+    conn = dynamic_cast<DelegateToken<ParamTypes...>*>(p);
+    if (conn && (conn->delegate().template equal<T>(obj, method)))
+      delete conn;
   }
 }
 
 template<typename ... ParamTypes>
-void Event<ParamTypes...>::DisconnectOne (Event<ParamTypes...>& other)
+void Event<ParamTypes...>::Disconnect1 (Event<ParamTypes...>& other)
 {
   EventToken<ParamTypes...>* conn = 0;
   for (Token* p = last_token_; p; p = p->previous) {
@@ -210,7 +260,7 @@ void Event<ParamTypes...>::DisconnectOne (Event<ParamTypes...>& other)
 }
 
 template<typename ... ParamTypes>
-void Event<ParamTypes...>::DisconnectAll (Event<ParamTypes...>& other)
+void Event<ParamTypes...>::Disconnect (Event<ParamTypes...>& other)
 {
   EventToken<ParamTypes...>* conn = 0;
   for (Token* p = last_token_; p; p = p->previous) {
@@ -220,13 +270,13 @@ void Event<ParamTypes...>::DisconnectAll (Event<ParamTypes...>& other)
 }
 
 template<typename ... ParamTypes>
-void Event<ParamTypes...>::DisconnectAllInvokers()
+void Event<ParamTypes...>::DisconnectTokens()
 {
   RemoveAllTokens();
 }
 
 template<typename ... ParamTypes>
-void Event<ParamTypes...>::DisconnectAllSlots ()
+void Event<ParamTypes...>::DisconnectFromEvents ()
 {
   RemoveAllBindings();
 }
@@ -252,14 +302,8 @@ void Event<ParamTypes...>::Invoke (ParamTypes ... Args)
 template<typename ... ParamTypes>
 void Event<ParamTypes...>::AuditDestroyingToken (Token* token)
 {
-  if (token == first_token_) {
-    first_token_ = token->next;
-  }
-
-  if (token == last_token_) {
-    last_token_ = token->previous;
-  }
-
+  if (token == first_token_) first_token_ = token->next;
+  if (token == last_token_) last_token_ = token->previous;
   if (token == iterator_) {
     iterator_removed_ = true;
     iterator_ = iterator_->next;
