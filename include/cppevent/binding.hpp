@@ -30,27 +30,27 @@ namespace CppEvent {
 
 // forward declaration
 class AbstractTrackable;
-struct Invoker; // the event source
+struct Token; // the event source
 
 /**
  * @brief The abstract event node
  */
-struct Slot
+struct Binding
 {
-  inline Slot ()
+  inline Binding ()
   : trackable_object(0),
     previous(0),
     next(0),
-    invoker(0)
+    token(0)
   {
   }
 
-  virtual ~Slot ();
+  virtual ~Binding ();
 
   AbstractTrackable* trackable_object;
-  Slot* previous;
-  Slot* next;
-  Invoker* invoker;
+  Binding* previous;
+  Binding* next;
+  Token* token;
 };
 
 } // namespace CppEvent

@@ -25,8 +25,8 @@
  */
 
 #include <cppevent/abstract-trackable.hpp>
-#include <cppevent/invoker.hpp>
-#include <cppevent/slot.hpp>
+#include <cppevent/binding.hpp>
+#include <cppevent/token.hpp>
 
 #ifdef DEBUG
 #include <cassert>
@@ -36,71 +36,71 @@ namespace CppEvent {
 
 AbstractTrackable::~AbstractTrackable ()
 {
-  RemoveAllSlots();
+  RemoveAllBindings();
 }
 
-void AbstractTrackable::PushBackSlot (Slot* node)
+void AbstractTrackable::PushBackBinding (Binding* node)
 {
 #ifdef DEBUG
   assert(node->trackable_object == 0);
 #endif
 
-  if (tail_slot_) {
-    tail_slot_->next = node;
-    node->previous = tail_slot_;
+  if (last_binding_) {
+    last_binding_->next = node;
+    node->previous = last_binding_;
   } else {
 #ifdef DEBUG
-    assert(head_slot_ == 0);
+    assert(first_binding_ == 0);
 #endif
     node->previous = 0;
-    head_slot_ = node;
+    first_binding_ = node;
   }
-  tail_slot_ = node;
+  last_binding_ = node;
   node->next = 0;
   node->trackable_object = this;
 }
 
-void AbstractTrackable::PushFrontSlot (Slot* node)
+void AbstractTrackable::PushFrontBinding (Binding* node)
 {
 #ifdef DEBUG
   assert(node->trackable_object == 0);
 #endif
 
-  if (head_slot_) {
-    head_slot_->previous = node;
-    node->next = head_slot_;
+  if (first_binding_) {
+    first_binding_->previous = node;
+    node->next = first_binding_;
   } else {
 #ifdef DEBUG
-    assert(tail_slot_ == 0);
+    assert(last_binding_ == 0);
 #endif
     node->next = 0;
-    tail_slot_ = node;
+    last_binding_ = node;
   }
-  head_slot_ = node;
+  first_binding_ = node;
 
   node->previous = 0;
   node->trackable_object = this;
 }
 
-void AbstractTrackable::InsertSlot (int index, Slot* node)
+void AbstractTrackable::InsertBinding (int index, Binding* node)
 {
 #ifdef DEBUG
   assert(node->trackable_object == 0);
 #endif
 
-  if (head_slot_ == 0) {
+  if (first_binding_ == 0) {
 #ifdef DEBUG
-    assert(tail_slot_ == 0);
+    assert(last_binding_ == 0);
 #endif
 
     node->next = 0;
-    tail_slot_ = node;
-    head_slot_ = node;
+    last_binding_ = node;
+    first_binding_ = node;
     node->previous = 0;
   } else {
     if (index > 0) {
 
-      Slot* p = head_slot_;
+      Binding* p = first_binding_;
 
       while (p && (index > 0)) {
         if (p->next == 0) break;
@@ -115,28 +115,28 @@ void AbstractTrackable::InsertSlot (int index, Slot* node)
         p->previous = node;
       } else {  // same as push back
 #ifdef DEBUG
-        assert(p == tail_slot_);
+        assert(p == last_binding_);
 #endif
-        tail_slot_->next = node;
-        node->previous = tail_slot_;
-        tail_slot_ = node;
+        last_binding_->next = node;
+        node->previous = last_binding_;
+        last_binding_ = node;
         node->next = 0;
       }
 
     } else {  // same as push front
-      head_slot_->previous = node;
-      node->next = head_slot_;
-      head_slot_ = node;
+      first_binding_->previous = node;
+      node->next = first_binding_;
+      first_binding_ = node;
       node->previous = 0;
     }
   }
   node->trackable_object = this;
 }
 
-void AbstractTrackable::RemoveAllSlots ()
+void AbstractTrackable::RemoveAllBindings ()
 {
-  Slot* tmp = 0;
-  Slot* p = head_slot_;
+  Binding* tmp = 0;
+  Binding* p = first_binding_;
 
   while (p) {
     tmp = p->next;
@@ -145,16 +145,16 @@ void AbstractTrackable::RemoveAllSlots ()
   }
 }
 
-bool AbstractTrackable::Link (Invoker* source, Slot* consumer)
+bool AbstractTrackable::Link (Token* source, Binding* consumer)
 {
   if ((source == 0) || (consumer == 0)) return false;
 
 #ifdef DEBUG
-  assert((source->slot == 0) && (consumer->invoker == 0));
+  assert((source->binding == 0) && (consumer->token == 0));
 #endif
 
-  source->slot = consumer;
-  consumer->invoker = source;
+  source->binding = consumer;
+  consumer->token = source;
 
   return true;
 }

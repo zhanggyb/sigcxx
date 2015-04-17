@@ -23,7 +23,7 @@ public:
 
   void DisconnectAll ()
   {
-    RemoveAllSlots();
+    RemoveAllBindings();
   }
 
   void OnTest1 (int n)
@@ -76,7 +76,7 @@ public:
 
   void DisconnectAll ()
   {
-    RemoveAllSlots();
+    RemoveAllBindings();
   }
 
   void OnTest0 ()

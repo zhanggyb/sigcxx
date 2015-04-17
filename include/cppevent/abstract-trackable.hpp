@@ -28,67 +28,57 @@
 
 namespace CppEvent {
 
-struct Invoker;
-struct Slot;
+struct Token;
+struct Binding;
 
 /**
  * @brief Abstract class for event
  */
 class AbstractTrackable
 {
-  friend struct Slot;
-  friend struct Invoker;
+  friend struct Binding;
+  friend struct Token;
 
 public:
 
   inline AbstractTrackable ()
-      : head_slot_(0), tail_slot_(0)
+      : first_binding_(0), last_binding_(0)
   {
   }
 
   virtual ~AbstractTrackable ();
 
-  static bool Link (Invoker* source, Slot* consumer);
+  static bool Link (Token* token, Binding* binding);
 
 protected:
 
-  virtual void AuditDestroyingInvoker (Invoker* signal) = 0;
+  virtual void AuditDestroyingToken (Token* token) = 0;
 
-  void PushBackSlot (Slot* node);
+  void PushBackBinding (Binding* node);
 
-  void PushFrontSlot (Slot* node);
+  void PushFrontBinding (Binding* node);
 
-  void InsertSlot (int index, Slot* node);
+  void InsertBinding (int index, Binding* node);
 
-  void RemoveAllSlots ();
+  void RemoveAllBindings ();
 
-  inline Slot* head_slot () const
+  static inline void add_binding (AbstractTrackable* trackable,
+                                     Binding* conn)
   {
-    return head_slot_;
+    trackable->PushBackBinding(conn);
   }
 
-  inline Slot* tail_slot () const
-  {
-    return tail_slot_;
-  }
-
-  static inline void add_slot (AbstractTrackable* trackable,
-                                     Slot* conn)
-  {
-    trackable->PushBackSlot(conn);
-  }
-
-  static inline void insert_slot (AbstractTrackable* trackable,
-                                        Slot* conn,
+  static inline void insert_binding (AbstractTrackable* trackable,
+                                        Binding* conn,
                                         int index = 0)
   {
-    trackable->InsertSlot(index, conn);
+    trackable->InsertBinding(index, conn);
   }
 
 private:
 
-  Slot* head_slot_;
-  Slot* tail_slot_;
+  Binding* first_binding_;
+  Binding* last_binding_;
 };
 
 }

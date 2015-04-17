@@ -27,20 +27,20 @@
 #pragma once
 
 #include <cppevent/delegate.hpp>
-#include <cppevent/practicalbe-invoker.hpp>
+#include <cppevent/invokable-token.hpp>
 
 namespace CppEvent {
 
 template<typename ... ParamTypes>
-class DelegateInvoker : public PracticalbeInvoker < ParamTypes... >
+class DelegateToken : public InvokableToken < ParamTypes... >
 {
  public:
 
-  DelegateInvoker() = delete;
+  DelegateToken() = delete;
 
-  inline DelegateInvoker(const Delegate<void, ParamTypes...>& d);
+  inline DelegateToken(const Delegate<void, ParamTypes...>& d);
 
-  virtual ~DelegateInvoker();
+  virtual ~DelegateToken();
 
   virtual void Invoke(ParamTypes... Args) override;
 
@@ -56,18 +56,18 @@ class DelegateInvoker : public PracticalbeInvoker < ParamTypes... >
 };
 
 template<typename ... ParamTypes>
-inline DelegateInvoker<ParamTypes...>::DelegateInvoker(const Delegate<void, ParamTypes...>& d)
-    : PracticalbeInvoker<ParamTypes...>(), delegate_(d)
+inline DelegateToken<ParamTypes...>::DelegateToken(const Delegate<void, ParamTypes...>& d)
+    : InvokableToken<ParamTypes...>(), delegate_(d)
 {
 }
 
 template<typename ... ParamTypes>
-DelegateInvoker<ParamTypes...>::~DelegateInvoker()
+DelegateToken<ParamTypes...>::~DelegateToken()
 {
 }
 
 template<typename ... ParamTypes>
-void DelegateInvoker<ParamTypes...>::Invoke(ParamTypes... Args)
+void DelegateToken<ParamTypes...>::Invoke(ParamTypes... Args)
 {
   delegate_(Args...);
 }

@@ -24,30 +24,34 @@
  * SOFTWARE.
  */
 
-#include <cppevent/abstract-trackable.hpp>
-#include <cppevent/invoker.hpp>
-#include <cppevent/slot.hpp>
+#pragma once
 
 namespace CppEvent {
 
-  Invoker::~Invoker()
+// forward declaration
+class AbstractTrackable;
+struct Binding;
+
+/**
+ * @brief The event source
+ */
+struct Token
+{
+  inline Token ()
+  : trackable_object(0),
+    previous(0),
+    next(0),
+    binding(0)
   {
-    if (trackable_object) trackable_object->AuditDestroyingInvoker(this);
-
-    if (previous) previous->next = next;
-    if (next) next->previous = previous;
-
-    previous = 0;
-    next = 0;
-
-    if (slot) {
-  #ifdef DEBUG
-      assert(slot->invoker == this);
-  #endif
-      slot->invoker = 0;
-      delete slot;
-      slot = 0;
-    }
   }
 
-} // namespace CppEvent
+  virtual ~Token ();
+
+  AbstractTrackable* trackable_object;
+  Token* previous;
+  Token* next;
+  Binding* binding;
+
+};
+
+}

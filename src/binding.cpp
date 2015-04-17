@@ -24,9 +24,9 @@
  * SOFTWARE.
  */
 
-#include <cppevent/slot.hpp>
 #include <cppevent/abstract-trackable.hpp>
-#include <cppevent/invoker.hpp>
+#include <cppevent/binding.hpp>
+#include <cppevent/token.hpp>
 
 #ifdef DEBUG
 #include <cassert>
@@ -34,19 +34,19 @@
 
 namespace CppEvent {
 
-Slot::~Slot ()
+Binding::~Binding ()
 {
   if (trackable_object) {
 
     if (previous)
       previous->next = next;
     else
-      trackable_object->head_slot_ = next;
+      trackable_object->first_binding_ = next;
 
     if (next)
       next->previous = previous;
     else
-      trackable_object->tail_slot_ = previous;
+      trackable_object->last_binding_ = previous;
 
   } else {
 
@@ -58,13 +58,13 @@ Slot::~Slot ()
   previous = 0;
   next = 0;
 
-  if (invoker) {
+  if (token) {
 #ifdef DEBUG
-    assert(invoker->slot == this);
+    assert(token->binding == this);
 #endif
-    invoker->slot = 0;
-    delete invoker;
-    invoker = 0;
+    token->binding = 0;
+    delete token;
+    token = 0;
   }
 }
 

@@ -27,7 +27,7 @@ class TestClassBase
     std::cout << "Method1 in base class, param0: " << p0 << std::endl;
   }
 
-  virtual void ConstMethod1 (int p0)
+  virtual void ConstMethod1 (int p0) const
   {
     std::cout << "ConstMethod1 in base class, param0: " << p0 << std::endl;
   }
@@ -70,11 +70,14 @@ static void test_delegate01()
 {
   TestClassBase obj1;
 
-  Delegate<void, int> d = Delegate<void, int>::from_method(&obj1, &TestClassBase::Method1);
+  Delegate<void, int> d = Delegate<void, int>::from_method(&obj1, &TestClassBase::ConstMethod1);
 
-  // bool result = d.equal<TestClassBase, &TestClassBase::Method1>(&obj1);
+  bool result = d.equal(&obj1, &TestClassBase::Method1);
 
-  // assert(result);
+  if (!result) {
+    std::cout << "const not equal to non-const" << std::endl;
+  }
+  assert(!result);
 
   d(1);
 }

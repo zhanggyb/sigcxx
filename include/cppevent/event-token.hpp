@@ -26,7 +26,7 @@
 
 #pragma once
 
-#include <cppevent/practicalbe-invoker.hpp>
+#include <cppevent/invokable-token.hpp>
 
 namespace CppEvent {
 
@@ -34,15 +34,15 @@ namespace CppEvent {
 template<typename ... ParamTypes> class Event;
 
 template<typename ... ParamTypes>
-class EventInvoker : public PracticalbeInvoker < ParamTypes... >
+class EventToken : public InvokableToken < ParamTypes... >
 {
 public:
 
-  EventInvoker () = delete;
+  EventToken () = delete;
 
-  inline EventInvoker(Event<ParamTypes...>* event);
+  inline EventToken(Event<ParamTypes...>* event);
 
-  virtual ~EventInvoker();
+  virtual ~EventToken();
 
   virtual void Invoke(ParamTypes... Args) override;
 
@@ -54,25 +54,25 @@ private:
 };
 
 template<typename ... ParamTypes>
-inline EventInvoker<ParamTypes...>::EventInvoker (Event<
+inline EventToken<ParamTypes...>::EventToken (Event<
     ParamTypes...>* event)
-    : PracticalbeInvoker<ParamTypes...>(), event_(event)
+    : InvokableToken<ParamTypes...>(), event_(event)
 {
 }
 
 template<typename ... ParamTypes>
-EventInvoker<ParamTypes...>::~EventInvoker()
+EventToken<ParamTypes...>::~EventToken()
 {
 }
 
 template<typename ... ParamTypes>
-void EventInvoker<ParamTypes...>::Invoke(ParamTypes... Args)
+void EventToken<ParamTypes...>::Invoke(ParamTypes... Args)
 {
   event_->Invoke(Args...);
 }
 
 template<typename ... ParamTypes>
-inline const Event<ParamTypes...>* EventInvoker<ParamTypes...>::event() const
+inline const Event<ParamTypes...>* EventToken<ParamTypes...>::event() const
 {
   return event_;
 }

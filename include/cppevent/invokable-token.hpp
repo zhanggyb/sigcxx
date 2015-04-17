@@ -26,35 +26,35 @@
 
 #pragma once
 
-#include <cppevent/invoker.hpp>
+#include <cppevent/token.hpp>
 
 namespace CppEvent {
 
 template<typename ... ParamTypes>
-class PracticalbeInvoker: public Invoker
+class InvokableToken: public Token
 {
 public:
 
-  inline PracticalbeInvoker ();
+  inline InvokableToken ();
 
-  virtual ~PracticalbeInvoker ();
+  virtual ~InvokableToken ();
 
   virtual void Invoke (ParamTypes ... Args);
 };
 
 template<typename ... ParamTypes>
-inline PracticalbeInvoker<ParamTypes...>::PracticalbeInvoker ()
-    : Invoker()
+inline InvokableToken<ParamTypes...>::InvokableToken ()
+    : Token()
 {
 }
 
 template<typename ... ParamTypes>
-PracticalbeInvoker<ParamTypes...>::~PracticalbeInvoker ()
+InvokableToken<ParamTypes...>::~InvokableToken ()
 {
 }
 
 template<typename ... ParamTypes>
-void PracticalbeInvoker<ParamTypes...>::Invoke (ParamTypes ... Args)
+void InvokableToken<ParamTypes...>::Invoke (ParamTypes ... Args)
 {
   // TODO: override this, or use this class for event chian load
 }
