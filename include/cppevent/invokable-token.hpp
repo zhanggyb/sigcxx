@@ -26,32 +26,37 @@
 
 #pragma once
 
+#include <cppevent/token.hpp>
+
 namespace CppEvent {
 
-// forward declaration
-class AbstractTrackable;
-struct Slot;
-
-/**
- * @brief The event source
- */
-struct Invoker
+template<typename ... ParamTypes>
+class InvokableToken: public Token
 {
-  inline Invoker ()
-  : trackable_object(0),
-    previous(0),
-    next(0),
-    slot(0)
-  {
-  }
+public:
 
-  virtual ~Invoker ();
+  inline InvokableToken ();
 
-  AbstractTrackable* trackable_object;
-  Invoker* previous;
-  Invoker* next;
-  Slot* slot;
+  virtual ~InvokableToken ();
 
+  virtual void Invoke (ParamTypes ... Args);
 };
 
+template<typename ... ParamTypes>
+inline InvokableToken<ParamTypes...>::InvokableToken ()
+    : Token()
+{
 }
+
+template<typename ... ParamTypes>
+InvokableToken<ParamTypes...>::~InvokableToken ()
+{
+}
+
+template<typename ... ParamTypes>
+void InvokableToken<ParamTypes...>::Invoke (ParamTypes ... Args)
+{
+  // TODO: override this, or use this class for event chian load
+}
+
+} // namespace CppEvent

@@ -27,17 +27,38 @@
 #pragma once
 
 #include <cppevent/abstract-trackable.hpp>
-#include <cppevent/delegate-invoker.hpp>
-#include <cppevent/event-invoker.hpp>
-#include <cppevent/slot.hpp>
-#include <cppevent/trackable.hpp>
+#include <cppevent/binding.hpp>
+#include <cppevent/delegate-token.hpp>
+#include <cppevent/event-token.hpp>
 
 namespace CppEvent {
+
+/**
+ * @brief Abstract class for event
+ */
+class Trackable: public AbstractTrackable
+{
+ public:
+  
+  inline Trackable ()
+      : AbstractTrackable()
+  { }
+  
+  virtual ~Trackable ()
+  { }
+  
+ protected:
+  
+  virtual void AuditDestroyingToken (Token* token) final
+  { }
+};
+
+// ---------
 
 template<typename ... ParamTypes>
 class Event: public AbstractTrackable
 {
-public:
+ public:
 
   inline Event ();
 
@@ -46,119 +67,83 @@ public:
   /**
    * @brief Connect this event to a method of trackable object
    */
-  template<typename T, void (T::*TMethod) (ParamTypes...)>
-  void Connect (T* obj);
-
-  /**
-   * @brief Connect this event to a const method of trackable object
-   */
-  template<typename T, void (T::*TMethod) (ParamTypes...) const>
-  void Connect (T* obj);
+  template<typename T>
+  void Connect (T* obj, void (T::*TMethod) (ParamTypes...));
 
   void Connect (Event<ParamTypes...>& other);
 
-  template<typename T, void (T::*TMethod) (ParamTypes...)>
-  void DisconnectOne (T* obj);
+  template<typename T>
+  void DisconnectOne (T* obj, void (T::*TMethod) (ParamTypes...));
 
-  template<typename T, void (T::*TMethod) (ParamTypes...)>
-  void DisconnectAll (T* obj);
-
-  template<typename T, void (T::*TMethod) (ParamTypes...) const>
-  void DisconnectOne (T* obj);
-
-  template<typename T, void (T::*TMethod) (ParamTypes...) const>
-  void DisconnectAll (T* obj);
+  template<typename T>
+  void DisconnectAll (T* obj, void (T::*TMethod) (ParamTypes...));
 
   void DisconnectOne (Event<ParamTypes...>& other);
 
   void DisconnectAll (Event<ParamTypes...>& other);
 
-  void DisconnectAllSignals ();
+  void DisconnectAllInvokers ();
 
   void DisconnectAllSlots ();
 
   virtual void Invoke (ParamTypes ... Args);
 
-protected:
+ protected:
 
-  virtual void AuditDestroyingSignal (Invoker* signal) final;
+  virtual void AuditDestroyingToken (Token* token) final;
 
-  void PushBackSignal (PracticalbeInvoker<ParamTypes...>* signal);
+  void PushBackToken (InvokableToken<ParamTypes...>* token);
 
-  void PushFrontSignal (PracticalbeInvoker<ParamTypes...>* signal);
+  void PushFrontToken (InvokableToken<ParamTypes...>* token);
 
-  void InsertSignal (int index, PracticalbeInvoker<ParamTypes...>* signal);
+  void InsertToken (int index, InvokableToken<ParamTypes...>* token);
 
-  void RemoveAllSignals ();
+  void RemoveAllTokens ();
 
-private:
+ private:
 
-  Invoker* head_signal_;
-  Invoker* tail_signal_;
+  Token* first_token_;
+  Token* last_token_;
 
-  Invoker* iterator_;  // a pointer to iterate through all connections
+  Token* iterator_;  // a pointer to iterate through all connections
   bool iterator_removed_;
 
 };
 
 template<typename ... ParamTypes>
 inline Event<ParamTypes...>::Event ()
-: AbstractTrackable(),
-  head_signal_(0),
-  tail_signal_(0),
-  iterator_(0),
-  iterator_removed_(false)
+    : AbstractTrackable(),
+      first_token_(0),
+      last_token_(0),
+      iterator_(0),
+      iterator_removed_(false)
 {
 }
 
 template<typename ... ParamTypes>
 Event<ParamTypes...>::~Event ()
 {
-  RemoveAllSignals();
+  RemoveAllTokens();
 }
 
 template<typename ... ParamTypes>
-template<typename T, void (T::*TMethod) (ParamTypes...)>
-void Event<ParamTypes...>::Connect (T* obj)
+template<typename T>
+void Event<ParamTypes...>::Connect (T* obj, void (T::*method) (ParamTypes...))
 {
   Trackable* trackable_object = dynamic_cast<Trackable*>(obj);
   if (trackable_object) {
 
-    Slot* downstream = new Slot;
+    Binding* downstream = new Binding;
 
     Delegate<void, ParamTypes...> d =
-        Delegate<void, ParamTypes...>::template from_method<T, TMethod>(obj);
-    DelegateInvoker<ParamTypes...>* upstream = new DelegateInvoker<
-        ParamTypes...>(d);
+        Delegate<void, ParamTypes...>::template from_method<T>(obj, method);
+    DelegateToken<ParamTypes...>* upstream = new DelegateToken<
+      ParamTypes...>(d);
 
     Link(upstream, downstream);
 
-    this->PushBackSignal(upstream);
-    add_slot(trackable_object, downstream);
-
-    return;
-  }
-}
-
-template<typename ... ParamTypes>
-template<typename T, void (T::*TMethod) (ParamTypes...) const>
-void Event<ParamTypes...>::Connect (T* obj)
-{
-  Trackable* trackable_object = dynamic_cast<Trackable*>(obj);
-  if (trackable_object) {
-
-    Slot* downstream = new Slot;
-
-    Delegate<void, ParamTypes...> d =
-        Delegate<void, ParamTypes...>::template from_const_method<T, TMethod>(
-            obj);
-    DelegateInvoker<ParamTypes...>* upstream = new DelegateInvoker<
-        ParamTypes...>(d);
-
-    Link(upstream, downstream);
-
-    this->PushBackSignal(upstream);
-    add_slot(trackable_object, downstream);
+    this->PushBackToken(upstream);
+    add_binding(trackable_object, downstream);
 
     return;
   }
@@ -167,24 +152,24 @@ void Event<ParamTypes...>::Connect (T* obj)
 template<typename ... ParamTypes>
 void Event<ParamTypes...>::Connect (Event<ParamTypes...>& other)
 {
-  EventInvoker<ParamTypes...>* upstream = new EventInvoker<ParamTypes...>(
+  EventToken<ParamTypes...>* upstream = new EventToken<ParamTypes...>(
       &other);
-  Slot* downstream = new Slot;
+  Binding* downstream = new Binding;
   Link(upstream, downstream);
-  this->PushBackSignal(upstream);
-  add_slot(&other, downstream);
+  this->PushBackToken(upstream);
+  add_binding(&other, downstream);
 }
 
 template<typename ... ParamTypes>
-template<typename T, void (T::*TMethod) (ParamTypes...)>
-void Event<ParamTypes...>::DisconnectOne (T* obj)
+template<typename T>
+void Event<ParamTypes...>::DisconnectOne (T* obj, void (T::*method) (ParamTypes...))
 {
   Trackable* trackable_object = dynamic_cast<Trackable*>(obj);
   if (trackable_object) {
-    DelegateInvoker<ParamTypes...>* conn = 0;
-    for (Invoker* p = tail_signal_; p; p = p->previous) {
-      conn = dynamic_cast<DelegateInvoker<ParamTypes...>*>(p);
-      if (conn && (conn->delegate().template equal<T, TMethod>(obj))) {
+    DelegateToken<ParamTypes...>* conn = 0;
+    for (Token* p = last_token_; p; p = p->previous) {
+      conn = dynamic_cast<DelegateToken<ParamTypes...>*>(p);
+      if (conn && (conn->delegate().template equal<T>(obj, method))) {
         delete conn;
         break;
       }
@@ -195,52 +180,18 @@ void Event<ParamTypes...>::DisconnectOne (T* obj)
 }
 
 template<typename ... ParamTypes>
-template<typename T, void (T::*TMethod) (ParamTypes...)>
-void Event<ParamTypes...>::DisconnectAll (T* obj)
+template<typename T>
+void Event<ParamTypes...>::DisconnectAll (T* obj, void (T::*method) (ParamTypes...))
 {
   Trackable* trackable_object = dynamic_cast<Trackable*>(obj);
   if (trackable_object) {
-    DelegateInvoker<ParamTypes...>* conn = 0;
-    for (Invoker* p = tail_signal_; p; p = p->previous) {
-      conn = dynamic_cast<DelegateInvoker<ParamTypes...>*>(p);
-      if (conn && (conn->delegate().template equal<T, TMethod>(obj)))
+    DelegateToken<ParamTypes...>* conn = 0;
+    for (Token* p = last_token_; p; p = p->previous) {
+      conn = dynamic_cast<DelegateToken<ParamTypes...>*>(p);
+      if (conn && (conn->delegate().template equal<T>(obj, method)))
         delete conn;
     }
 
-    return;
-  }
-}
-
-template<typename ... ParamTypes>
-template<typename T, void (T::*TMethod) (ParamTypes...) const>
-void Event<ParamTypes...>::DisconnectOne (T* obj)
-{
-  Trackable* trackable_object = dynamic_cast<Trackable*>(obj);
-  if (trackable_object) {
-    DelegateInvoker<ParamTypes...>* conn = 0;
-    for (Invoker* p = tail_signal_; p; p = p->previous) {
-      conn = dynamic_cast<DelegateInvoker<ParamTypes...>*>(p);
-      if (conn && (conn->delegate().template equal<T, TMethod>(obj))) {
-        delete conn;
-        break;
-      }
-    }
-    return;
-  }
-}
-
-template<typename ... ParamTypes>
-template<typename T, void (T::*TMethod) (ParamTypes...) const>
-void Event<ParamTypes...>::DisconnectAll (T* obj)
-{
-  Trackable* trackable_object = dynamic_cast<Trackable*>(obj);
-  if (trackable_object) {
-    DelegateInvoker<ParamTypes...>* conn = 0;
-    for (Invoker* p = tail_signal_; p; p = p->previous) {
-      conn = dynamic_cast<DelegateInvoker<ParamTypes...>*>(p);
-      if (conn && (conn->delegate().template equal<T, TMethod>(obj)))
-        delete conn;
-    }
     return;
   }
 }
@@ -248,9 +199,9 @@ void Event<ParamTypes...>::DisconnectAll (T* obj)
 template<typename ... ParamTypes>
 void Event<ParamTypes...>::DisconnectOne (Event<ParamTypes...>& other)
 {
-  EventInvoker<ParamTypes...>* conn = 0;
-  for (Invoker* p = tail_signal_; p; p = p->previous) {
-    conn = dynamic_cast<EventInvoker<ParamTypes...>*>(p);
+  EventToken<ParamTypes...>* conn = 0;
+  for (Token* p = last_token_; p; p = p->previous) {
+    conn = dynamic_cast<EventToken<ParamTypes...>*>(p);
     if (conn && (conn->event() == (&other))) {
       delete conn;
       break;
@@ -261,31 +212,31 @@ void Event<ParamTypes...>::DisconnectOne (Event<ParamTypes...>& other)
 template<typename ... ParamTypes>
 void Event<ParamTypes...>::DisconnectAll (Event<ParamTypes...>& other)
 {
-  EventInvoker<ParamTypes...>* conn = 0;
-  for (Invoker* p = tail_signal_; p; p = p->previous) {
-    conn = dynamic_cast<EventInvoker<ParamTypes...>*>(p);
+  EventToken<ParamTypes...>* conn = 0;
+  for (Token* p = last_token_; p; p = p->previous) {
+    conn = dynamic_cast<EventToken<ParamTypes...>*>(p);
     if (conn && (conn->event() == (&other))) delete conn;
   }
 }
 
 template<typename ... ParamTypes>
-void Event<ParamTypes...>::DisconnectAllSignals()
+void Event<ParamTypes...>::DisconnectAllInvokers()
 {
-  RemoveAllSignals();
+  RemoveAllTokens();
 }
 
 template<typename ... ParamTypes>
 void Event<ParamTypes...>::DisconnectAllSlots ()
 {
-  RemoveAllSlots();
+  RemoveAllBindings();
 }
 
 template<typename ... ParamTypes>
 void Event<ParamTypes...>::Invoke (ParamTypes ... Args)
 {
-  iterator_ = head_signal_;
+  iterator_ = first_token_;
   while (iterator_) {
-    static_cast<PracticalbeInvoker<ParamTypes...>*>(iterator_)->Invoke(Args...);
+    static_cast<InvokableToken<ParamTypes...>*>(iterator_)->Invoke(Args...);
 
     // check if iterator was deleted when being invoked
     // (iterator_removed_ was set via the virtual AuditDestroyingConnection()
@@ -299,87 +250,87 @@ void Event<ParamTypes...>::Invoke (ParamTypes ... Args)
 }
 
 template<typename ... ParamTypes>
-void Event<ParamTypes...>::AuditDestroyingSignal (Invoker* signal)
+void Event<ParamTypes...>::AuditDestroyingToken (Token* token)
 {
-  if (signal == head_signal_) {
-    head_signal_ = signal->next;
+  if (token == first_token_) {
+    first_token_ = token->next;
   }
 
-  if (signal == tail_signal_) {
-    tail_signal_ = signal->previous;
+  if (token == last_token_) {
+    last_token_ = token->previous;
   }
 
-  if (signal == iterator_) {
+  if (token == iterator_) {
     iterator_removed_ = true;
     iterator_ = iterator_->next;
   }
 }
 
 template<typename ... ParamTypes>
-void Event<ParamTypes...>::PushBackSignal(PracticalbeInvoker<ParamTypes...>* signal)
+void Event<ParamTypes...>::PushBackToken(InvokableToken<ParamTypes...>* token)
 {
 #ifdef DEBUG
-  assert(signal->trackable_object == 0);
+  assert(token->trackable_object == 0);
 #endif
 
-  if (tail_signal_) {
-    tail_signal_->next = signal;
-    signal->previous = tail_signal_;
+  if (last_token_) {
+    last_token_->next = token;
+    token->previous = last_token_;
   } else {
 #ifdef DEBUG
-    assert(head_signal_ == 0);
+    assert(first_token_ == 0);
 #endif
-    signal->previous = 0;
-    head_signal_ = signal;
+    token->previous = 0;
+    first_token_ = token;
   }
-  tail_signal_ = signal;
-  signal->next = 0;
-  signal->trackable_object = this;
+  last_token_ = token;
+  token->next = 0;
+  token->trackable_object = this;
 }
 
 template<typename ... ParamTypes>
-void Event<ParamTypes...>::PushFrontSignal(PracticalbeInvoker<ParamTypes...>* signal)
+void Event<ParamTypes...>::PushFrontToken(InvokableToken<ParamTypes...>* token)
 {
 #ifdef DEBUG
   assert(node->trackable_object == 0);
 #endif
 
-  if (head_signal_) {
-    head_signal_->previous = signal;
-    signal->next = head_signal_;
+  if (first_token_) {
+    first_token_->previous = token;
+    token->next = first_token_;
   } else {
 #ifdef DEBUG
-    assert(tail_signal_ == 0);
+    assert(last_token_ == 0);
 #endif
-    signal->next = 0;
-    tail_signal_ = signal;
+    token->next = 0;
+    last_token_ = token;
   }
-  head_signal_ = signal;
+  first_token_ = token;
 
-  signal->previous = 0;
-  signal->trackable_object = this;
+  token->previous = 0;
+  token->trackable_object = this;
 }
 
 template<typename ... ParamTypes>
-void Event<ParamTypes...>::InsertSignal(int index, PracticalbeInvoker<ParamTypes...>* signal)
+void Event<ParamTypes...>::InsertToken(int index, InvokableToken<ParamTypes...>* token)
 {
 #ifdef DEBUG
-  assert(signal->trackable_object == 0);
+  assert(token->trackable_object == 0);
 #endif
 
-  if (head_signal_ == 0) {
+  if (first_token_ == 0) {
 #ifdef DEBUG
-    assert(tail_signal_ == 0);
+    assert(last_token_ == 0);
 #endif
 
-    signal->next = 0;
-    tail_signal_ = signal;
-    head_signal_ = signal;
-    signal->previous = 0;
+    token->next = 0;
+    last_token_ = token;
+    first_token_ = token;
+    token->previous = 0;
   } else {
     if (index > 0) {
 
-      Invoker* p = head_signal_;
+      Token* p = first_token_;
 
       while (p && (index > 0)) {
         if (p->next == 0) break;
@@ -388,35 +339,35 @@ void Event<ParamTypes...>::InsertSignal(int index, PracticalbeInvoker<ParamTypes
       }
 
       if (index == 0) {  // insert
-        signal->previous = p->previous;
-        signal->next = p;
-        p->previous->next = signal;
-        p->previous = signal;
+        token->previous = p->previous;
+        token->next = p;
+        p->previous->next = token;
+        p->previous = token;
       } else {  // same as push back
 #ifdef DEBUG
-        assert(p == tail_signal_);
+        assert(p == last_token_);
 #endif
-        tail_signal_->next = signal;
-        signal->previous = tail_signal_;
-        tail_signal_ = signal;
-        signal->next = 0;
+        last_token_->next = token;
+        token->previous = last_token_;
+        last_token_ = token;
+        token->next = 0;
       }
 
     } else {  // same as push front
-      head_signal_->previous = signal;
-      signal->next = head_signal_;
-      head_signal_ = signal;
-      signal->previous = 0;
+      first_token_->previous = token;
+      token->next = first_token_;
+      first_token_ = token;
+      token->previous = 0;
     }
   }
-  signal->trackable_object = this;
+  token->trackable_object = this;
 }
 
 template<typename ... ParamTypes>
-void Event<ParamTypes...>::RemoveAllSignals()
+void Event<ParamTypes...>::RemoveAllTokens()
 {
-  Invoker* tmp = 0;
-  Invoker* p = head_signal_;
+  Token* tmp = 0;
+  Token* p = first_token_;
 
   while (p) {
     tmp = p->next;

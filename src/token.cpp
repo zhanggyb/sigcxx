@@ -24,52 +24,30 @@
  * SOFTWARE.
  */
 
-#pragma once
-
-#include <cppevent/delegate.hpp>
-#include <cppevent/practicalbe-invoker.hpp>
+#include <cppevent/abstract-trackable.hpp>
+#include <cppevent/binding.hpp>
+#include <cppevent/token.hpp>
 
 namespace CppEvent {
 
-template<typename ... ParamTypes>
-class DelegateInvoker : public PracticalbeInvoker < ParamTypes... >
-{
-public:
-
-  DelegateInvoker() = delete;
-
-  inline DelegateInvoker(const Delegate<void, ParamTypes...>& d);
-
-  virtual ~DelegateInvoker();
-
-  virtual void Invoke(ParamTypes... Args) override;
-
-  const Delegate<void, ParamTypes...>& delegate () const
+  Token::~Token()
   {
-    return delegate_;
+    if (trackable_object) trackable_object->AuditDestroyingToken(this);
+
+    if (previous) previous->next = next;
+    if (next) next->previous = previous;
+
+    previous = 0;
+    next = 0;
+
+    if (binding) {
+  #ifdef DEBUG
+      assert(binding->token == this);
+  #endif
+      binding->token = 0;
+      delete binding;
+      binding = 0;
+    }
   }
-
-private:
-
-  Delegate<void, ParamTypes...> delegate_;
-
-};
-
-template<typename ... ParamTypes>
-inline DelegateInvoker<ParamTypes...>::DelegateInvoker(const Delegate<void, ParamTypes...>& d)
-  : PracticalbeInvoker<ParamTypes...>(), delegate_(d)
-{
-}
-
-template<typename ... ParamTypes>
-DelegateInvoker<ParamTypes...>::~DelegateInvoker()
-{
-}
-
-template<typename ... ParamTypes>
-void DelegateInvoker<ParamTypes...>::Invoke(ParamTypes... Args)
-{
-  delegate_(Args...);
-}
 
 } // namespace CppEvent

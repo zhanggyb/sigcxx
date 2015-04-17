@@ -4,7 +4,7 @@
 #pragma once
 
 #include <iostream>
-#include <cppevent/trackable.hpp>
+#include <cppevent/event.hpp>
 
 class EventConsumer: public CppEvent::Trackable
 {
@@ -23,7 +23,7 @@ public:
 
   void DisconnectAll ()
   {
-    RemoveAllSlots();
+    RemoveAllBindings();
   }
 
   void OnTest1 (int n)
@@ -76,13 +76,13 @@ public:
 
   void DisconnectAll ()
   {
-    RemoveAllSlots();
+    RemoveAllBindings();
   }
 
   void OnTest0 ()
   {
     std::cout << "Delete the connection" << std::endl;
-    event0_.DisconnectOne<EventSelfConsumer, &EventSelfConsumer::OnTest0>(this);
+    event0_.DisconnectOne(this, &EventSelfConsumer::OnTest0);
   }
 
   void OnTest1 (int n)

@@ -24,30 +24,52 @@
  * SOFTWARE.
  */
 
-#include <cppevent/abstract-trackable.hpp>
-#include <cppevent/invoker.hpp>
-#include <cppevent/slot.hpp>
+#pragma once
+
+#include <cppevent/delegate.hpp>
+#include <cppevent/invokable-token.hpp>
 
 namespace CppEvent {
 
-  Invoker::~Invoker()
+template<typename ... ParamTypes>
+class DelegateToken : public InvokableToken < ParamTypes... >
+{
+ public:
+
+  DelegateToken() = delete;
+
+  inline DelegateToken(const Delegate<void, ParamTypes...>& d);
+
+  virtual ~DelegateToken();
+
+  virtual void Invoke(ParamTypes... Args) override;
+
+  const Delegate<void, ParamTypes...>& delegate () const
   {
-    if (trackable_object) trackable_object->AuditDestroyingSignal(this);
-
-    if (previous) previous->next = next;
-    if (next) next->previous = previous;
-
-    previous = 0;
-    next = 0;
-
-    if (slot) {
-  #ifdef DEBUG
-      assert(slot->invoker == this);
-  #endif
-      slot->invoker = 0;
-      delete slot;
-      slot = 0;
-    }
+    return delegate_;
   }
+
+ private:
+
+  Delegate<void, ParamTypes...> delegate_;
+
+};
+
+template<typename ... ParamTypes>
+inline DelegateToken<ParamTypes...>::DelegateToken(const Delegate<void, ParamTypes...>& d)
+    : InvokableToken<ParamTypes...>(), delegate_(d)
+{
+}
+
+template<typename ... ParamTypes>
+DelegateToken<ParamTypes...>::~DelegateToken()
+{
+}
+
+template<typename ... ParamTypes>
+void DelegateToken<ParamTypes...>::Invoke(ParamTypes... Args)
+{
+  delegate_(Args...);
+}
 
 } // namespace CppEvent

@@ -7,7 +7,7 @@ using namespace CppEvent;
 
 class TestClassBase
 {
-public:
+ public:
 
   TestClassBase ()
   {
@@ -27,17 +27,22 @@ public:
     std::cout << "Method1 in base class, param0: " << p0 << std::endl;
   }
 
+  virtual void ConstMethod1 (int p0) const
+  {
+    std::cout << "ConstMethod1 in base class, param0: " << p0 << std::endl;
+  }
+
   virtual void Method2 (int p0, int p1) const
   {
     std::cout << "const Method2 in base class, param0: " << p0 << " param1: "
-        << p1 << std::endl;
+              << p1 << std::endl;
   }
 
 };
 
 class TestClassDerived: public TestClassBase
 {
-public:
+ public:
 
   TestClassDerived ()
       : TestClassBase()
@@ -65,35 +70,48 @@ static void test_delegate01()
 {
   TestClassBase obj1;
 
-  Delegate<void, int> d = Delegate<void, int>::from_method<TestClassBase, &TestClassBase::Method1>(&obj1);
+  Delegate<void, int> d = Delegate<void, int>::from_method(&obj1, &TestClassBase::ConstMethod1);
 
-  bool result = d.equal<TestClassBase, &TestClassBase::Method1>(&obj1);
+  bool result = d.equal(&obj1, &TestClassBase::Method1);
 
-  assert(result);
+  if (!result) {
+    std::cout << "const not equal to non-const" << std::endl;
+  }
+  assert(!result);
 
   d(1);
 }
 
-static void test_event01()
+static void test_delegate02()
 {
   TestClassBase obj1;
+  Delegate<void, int> d1 = Delegate<void, int>::from_method(&obj1, &TestClassBase::ConstMethod1);
+  Delegate<void, int> d2 = Delegate<void, int>::from_method(&obj1, &TestClassBase::Method1);
 
-  Event<int> event;
-  event.Connect<TestClassBase, &TestClassBase::Method1>(&obj1);
-  event.Invoke(1);
+  if (d1 == d2) {
+    std::cout << "2 delegates equal" << std::endl;
+  }
 
-  std::cout << "size of AbstractEvent: " << sizeof(event) << std::endl;
-}
+  if (d1 != d2) {
+    std::cout << " not equal" << std::endl;
+  }
 
-void test_event02()
-{
+  if (d1 < d2) {
+    std::cout << " less then " << std::endl;
+  }
 
+  if (d1 > d2) {
+    std::cout << " great then " << std::endl;
+  }
+  
+  d1(1);
 }
 
 int main (int argc, char* argv[])
 {
   test_delegate01();
-  test_event01();
+
+  test_delegate02();
 
   return 0;
 }

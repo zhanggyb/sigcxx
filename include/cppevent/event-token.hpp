@@ -24,17 +24,57 @@
  * SOFTWARE.
  */
 
-#include <cppevent/trackable.hpp>
+#pragma once
+
+#include <cppevent/invokable-token.hpp>
 
 namespace CppEvent {
 
-Trackable::~Trackable ()
+// forward declaration
+template<typename ... ParamTypes> class Event;
+
+template<typename ... ParamTypes>
+class EventToken : public InvokableToken < ParamTypes... >
+{
+public:
+
+  EventToken () = delete;
+
+  inline EventToken(Event<ParamTypes...>* event);
+
+  virtual ~EventToken();
+
+  virtual void Invoke(ParamTypes... Args) override;
+
+  inline const Event<ParamTypes...>* event () const;
+
+private:
+
+  Event<ParamTypes...>* event_;
+};
+
+template<typename ... ParamTypes>
+inline EventToken<ParamTypes...>::EventToken (Event<
+    ParamTypes...>* event)
+    : InvokableToken<ParamTypes...>(), event_(event)
 {
 }
 
-void Trackable::AuditDestroyingSignal (Invoker* signal)
+template<typename ... ParamTypes>
+EventToken<ParamTypes...>::~EventToken()
 {
-  // Nothing to do
 }
 
-} // namespace CppEvent
+template<typename ... ParamTypes>
+void EventToken<ParamTypes...>::Invoke(ParamTypes... Args)
+{
+  event_->Invoke(Args...);
+}
+
+template<typename ... ParamTypes>
+inline const Event<ParamTypes...>* EventToken<ParamTypes...>::event() const
+{
+  return event_;
+}
+
+}
