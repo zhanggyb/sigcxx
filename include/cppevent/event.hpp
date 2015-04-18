@@ -163,7 +163,22 @@ public:
   {
     event_->Disconnect(obj, method);
   }
+
+  inline void connect (Event<ParamTypes...>& event)
+  {
+    event_->Connect(event);
+  }
   
+  inline void disconnect1 (Event<ParamTypes...>& event)
+  {
+    event_->Disconnect1(event);
+  }
+
+  inline void disconnect (Event<ParamTypes...>& event)
+  {
+    event_->Disconnect(event);
+  }
+
   inline void connect (const EventRef<ParamTypes...>& other)
   {
     event_->Connect(*other.event_);
