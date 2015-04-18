@@ -6,17 +6,17 @@
 #include <iostream>
 #include <cppevent/event.hpp>
 
-class EventConsumer: public CppEvent::Trackable
+class EventConsumerBase: public CppEvent::Trackable
 {
 
 public:
 
-  EventConsumer ()
+  EventConsumerBase ()
   {
 
   }
 
-  virtual ~EventConsumer ()
+  virtual ~EventConsumerBase ()
   {
 
   }
@@ -37,6 +37,24 @@ public:
         << std::endl;
   }
 
+  virtual void OnVirtualTest1 (int n)
+  {
+    std::cout << "Virtual test in base class, param: " << n << std::endl;
+  }
+};
+
+class EventConsumer: public EventConsumerBase
+{
+ public:
+
+  EventConsumer() {}
+
+  virtual ~EventConsumer() {}
+
+  virtual void OnVirtualTest1 (int n)
+  {
+    std::cout << "Virtual test in sub class, param: " << n << std::endl;
+  }
 };
 
 class EventSelfConsumer: public CppEvent::Trackable
