@@ -26,14 +26,14 @@
 
 #pragma once
 
-#include <cppevent/token.hpp>
+#include <cppevent/abstract-trackable.hpp>
 
 namespace CppEvent {
 
 template<typename ... ParamTypes>
 class InvokableToken: public Token
 {
-public:
+ public:
 
   inline InvokableToken ();
 
@@ -56,7 +56,7 @@ InvokableToken<ParamTypes...>::~InvokableToken ()
 template<typename ... ParamTypes>
 void InvokableToken<ParamTypes...>::Invoke (ParamTypes ... Args)
 {
-  // TODO: override this, or use this class for event chian load
+  // Override this in sub class
 }
 
 } // namespace CppEvent
