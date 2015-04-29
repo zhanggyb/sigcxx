@@ -7,10 +7,12 @@
 A simple C++11 event/delegate framework based on fast C++ delegates.
 
 This project is inspired by:
-  * [Member Function Pointers and the Fastest Possible C++ Delegates](http://www.codeproject.com/Articles/7150/Member-Function-Pointers-and-the-Fastest-Possible) by Don Clugston
-  * [The Impossibly Fast C++ Delegates](http://www.codeproject.com/Articles/11015/The-Impossibly-Fast-C-Delegates) by by Sergey Ryazanov
-  * [Fast C++ Delegate: Boost.Function 'drop-in' replacement and multicast](http://www.codeproject.com/Articles/18389/Fast-C-Delegate-Boost-Function-drop-in-replacement) by JaeWook Choi
-  * [CppEvents](http://code.google.com/p/cpp-events/) by Nickolas V. Pohilets
+
+* [Member Function Pointers and the Fastest Possible C++ Delegates](http://www.codeproject.com/Articles/7150/Member-Function-Pointers-and-the-Fastest-Possible)
+by Don Clugston
+* [The Impossibly Fast C++ Delegates](http://www.codeproject.com/Articles/11015/The-Impossibly-Fast-C-Delegates) by by Sergey Ryazanov
+* [Fast C++ Delegate: Boost.Function 'drop-in' replacement and multicast](http://www.codeproject.com/Articles/18389/Fast-C-Delegate-Boost-Function-drop-in-replacement) by JaeWook Choi
+* [CppEvents](http://code.google.com/p/cpp-events/) by Nickolas V. Pohilets
 
 CppEvent currently lives on [GitHub](https://github.com/zhanggyb/CppEvent).
 
@@ -23,65 +25,54 @@ CppEvent currently lives on [GitHub](https://github.com/zhanggyb/CppEvent).
 
 ## Basic Usage
 
-Here is a simple example:
-
-First, include necessary header
+Here is a simple example, in this example, we delcare *clicked* event
+in Button and connect it to a member function of Dialog.
 
 ```c++
 #include <cppevent/event.hpp>
-```
 
-```c++
-// A class inherit CppEvent::Trackable can receive events
-class Consumer: public CppEvent::Trackable
+class Widget: public CppEvent::Trackable;
+
+class Button: public Widget
 {
 public:
 
-  // A callback method:
-  void OnDoSum (int a, int b);
+    Button(Widget* parent);
 
-  // ... other code
-};
-```
+    // Event connection interface
+    CppEvent::EventRef<> clicked()
+    {return clicked_;}
 
-```c++
-// An event source
-class Source
-{
-public:
+protected:
 
-  // other code
-
-  CppEvent::EventRef<int, int>& sum_event ()
-  {
-    return sum_event_;
-  }
-
-  void DoSum ()
-  {
-    sum_event_.Invoke(1, 2);
-  }
+    virtual void mousePress (MouseParams const & params);
 
 private:
 
-  CppEvent::Event<int, int> sum_event_;  
+    // Event implementation
+    CppEvent::Event<> clicked_;
 };
-```
 
-```c++
-void main (void)
+void Button::mousePress(MouseParams const & params)
 {
-    Consumer consum;
-    Source source;
-
-    // connect event to an trackable object
-    source.sum_event().Connect(&consum, &Consumer::OnDoSum);
-
-    source.DoSum();
-
-    source.sum_event().Disconnect(&consum, &Consumer::OnDoSum);
+    clicked.Invoke();
 }
+
+class Dialog: public Widget
+{
+public:
+
+    Dialog (Widget* parent);
+
+    void OnShowText ();
+};
+
+Button* btn = new Button;
+Dialog* dlg = new Dialog;
+btn->clicked().connect(dlg, &Dialog::OnShowText);
 ```
+
+See [Wiki](https://github.com/zhanggyb/libCppEvent/wiki) for more information.
 
 ## License
 
