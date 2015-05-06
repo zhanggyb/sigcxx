@@ -9,3 +9,6 @@ target_link_libraries(delegate cppevent)
 
 add_executable(simple simple.cpp)
 target_link_libraries(simple cppevent)
+
+add_executable(performance performance.cpp)
+target_link_libraries(performance cppevent)
