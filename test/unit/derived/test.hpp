@@ -56,7 +56,7 @@ class Consumer: public CppEvent::Trackable
  public:
 
   Consumer ()
- 	 : test1_count_(0), test2_count_(0)
+ 	 : test1_count_(0), test2_count_(0), virtualtest_count_(0)
  	 { }
 
   virtual ~Consumer () { }
@@ -79,6 +79,13 @@ class Consumer: public CppEvent::Trackable
               << std::endl;
   }
 
+  virtual void OnVirtualTest (int n)
+  {
+    virtualtest_count_++;
+    std::cout << "Virtual test in base class, param: " << n << ", " << virtualtest_count_ << " times."
+              << std::endl;
+  }
+
   inline size_t test1_count() const
   {
 	  return test1_count_;
@@ -89,58 +96,36 @@ class Consumer: public CppEvent::Trackable
 	  return test2_count_;
   }
 
+  inline size_t virtualtest_count() const
+  {
+	  return virtualtest_count_;
+  }
+
+protected:
+  
+  inline void set_virtualtest_count(size_t num)
+  {
+    virtualtest_count_ = num;
+  }
+
  private:
   size_t test1_count_;
   size_t test2_count_;
+  size_t virtualtest_count_;
 };
 
-class SelfDestroyConsumer: public CppEvent::Trackable
+class SubConsumer: public Consumer
 {
  public:
 
-  static SelfDestroyConsumer* Create ();
+  SubConsumer() {}
 
-  virtual ~SelfDestroyConsumer();
+  virtual ~SubConsumer() {}
 
-  void OnTest1 (int n);
-  
- private:
-
-  SelfDestroyConsumer();
-  
-};
-
-class SelfConsumer: public CppEvent::Trackable
-{
- public:
-
-  SelfConsumer()
-      : event_count_(0)
-  {}
-
-  virtual ~SelfConsumer()
-  {}
-
-  inline CppEvent::EventRef<> event()
+  virtual void OnVirtualTest (int n)
   {
-    return event_;
+    set_virtualtest_count(virtualtest_count() + 1);
+    std::cout << "Virtual test in sub class, param: " << n << ", " << virtualtest_count() << " times."
+              << std::endl;
   }
-
-  void DoTest ()
-  {
-    event_.Invoke();
-  }
-  
-  void OnTest () {event_count_++;}
-
-  inline size_t event_count() const
-  {
-    return event_count_;
-  }
-  
- private:
-
-  CppEvent::Event<> event_;
-
-  size_t event_count_;
 };
