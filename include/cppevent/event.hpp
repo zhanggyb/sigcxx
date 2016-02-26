@@ -30,6 +30,8 @@
 #include <cppevent/delegate-token.hpp>
 #include <cppevent/event-token.hpp>
 
+#include <thread>
+
 namespace CppEvent {
 
 /**
@@ -116,8 +118,11 @@ class Event: public AbstractTrackable
   Token* first_token_;
   Token* last_token_;
 
-  Token* iterator_;  // a pointer to iterate through all connections
+  Token* forward_iterator_;  // a pointer to iterate through all connections
+  Token* backward_iterator_;
   bool iterator_removed_;
+
+  std::mutex mutex_;
 
 };
 
@@ -126,17 +131,17 @@ class Event: public AbstractTrackable
 template<typename ... ParamTypes>
 class EventRef
 {
-public:
+ public:
 
   EventRef () = delete;
 
   inline EventRef(Event<ParamTypes...>& event)
-  : event_(&event)
-  {}
+      : event_(&event)
+  { }
 
   inline EventRef(const EventRef<ParamTypes...>& orig)
-  : event_(orig.event_)
-  {}
+      : event_(orig.event_)
+  { }
 
   ~EventRef() {}
 
@@ -194,7 +199,7 @@ public:
     event_->Disconnect(*other.event_);
   }
 
-private:
+ private:
 
   Event<ParamTypes...>* event_;
 };
@@ -206,7 +211,8 @@ inline Event<ParamTypes...>::Event ()
     : AbstractTrackable(),
       first_token_(0),
       last_token_(0),
-      iterator_(0),
+      forward_iterator_(0),
+  backward_iterator_(0),
       iterator_removed_(false)
 {
 }
@@ -221,15 +227,15 @@ template<typename ... ParamTypes>
 template<typename T>
 void Event<ParamTypes...>::Connect (T* obj, void (T::*method) (ParamTypes...))
 {
-  Binding* downstream = new Binding;
+  std::lock_guard<std::mutex> lock(mutex_);
 
+  Binding* downstream = new Binding;
   Delegate<void, ParamTypes...> d =
       Delegate<void, ParamTypes...>::template from_method<T>(obj, method);
   DelegateToken<ParamTypes...>* upstream = new DelegateToken<
     ParamTypes...>(d);
 
   link(upstream, downstream);
-
   this->PushBackToken(upstream);
   add_binding(obj, downstream);
 }
@@ -237,6 +243,8 @@ void Event<ParamTypes...>::Connect (T* obj, void (T::*method) (ParamTypes...))
 template<typename ... ParamTypes>
 void Event<ParamTypes...>::Connect (Event<ParamTypes...>& other)
 {
+  std::lock_guard<std::mutex> lock(mutex_);
+
   EventToken<ParamTypes...>* upstream = new EventToken<ParamTypes...>(
       other);
   Binding* downstream = new Binding;
@@ -249,6 +257,8 @@ template<typename ... ParamTypes>
 template<typename T>
 void Event<ParamTypes...>::Disconnect1 (T* obj, void (T::*method) (ParamTypes...))
 {
+  std::lock_guard<std::mutex> lock(mutex_);
+
   DelegateToken<ParamTypes...>* conn = 0;
   for (Token* p = last_token_; p; p = p->previous) {
     conn = dynamic_cast<DelegateToken<ParamTypes...>*>(p);
@@ -263,17 +273,31 @@ template<typename ... ParamTypes>
 template<typename T>
 void Event<ParamTypes...>::Disconnect (T* obj, void (T::*method) (ParamTypes...))
 {
+  std::lock_guard<std::mutex> lock(mutex_);
+
   DelegateToken<ParamTypes...>* conn = 0;
-  for (Token* p = last_token_; p; p = p->previous) {
-    conn = dynamic_cast<DelegateToken<ParamTypes...>*>(p);
+  backward_iterator_ = last_token_;
+  while (backward_iterator_) {
+    conn = dynamic_cast<DelegateToken<ParamTypes...>*>(backward_iterator_);
     if (conn && (conn->delegate().template equal<T>(obj, method)))
       delete conn;
+    
+    // check if iterator was deleted when being invoked
+    // (iterator_removed_ was set via the virtual AuditDestroyingConnection()
+    if (iterator_removed_)
+      iterator_removed_ = false;
+    else
+      backward_iterator_ = backward_iterator_->previous;
   }
+  backward_iterator_ = 0;
+  iterator_removed_ = false;
 }
 
 template<typename ... ParamTypes>
 void Event<ParamTypes...>::Disconnect1 (Event<ParamTypes...>& other)
 {
+  std::lock_guard<std::mutex> lock(mutex_);
+
   EventToken<ParamTypes...>* conn = 0;
   for (Token* p = last_token_; p; p = p->previous) {
     conn = dynamic_cast<EventToken<ParamTypes...>*>(p);
@@ -287,40 +311,59 @@ void Event<ParamTypes...>::Disconnect1 (Event<ParamTypes...>& other)
 template<typename ... ParamTypes>
 void Event<ParamTypes...>::Disconnect (Event<ParamTypes...>& other)
 {
+  std::lock_guard<std::mutex> lock(mutex_);
+
   EventToken<ParamTypes...>* conn = 0;
-  for (Token* p = last_token_; p; p = p->previous) {
-    conn = dynamic_cast<EventToken<ParamTypes...>*>(p);
+
+  backward_iterator_ = last_token_;
+  while (backward_iterator_) {
+    conn = dynamic_cast<EventToken<ParamTypes...>*>(backward_iterator_);
     if (conn && (conn->event() == (&other))) delete conn;
+    
+    // check if iterator was deleted when being invoked
+    // (iterator_removed_ was set via the virtual AuditDestroyingConnection()
+    if (iterator_removed_)
+      iterator_removed_ = false;
+    else
+      backward_iterator_ = backward_iterator_->previous;
   }
+  backward_iterator_ = 0;
+  iterator_removed_ = false;
 }
 
 template<typename ... ParamTypes>
 void Event<ParamTypes...>::DisconnectTokens()
 {
+  std::lock_guard<std::mutex> lock(mutex_);
+
   RemoveAllTokens();
 }
 
 template<typename ... ParamTypes>
 void Event<ParamTypes...>::DisconnectFromEvents ()
 {
+  std::lock_guard<std::mutex> lock(mutex_);
+
   RemoveAllBindings();
 }
 
 template<typename ... ParamTypes>
 void Event<ParamTypes...>::Invoke (ParamTypes ... Args)
 {
-  iterator_ = first_token_;
-  while (iterator_) {
-    static_cast<InvokableToken<ParamTypes...>*>(iterator_)->Invoke(Args...);
+  std::lock_guard<std::mutex> lock(mutex_);
+
+  forward_iterator_ = first_token_;
+  while (forward_iterator_) {
+    static_cast<InvokableToken<ParamTypes...>*>(forward_iterator_)->Invoke(Args...);
 
     // check if iterator was deleted when being invoked
     // (iterator_removed_ was set via the virtual AuditDestroyingConnection()
     if (iterator_removed_)
       iterator_removed_ = false;
     else
-      iterator_ = iterator_->next;
+      forward_iterator_ = forward_iterator_->next;
   }
-  iterator_ = 0;
+  forward_iterator_ = 0;
   iterator_removed_ = false;
 }
 
@@ -329,9 +372,12 @@ void Event<ParamTypes...>::AuditDestroyingToken (Token* token)
 {
   if (token == first_token_) first_token_ = token->next;
   if (token == last_token_) last_token_ = token->previous;
-  if (token == iterator_) {
+  if (token == forward_iterator_) {
     iterator_removed_ = true;
-    iterator_ = iterator_->next;
+    forward_iterator_ = forward_iterator_->next;
+  } else if (token == backward_iterator_) {
+    iterator_removed_ = true;
+    backward_iterator_ = backward_iterator_->previous;
   }
 }
 

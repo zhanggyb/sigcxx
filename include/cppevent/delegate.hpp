@@ -26,8 +26,6 @@
 
 #pragma once
 
-#include <string.h>
-
 namespace CppEvent {
 
 // generic classes to calculate method pointer:
