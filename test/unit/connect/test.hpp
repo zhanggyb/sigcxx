@@ -27,12 +27,12 @@ class Source
 
   void DoTest1 (int n)
   {
-    event1_.Invoke(n);
+    event1_.Emit(n);
   }
 
   void DoTest2 (int n1, int n2)
   {
-    event2_.Invoke(n1, n2);
+    event2_.Emit(n1, n2);
   }
 
   inline CppEvent::EventRef<int> event1 ()
@@ -51,7 +51,7 @@ class Source
   CppEvent::Event<int, int> event2_;
 };
 
-class Consumer: public CppEvent::Trackable
+class Consumer: public CppEvent::Observer
 {
  public:
 
@@ -94,7 +94,7 @@ class Consumer: public CppEvent::Trackable
   size_t test2_count_;
 };
 
-class SelfDestroyConsumer: public CppEvent::Trackable
+class SelfDestroyConsumer: public CppEvent::Observer
 {
  public:
 
@@ -110,7 +110,7 @@ class SelfDestroyConsumer: public CppEvent::Trackable
   
 };
 
-class SelfConsumer: public CppEvent::Trackable
+class SelfConsumer: public CppEvent::Observer
 {
  public:
 
@@ -128,7 +128,7 @@ class SelfConsumer: public CppEvent::Trackable
 
   void DoTest ()
   {
-    event_.Invoke();
+    event_.Emit();
   }
   
   void OnTest () {event_count_++;}

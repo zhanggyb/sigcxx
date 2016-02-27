@@ -13,8 +13,8 @@ class Test: public testing::Test
   virtual ~Test();
 
  protected:
-  virtual void SetUp() {  }
-  virtual void TearDown() {  }
+  virtual void SetUp() { }
+  virtual void TearDown() { }
 };
 
 class Source
@@ -27,12 +27,12 @@ class Source
 
   void DoTest1 (int n)
   {
-    event1_.Invoke(n);
+    event1_.Emit(n);
   }
 
   void DoTest2 (int n1, int n2)
   {
-    event2_.Invoke(n1, n2);
+    event2_.Emit(n1, n2);
   }
 
   inline CppEvent::EventRef<int> event1 ()
@@ -51,7 +51,7 @@ class Source
   CppEvent::Event<int, int> event2_;
 };
 
-class Consumer: public CppEvent::Trackable
+class Consumer: public CppEvent::Observer
 {
  public:
 

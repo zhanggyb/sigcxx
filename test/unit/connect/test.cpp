@@ -21,7 +21,7 @@ SelfDestroyConsumer* SelfDestroyConsumer::Create()
 }
 
 SelfDestroyConsumer::SelfDestroyConsumer()
-    : CppEvent::Trackable()
+    : CppEvent::Observer()
 {}
 
 SelfDestroyConsumer::~SelfDestroyConsumer()

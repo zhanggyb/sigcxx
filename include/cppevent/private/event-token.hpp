@@ -26,50 +26,55 @@
 
 #pragma once
 
-#include <cppevent/delegate.hpp>
-#include <cppevent/invokable-token.hpp>
+#include "invokable-token.hpp"
 
 namespace CppEvent {
 
+// forward declaration
+template<typename ... ParamTypes> class Event;
+
 template<typename ... ParamTypes>
-class DelegateToken : public InvokableToken < ParamTypes... >
+class EventToken : public InvokableToken < ParamTypes... >
 {
- public:
+public:
 
-  DelegateToken() = delete;
+  EventToken () = delete;
 
-  inline DelegateToken(const Delegate<void, ParamTypes...>& d);
+  inline EventToken(Event<ParamTypes...>& event);
 
-  virtual ~DelegateToken();
+  virtual ~EventToken();
 
   virtual void Invoke(ParamTypes... Args) override;
 
-  const Delegate<void, ParamTypes...>& delegate () const
-  {
-    return delegate_;
-  }
+  inline const Event<ParamTypes...>* event () const;
 
- private:
+private:
 
-  Delegate<void, ParamTypes...> delegate_;
-
+  Event<ParamTypes...>* event_;
 };
 
 template<typename ... ParamTypes>
-inline DelegateToken<ParamTypes...>::DelegateToken(const Delegate<void, ParamTypes...>& d)
-    : InvokableToken<ParamTypes...>(), delegate_(d)
+inline EventToken<ParamTypes...>::EventToken (Event<
+    ParamTypes...>& event)
+    : InvokableToken<ParamTypes...>(), event_(&event)
 {
 }
 
 template<typename ... ParamTypes>
-DelegateToken<ParamTypes...>::~DelegateToken()
+EventToken<ParamTypes...>::~EventToken()
 {
 }
 
 template<typename ... ParamTypes>
-void DelegateToken<ParamTypes...>::Invoke(ParamTypes... Args)
+void EventToken<ParamTypes...>::Invoke(ParamTypes... Args)
 {
-  delegate_(Args...);
+  event_->Emit(Args...);
 }
 
-} // namespace CppEvent
+template<typename ... ParamTypes>
+inline const Event<ParamTypes...>* EventToken<ParamTypes...>::event() const
+{
+  return event_;
+}
+
+}

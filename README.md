@@ -14,8 +14,6 @@ by Don Clugston
 * [Fast C++ Delegate: Boost.Function 'drop-in' replacement and multicast](http://www.codeproject.com/Articles/18389/Fast-C-Delegate-Boost-Function-drop-in-replacement) by JaeWook Choi
 * [CppEvents](http://code.google.com/p/cpp-events/) by Nickolas V. Pohilets
 
-CppEvent currently lives on [GitHub](https://github.com/zhanggyb/CppEvent).
-
 ## Download and Install
 
 > Note: this project currently does not support MSVC, will be fixed later
@@ -31,7 +29,7 @@ in Button and connect it to a member function of Dialog.
 ```c++
 #include <cppevent/event.hpp>
 
-class Widget: public CppEvent::Trackable;
+class Widget: public CppEvent::Observer;
 
 class Button: public Widget
 {
@@ -55,7 +53,7 @@ private:
 
 void Button::mousePress(MouseParams const & params)
 {
-    clicked.Invoke();
+    clicked.Emit();
 }
 
 class Dialog: public Widget

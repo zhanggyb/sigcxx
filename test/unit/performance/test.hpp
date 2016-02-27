@@ -17,12 +17,12 @@ class Test: public testing::Test
   virtual void TearDown() {  }
 };
 
-class Consumer: public CppEvent::Trackable
+class Consumer: public CppEvent::Observer
 {
  public:
 
   Consumer()
-      : CppEvent::Trackable(),
+      : CppEvent::Observer(),
         count_(0)
   {}
 
@@ -56,7 +56,7 @@ class Source
 
   void DoTest ()
   {
-    foo_.Invoke();
+    foo_.Emit();
   }
   
   CppEvent::EventRef<> foo ()

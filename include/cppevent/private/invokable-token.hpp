@@ -26,55 +26,37 @@
 
 #pragma once
 
-#include <cppevent/invokable-token.hpp>
+#include "abstract-trackable.hpp"
 
 namespace CppEvent {
 
-// forward declaration
-template<typename ... ParamTypes> class Event;
-
 template<typename ... ParamTypes>
-class EventToken : public InvokableToken < ParamTypes... >
+class InvokableToken: public Token
 {
-public:
+ public:
 
-  EventToken () = delete;
+  inline InvokableToken ();
 
-  inline EventToken(Event<ParamTypes...>& event);
+  virtual ~InvokableToken ();
 
-  virtual ~EventToken();
-
-  virtual void Invoke(ParamTypes... Args) override;
-
-  inline const Event<ParamTypes...>* event () const;
-
-private:
-
-  Event<ParamTypes...>* event_;
+  virtual void Invoke (ParamTypes ... Args);
 };
 
 template<typename ... ParamTypes>
-inline EventToken<ParamTypes...>::EventToken (Event<
-    ParamTypes...>& event)
-    : InvokableToken<ParamTypes...>(), event_(&event)
+inline InvokableToken<ParamTypes...>::InvokableToken ()
+    : Token()
 {
 }
 
 template<typename ... ParamTypes>
-EventToken<ParamTypes...>::~EventToken()
+InvokableToken<ParamTypes...>::~InvokableToken ()
 {
 }
 
 template<typename ... ParamTypes>
-void EventToken<ParamTypes...>::Invoke(ParamTypes... Args)
+void InvokableToken<ParamTypes...>::Invoke (ParamTypes ... Args)
 {
-  event_->Invoke(Args...);
+  // Override this in sub class
 }
 
-template<typename ... ParamTypes>
-inline const Event<ParamTypes...>* EventToken<ParamTypes...>::event() const
-{
-  return event_;
-}
-
-}
+} // namespace CppEvent

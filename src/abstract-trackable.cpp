@@ -24,31 +24,22 @@
  * SOFTWARE.
  */
 
-#include <cppevent/abstract-trackable.hpp>
+#include <cppevent/event.hpp>
 
 namespace CppEvent {
 
 Binding::~Binding()
 {
+  if (previous) previous->next = next;
+  if (next) next->previous = previous;
+	
   if (trackable_object) {
-
-    if (previous)
-      previous->next = next;
-    else
+    if (!previous)
       trackable_object->first_binding_ = next;
-
-    if (next)
-      next->previous = previous;
-    else
+    if (!next)
       trackable_object->last_binding_ = previous;
-
-  } else {
-
-    if (previous) previous->next = next;
-    if (next) next->previous = previous;
-
   }
-
+	
   previous = 0;
   next = 0;
 

@@ -26,9 +26,9 @@
 
 #pragma once
 
-#include <cppevent/abstract-trackable.hpp>
-#include <cppevent/delegate-token.hpp>
-#include <cppevent/event-token.hpp>
+#include "private/abstract-trackable.hpp"
+#include "private/delegate-token.hpp"
+#include "private/event-token.hpp"
 
 #include <thread>
 
@@ -37,15 +37,15 @@ namespace CppEvent {
 /**
  * @brief Abstract class for event
  */
-class Trackable: public AbstractTrackable
+class Observer: public AbstractTrackable
 {
  public:
 
-  inline Trackable ()
+  inline Observer ()
       : AbstractTrackable()
   { }
 
-  virtual ~Trackable ()
+  virtual ~Observer ()
   { }
 
  protected:
@@ -99,7 +99,7 @@ class Event: public AbstractTrackable
 
   void DisconnectFromEvents ();
 
-  virtual void Invoke (ParamTypes ... Args);
+  void Emit (ParamTypes ... Args);
 
  protected:
 
@@ -128,9 +128,6 @@ class Event: public AbstractTrackable
 
   Token* iterator_;  // a pointer to iterate through all connections
   int flag_;
-
-  std::mutex mutex_;
-
 };
 
 // EventRef declaration:
@@ -233,8 +230,6 @@ template<typename ... ParamTypes>
 template<typename T>
 void Event<ParamTypes...>::Connect (T* obj, void (T::*method) (ParamTypes...))
 {
-  std::lock_guard<std::mutex> lock(mutex_);
-
   Binding* downstream = new Binding;
   Delegate<void, ParamTypes...> d =
       Delegate<void, ParamTypes...>::template from_method<T>(obj, method);
@@ -249,8 +244,6 @@ void Event<ParamTypes...>::Connect (T* obj, void (T::*method) (ParamTypes...))
 template<typename ... ParamTypes>
 void Event<ParamTypes...>::Connect (Event<ParamTypes...>& other)
 {
-  std::lock_guard<std::mutex> lock(mutex_);
-
   EventToken<ParamTypes...>* upstream = new EventToken<ParamTypes...>(
       other);
   Binding* downstream = new Binding;
@@ -263,8 +256,6 @@ template<typename ... ParamTypes>
 template<typename T>
 void Event<ParamTypes...>::Disconnect1 (T* obj, void (T::*method) (ParamTypes...))
 {
-  std::lock_guard<std::mutex> lock(mutex_);
-
   DelegateToken<ParamTypes...>* conn = 0;
   for (Token* p = last_token_; p; p = p->previous) {
     conn = dynamic_cast<DelegateToken<ParamTypes...>*>(p);
@@ -279,8 +270,6 @@ template<typename ... ParamTypes>
 template<typename T>
 void Event<ParamTypes...>::Disconnect (T* obj, void (T::*method) (ParamTypes...))
 {
-  std::lock_guard<std::mutex> lock(mutex_);
-
   DelegateToken<ParamTypes...>* conn = 0;
   set_bit(flag_, EventIteratorDirectionMask);
   iterator_ = last_token_;
@@ -303,8 +292,6 @@ void Event<ParamTypes...>::Disconnect (T* obj, void (T::*method) (ParamTypes...)
 template<typename ... ParamTypes>
 void Event<ParamTypes...>::Disconnect1 (Event<ParamTypes...>& other)
 {
-  std::lock_guard<std::mutex> lock(mutex_);
-
   EventToken<ParamTypes...>* conn = 0;
   for (Token* p = last_token_; p; p = p->previous) {
     conn = dynamic_cast<EventToken<ParamTypes...>*>(p);
@@ -318,8 +305,6 @@ void Event<ParamTypes...>::Disconnect1 (Event<ParamTypes...>& other)
 template<typename ... ParamTypes>
 void Event<ParamTypes...>::Disconnect (Event<ParamTypes...>& other)
 {
-  std::lock_guard<std::mutex> lock(mutex_);
-
   EventToken<ParamTypes...>* conn = 0;
   set_bit(flag_, EventIteratorDirectionMask);
   iterator_ = last_token_;
@@ -341,24 +326,18 @@ void Event<ParamTypes...>::Disconnect (Event<ParamTypes...>& other)
 template<typename ... ParamTypes>
 void Event<ParamTypes...>::DisconnectTokens()
 {
-  std::lock_guard<std::mutex> lock(mutex_);
-
   RemoveAllTokens();
 }
 
 template<typename ... ParamTypes>
 void Event<ParamTypes...>::DisconnectFromEvents ()
 {
-  std::lock_guard<std::mutex> lock(mutex_);
-
   RemoveAllBindings();
 }
 
 template<typename ... ParamTypes>
-void Event<ParamTypes...>::Invoke (ParamTypes ... Args)
+void Event<ParamTypes...>::Emit (ParamTypes ... Args)
 {
-  std::lock_guard<std::mutex> lock(mutex_);
-
   clear_bit(flag_, EventIteratorDirectionMask);
   iterator_ = first_token_;
   while (iterator_) {

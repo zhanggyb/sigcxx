@@ -26,37 +26,50 @@
 
 #pragma once
 
-#include <cppevent/abstract-trackable.hpp>
+#include "delegate.hpp"
+#include "invokable-token.hpp"
 
 namespace CppEvent {
 
 template<typename ... ParamTypes>
-class InvokableToken: public Token
+class DelegateToken : public InvokableToken < ParamTypes... >
 {
  public:
 
-  inline InvokableToken ();
+  DelegateToken() = delete;
 
-  virtual ~InvokableToken ();
+  inline DelegateToken(const Delegate<void, ParamTypes...>& d);
 
-  virtual void Invoke (ParamTypes ... Args);
+  virtual ~DelegateToken();
+
+  virtual void Invoke(ParamTypes... Args) override;
+
+  const Delegate<void, ParamTypes...>& delegate () const
+  {
+    return delegate_;
+  }
+
+ private:
+
+  Delegate<void, ParamTypes...> delegate_;
+
 };
 
 template<typename ... ParamTypes>
-inline InvokableToken<ParamTypes...>::InvokableToken ()
-    : Token()
+inline DelegateToken<ParamTypes...>::DelegateToken(const Delegate<void, ParamTypes...>& d)
+    : InvokableToken<ParamTypes...>(), delegate_(d)
 {
 }
 
 template<typename ... ParamTypes>
-InvokableToken<ParamTypes...>::~InvokableToken ()
+DelegateToken<ParamTypes...>::~DelegateToken()
 {
 }
 
 template<typename ... ParamTypes>
-void InvokableToken<ParamTypes...>::Invoke (ParamTypes ... Args)
+void DelegateToken<ParamTypes...>::Invoke(ParamTypes... Args)
 {
-  // Override this in sub class
+  delegate_(Args...);
 }
 
 } // namespace CppEvent
