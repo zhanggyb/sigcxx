@@ -4,13 +4,16 @@ libCppEvent
 ## Overview
 
 [libCppEvent](https://github.com/zhanggyb/libCppEvent) is a simple C++11 library
-implementing event/delegate (Subject-Observer design pattern) based on fast C++
-delegates, inspired by:
+implementing event/delegate based on fast C++ delegates, inspired by:
 * [Member Function Pointers and the Fastest Possible C++ Delegates](http://www.codeproject.com/Articles/7150/Member-Function-Pointers-and-the-Fastest-Possible)
 by Don Clugston
-* [The Impossibly Fast C++ Delegates](http://www.codeproject.com/Articles/11015/The-Impossibly-Fast-C-Delegates) by by Sergey Ryazanov
+* [The Impossibly Fast C++ Delegates](http://www.codeproject.com/Articles/11015/The-Impossibly-Fast-C-Delegates) by Sergey Ryazanov
 * [Fast C++ Delegate: Boost.Function 'drop-in' replacement and multicast](http://www.codeproject.com/Articles/18389/Fast-C-Delegate-Boost-Function-drop-in-replacement) by JaeWook Choi
 * [CppEvents](http://code.google.com/p/cpp-events/) by Nickolas V. Pohilets
+
+libCppEvent provides a implementation of Subject-Observer design pattern in C++:
+
+![Example](https://github.com/zhanggyb/libCppEvent/blob/master/doc/graphics/example.svg)
 
 ## Download and Install
 
