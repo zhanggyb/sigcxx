@@ -35,7 +35,7 @@
 namespace CppEvent {
 
 /**
- * @brief Abstract class for event
+ * @brief The base class for observer
  */
 class Observer: public AbstractTrackable
 {
@@ -66,7 +66,7 @@ class Event: public AbstractTrackable
   virtual ~Event ();
 
   /**
-   * @brief Connect this event to a method of trackable object
+   * @brief Connect this event to a method in a observer
    */
   template<typename T>
   void Connect (T* obj, void (T::*method) (ParamTypes...));
@@ -86,7 +86,7 @@ class Event: public AbstractTrackable
   void Disconnect (T* obj, void (T::*method) (ParamTypes...));
 
   /**
-   * @brief Disconnect the last event bound
+   * @brief Disconnect the last event
    */
   void Disconnect1 (Event<ParamTypes...>& other);
 

@@ -1,13 +1,11 @@
-# CppEvent
-
-------
+libCppEvent
+===========
 
 ## Overview
 
-A simple C++11 event/delegate framework based on fast C++ delegates.
-
-This project is inspired by:
-
+[libCppEvent](https://github.com/zhanggyb/libCppEvent) is a simple C++11 library
+implementing event/delegate (Subject-Observer design pattern) based on fast C++
+delegates, inspired by:
 * [Member Function Pointers and the Fastest Possible C++ Delegates](http://www.codeproject.com/Articles/7150/Member-Function-Pointers-and-the-Fastest-Possible)
 by Don Clugston
 * [The Impossibly Fast C++ Delegates](http://www.codeproject.com/Articles/11015/The-Impossibly-Fast-C-Delegates) by by Sergey Ryazanov
@@ -16,15 +14,17 @@ by Don Clugston
 
 ## Download and Install
 
-> Note: this project currently does not support MSVC, will be fixed later
+> FIXME: this project currently does not support MSVC
 
 * Checkout this repository
 * Copy *include/cppevent* and *src/\** into your C++ project
 
 ## Basic Usage
 
-Here is a simple example, in this example, we delcare *clicked* event
-in Button and connect it to a member function of Dialog.
+Event/delegate is typically used in GUI application.
+
+Here is a simple example, in this example, we delcare a *clicked* event in
+Button class and connecte it to a member function of Dialog:
 
 ```c++
 #include <cppevent/event.hpp>
@@ -53,6 +53,7 @@ private:
 
 void Button::mousePress(MouseParams const & params)
 {
+    // ...
     clicked.Emit();
 }
 

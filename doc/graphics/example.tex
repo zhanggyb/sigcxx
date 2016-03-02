@@ -1,0 +1,35 @@
+\documentclass[11pt,tikz,border=1]{standalone}
+\usetikzlibrary{calc,positioning,arrows.meta,shadows}
+
+\begin{document}
+  \begin{tikzpicture}[
+    object/.style={thick,fill=white,rectangle,rounded corners=5pt,draw,minimum width=100pt,minimum height=120pt,drop shadow},
+    token/.style={circle,draw,fill=yellow!50,minimum size=6pt},
+    binding/.style={circle,draw,fill=violet!50,minimum size=6pt}
+    ]
+
+  \node(subject) [object] {};
+  \node(subjectName) [below] at (subject.north) {\bf Subject};  
+  \node(event1) [token,yshift=-10pt] at (subject.east) {};
+  
+  \node(observer1) [right=5cm of subject,yshift=4cm,object] {};
+  \node(observer1Name) [below] at (observer1.north) {\bf Observer1};
+  \node(method1) [binding,yshift=-10pt] at (observer1.west) {};
+
+  \node(observer2) [right=4cm of subject,yshift=-3cm,object] {};
+  \node(observer2Name) [below] at (observer2.north) {\bf Observer2};
+  \node(method2) [binding,yshift=-10pt] at (observer2.west) {};
+
+  \coordinate(a) at ($(event1.east)+(25mm,0)$);
+  \coordinate(b) at ($(method1.west)-(25mm,0)$);
+  \coordinate(c) at ($(method2.west)-(25mm,0)$);
+
+  \draw[->,-{Stealth}] (event1) .. controls (a) and (b) .. (method1);
+  \draw[->,-{Stealth}] (event1) .. controls (a) and (c) .. (method2);
+
+  \node [left] at (event1.west) {\ttfamily notify};
+  \node [right] at (method1.east) {\ttfamily onUpdate1()};
+  \node [right] at (method2.east) {\ttfamily onUpdate2()};
+
+  \end{tikzpicture}
+\end{document}

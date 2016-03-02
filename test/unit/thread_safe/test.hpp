@@ -25,16 +25,10 @@ class Source
 
   ~Source () { }
 
-  void DoTest1 (int n)
-  {
-    event1_.Emit(n);
-  }
+  void DoTest1 (int n);
 
-  void DoTest2 (int n1, int n2)
-  {
-    event2_.Emit(n1, n2);
-  }
-
+  void DoTest2 (int n1, int n2);
+  
   inline CppEvent::EventRef<int> event1 ()
   {
     return event1_;
@@ -56,37 +50,34 @@ class Consumer: public CppEvent::Observer
  public:
 
   Consumer ()
- 	 : test1_count_(0), test2_count_(0)
- 	 { }
+      : test1_count_(0), test2_count_(0)
+  { }
 
   virtual ~Consumer () { }
 
-  void DisconnectAll ()
-  {
-    RemoveAllBindings();
-  }
+  void DisconnectAll ();
 
   void OnTest1 (int n)
   {
-	  test1_count_++;
-	  std::cout << "Event received in OnTest1, n " << n << ", " << test1_count_ << " times." << std::endl;
+    test1_count_++;
+    std::cout << "Event received in OnTest1, n " << n << ", " << test1_count_ << " times." << std::endl;
   }
 
   void OnTest2 (int n1, int n2)
   {
-	  test2_count_++;
+    test2_count_++;
     std::cout << "Event received in OnTest2, n1: " << n1 << " n2: " << n2 << ", " << test2_count_ << " times."
               << std::endl;
   }
 
   inline size_t test1_count() const
   {
-	  return test1_count_;
+    return test1_count_;
   }
 
   inline size_t test2_count() const
   {
-	  return test2_count_;
+    return test2_count_;
   }
 
  private:
