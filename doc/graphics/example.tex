@@ -1,4 +1,10 @@
-\documentclass[11pt,tikz,border=1]{standalone}
+% file: example.tex
+%
+% Use:
+% 	$ pdflatex -shell-escape <filename.tex>
+% to generate a svg image.
+
+\documentclass[11pt,tikz,border=1,convert={outfile=\jobname.svg}]{standalone}
 \usetikzlibrary{calc,positioning,arrows.meta,shadows}
 
 \begin{document}
@@ -9,9 +15,9 @@
     ]
 
   \node(subject) [object] {};
-  \node(subjectName) [below] at (subject.north) {\bf Subject};  
+  \node(subjectName) [below] at (subject.north) {\bf Subject};
   \node(event1) [token,yshift=-10pt] at (subject.east) {};
-  
+
   \node(observer1) [right=5cm of subject,yshift=4cm,object] {};
   \node(observer1Name) [below] at (observer1.north) {\bf Observer1};
   \node(method1) [binding,yshift=-10pt] at (observer1.west) {};
