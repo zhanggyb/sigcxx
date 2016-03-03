@@ -15,7 +15,7 @@ by Don Clugston
 Event/delegate has been proven very useful in object-oriented programming, especially GUI application. libCppEvent provides such implementation in a simple way as illustrated below:
 
 <div  align="center">    
-	<img src="https://github.com/zhanggyb/libCppEvent/blob/master/doc/graphics/example.svg" width = "400" alt="Example" align=center />
+	<img src="https://github.com/zhanggyb/libCppEvent/blob/master/doc/graphics/example.png" width = "400" alt="Example" align=center />
 </div>
 
 See [Wiki](https://github.com/zhanggyb/libCppEvent/wiki) for more information.
