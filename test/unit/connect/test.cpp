@@ -297,6 +297,20 @@ TEST_F(Test, selfconsumer)
   ASSERT_TRUE(c.event_count() == 2);
 }
 
+TEST_F(Test, event_chaining)
+{
+  Source s1;
+  Source s2;
+  Consumer c;
+  
+  s1.event1().connect(s2.event1());
+  s2.event1().connect(&c, &Consumer::OnTest1);
+  
+  s1.DoTest1(1);
+  
+  ASSERT_TRUE(c.CountInConnections() == 1 && c.test1_count() == 1);
+}
+
 TEST_F(Test, delete_more_when_called)
 {
   Source s;
