@@ -5,6 +5,9 @@ cmake_minimum_required(VERSION 2.8.11)
 
 project(libCppEvent)
 
+# You may need to set environment variable CMAKE_PREFIX_PATH, see http://doc.qt.io/qt-5/cmake-manual.html
+option(WITH_QT5 "Build unit test to compare this with Qt5" OFF)
+
 if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
   set(CMAKE_CXX_FLAGS	"/W4")
 else()

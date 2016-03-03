@@ -10,3 +10,6 @@ add_subdirectory(derived)
 add_subdirectory(performance)
 add_subdirectory(thread_safe)
 
+if(WITH_QT5)
+add_subdirectory(qt5)
+endif()
