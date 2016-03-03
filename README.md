@@ -12,13 +12,15 @@ by Don Clugston
 - [Fast C++ Delegate: Boost.Function 'drop-in' replacement and multicast](http://www.codeproject.com/Articles/18389/Fast-C-Delegate-Boost-Function-drop-in-replacement) by JaeWook Choi
 - [CppEvents](http://code.google.com/p/cpp-events/) by Nickolas V. Pohilets
 
-Event/delegate has been proven very useful in object-oriented programming, especially GUI application. libCppEvent provides such implementation in a simple way as illustrated below:
+Event/delegate has been proven very useful in object-oriented programming, especially GUI application. libCppEvent provides such implementation for communication between objects in a simple way as illustrated below:
 
-<div  align="center">    
-	<img src="https://github.com/zhanggyb/libCppEvent/blob/master/doc/graphics/example.png" width = "400" alt="Example" align=center />
+<div  align="center">
+<img src="https://github.com/zhanggyb/libCppEvent/blob/master/doc/graphics/example.png" width = "400" alt="Example" align=center />
 </div>
 
-See [Wiki](https://github.com/zhanggyb/libCppEvent/wiki) for more information.
+When an instance of Subject has something changed, it may want its observer to be notified. It can fire events to invoke the connected member function in observers. The events can be connected or disconnected when needed. When a Subject or Observer is destroyed, all corresponding connections will be broken too.
+
+For more information, see the [Wiki page](https://github.com/zhanggyb/libCppEvent/wiki).
 
 ## Download and Install
 

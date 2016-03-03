@@ -97,6 +97,8 @@ class AbstractTrackable
 
   virtual ~AbstractTrackable ();
 
+  void RemoveAllInConnections ();
+
  protected:
 
   virtual void AuditDestroyingToken (Token* token) = 0;
@@ -107,8 +109,6 @@ class AbstractTrackable
 
   void InsertBinding (int index, Binding* binding);
 
-  void RemoveAllBindings ();
-
   static inline void link (Token* token, Binding* binding)
   {
 #ifdef DEBUG
@@ -118,7 +118,7 @@ class AbstractTrackable
     token->binding = binding;
     binding->token = token;
   }
-  
+
   static inline void add_binding (AbstractTrackable* trackable,
                                   Binding* conn)
   {

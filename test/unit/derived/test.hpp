@@ -27,12 +27,12 @@ class Source
 
   void DoTest1 (int n)
   {
-    event1_.Emit(n);
+    event1_.Fire(n);
   }
 
   void DoTest2 (int n1, int n2)
   {
-    event2_.Emit(n1, n2);
+    event2_.Fire(n1, n2);
   }
 
   inline CppEvent::EventRef<int> event1 ()
@@ -63,7 +63,7 @@ class Consumer: public CppEvent::Observer
 
   void DisconnectAll ()
   {
-    RemoveAllBindings();
+    RemoveAllInConnections();
   }
 
   void OnTest1 (int n)
@@ -102,7 +102,7 @@ class Consumer: public CppEvent::Observer
   }
 
 protected:
-  
+
   inline void set_virtualtest_count(size_t num)
   {
     virtualtest_count_ = num;

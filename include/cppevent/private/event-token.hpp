@@ -68,7 +68,7 @@ EventToken<ParamTypes...>::~EventToken()
 template<typename ... ParamTypes>
 void EventToken<ParamTypes...>::Invoke(ParamTypes... Args)
 {
-  event_->Emit(Args...);
+  event_->Fire(Args...);
 }
 
 template<typename ... ParamTypes>

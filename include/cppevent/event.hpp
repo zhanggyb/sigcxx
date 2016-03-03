@@ -95,11 +95,9 @@ class Event: public AbstractTrackable
    */
   void Disconnect (Event<ParamTypes...>& other);
 
-  void DisconnectTokens ();
+  void RemoveAllOutConnections ();
 
-  void DisconnectFromEvents ();
-
-  void Emit (ParamTypes ... Args);
+  void Fire (ParamTypes ... Args);
 
  protected:
 
@@ -110,8 +108,6 @@ class Event: public AbstractTrackable
   void PushFrontToken (InvokableToken<ParamTypes...>* token);
 
   void InsertToken (int index, InvokableToken<ParamTypes...>* token);
-
-  void RemoveAllTokens ();
 
  private:
 
@@ -177,7 +173,7 @@ class EventRef
   {
     event_->Connect(event);
   }
-  
+
   inline void disconnect1 (Event<ParamTypes...>& event)
   {
     event_->Disconnect1(event);
@@ -223,7 +219,7 @@ inline Event<ParamTypes...>::Event ()
 template<typename ... ParamTypes>
 Event<ParamTypes...>::~Event ()
 {
-  RemoveAllTokens();
+  RemoveAllOutConnections();
 }
 
 template<typename ... ParamTypes>
@@ -277,7 +273,7 @@ void Event<ParamTypes...>::Disconnect (T* obj, void (T::*method) (ParamTypes...)
     conn = dynamic_cast<DelegateToken<ParamTypes...>*>(iterator_);
     if (conn && (conn->delegate().template equal<T>(obj, method)))
       delete conn;
-    
+
     // check if iterator was deleted when being invoked
     // (EventIteratorRemoveMask was set via the virtual AuditDestroyingConnection()
     if (flag_ & EventIteratorRemoveMask)
@@ -311,7 +307,7 @@ void Event<ParamTypes...>::Disconnect (Event<ParamTypes...>& other)
   while (iterator_) {
     conn = dynamic_cast<EventToken<ParamTypes...>*>(iterator_);
     if (conn && (conn->event() == (&other))) delete conn;
-    
+
     // check if iterator was deleted when being invoked
     // (EventIteratorRemoveMask was set via the virtual AuditDestroyingConnection()
     if (flag_ & EventIteratorRemoveMask)
@@ -324,19 +320,7 @@ void Event<ParamTypes...>::Disconnect (Event<ParamTypes...>& other)
 }
 
 template<typename ... ParamTypes>
-void Event<ParamTypes...>::DisconnectTokens()
-{
-  RemoveAllTokens();
-}
-
-template<typename ... ParamTypes>
-void Event<ParamTypes...>::DisconnectFromEvents ()
-{
-  RemoveAllBindings();
-}
-
-template<typename ... ParamTypes>
-void Event<ParamTypes...>::Emit (ParamTypes ... Args)
+void Event<ParamTypes...>::Fire (ParamTypes ... Args)
 {
   clear_bit(flag_, EventIteratorDirectionMask);
   iterator_ = first_token_;
@@ -467,7 +451,7 @@ void Event<ParamTypes...>::InsertToken(int index, InvokableToken<ParamTypes...>*
 }
 
 template<typename ... ParamTypes>
-void Event<ParamTypes...>::RemoveAllTokens()
+void Event<ParamTypes...>::RemoveAllOutConnections()
 {
   Token* tmp = 0;
   Token* p = first_token_;

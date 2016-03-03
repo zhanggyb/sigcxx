@@ -28,7 +28,7 @@ class Source
   void DoTest1 (int n);
 
   void DoTest2 (int n1, int n2);
-  
+
   inline CppEvent::EventRef<int> event1 ()
   {
     return event1_;

@@ -27,12 +27,12 @@ class Source
 
   void DoTest1 (int n)
   {
-    event1_.Emit(n);
+    event1_.Fire(n);
   }
 
   void DoTest2 (int n1, int n2)
   {
-    event2_.Emit(n1, n2);
+    event2_.Fire(n1, n2);
   }
 
   inline CppEvent::EventRef<int> event1 ()
@@ -63,7 +63,7 @@ class Consumer: public CppEvent::Observer
 
   void DisconnectAll ()
   {
-    RemoveAllBindings();
+    RemoveAllInConnections();
   }
 
   void OnTest1 (int n)
@@ -103,11 +103,11 @@ class SelfDestroyConsumer: public CppEvent::Observer
   virtual ~SelfDestroyConsumer();
 
   void OnTest1 (int n);
-  
+
  private:
 
   SelfDestroyConsumer();
-  
+
 };
 
 class SelfConsumer: public CppEvent::Observer
@@ -128,16 +128,16 @@ class SelfConsumer: public CppEvent::Observer
 
   void DoTest ()
   {
-    event_.Emit();
+    event_.Fire();
   }
-  
+
   void OnTest () {event_count_++;}
 
   inline size_t event_count() const
   {
     return event_count_;
   }
-  
+
  private:
 
   CppEvent::Event<> event_;

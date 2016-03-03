@@ -1,6 +1,8 @@
 // Unit test code for Event::Connect
 
 #include "test.hpp"
+#include <thread>
+#include <mutex>
 
 using namespace std;
 
@@ -9,19 +11,19 @@ static std::mutex m;
 void Source::DoTest1(int n)
 {
   lock_guard<mutex> lock(m);
-  event1_.Emit(n);
+  event1_.Fire(n);
 }
 
 void Source::DoTest2 (int n1, int n2)
 {
   lock_guard<mutex> lock(m);
-  event2_.Emit(n1, n2);
+  event2_.Fire(n1, n2);
 }
 
 void Consumer::DisconnectAll()
 {
   lock_guard<mutex> lock(m);
-  RemoveAllBindings();
+  RemoveAllInConnections();
 }
 
 Test::Test()
@@ -31,7 +33,7 @@ Test::Test()
 
 Test::~Test()
 {
-  
+
 }
 
 Source s;
@@ -40,7 +42,7 @@ Consumer c;
 void thread1 () {
 
   std::unique_lock<std::mutex> lock(m, std::defer_lock);
-  
+
   for(int i = 0; i < 100; i++) {
 
     lock.lock();
@@ -50,9 +52,9 @@ void thread1 () {
     s.DoTest1(1);
 
     lock.lock();
-    s.event1().disconnect(&c, static_cast<void (Consumer::*)(int)>(&Consumer::OnTest1));  
+    s.event1().disconnect(&c, static_cast<void (Consumer::*)(int)>(&Consumer::OnTest1));
     lock.unlock();
-    
+
     //std::this_thread::sleep_for(std::chrono::milliseconds(100));
   }
 }
@@ -60,7 +62,7 @@ void thread1 () {
 void thread2 () {
 
   std::unique_lock<std::mutex> lock(m, std::defer_lock);
-  
+
   for(int i = 0; i < 100; i++) {
     lock.lock();
     s.event1().connect(&c, static_cast<void (Consumer::*)(int)>(&Consumer::OnTest1));
@@ -79,7 +81,7 @@ void thread3 () {
   Consumer* lc = 0;
 
   std::unique_lock<std::mutex> lock(m, std::defer_lock);
-  
+
   for(int i = 0; i < 500; i++) {
     lc = new Consumer();
 
@@ -99,14 +101,14 @@ void thread4 () {
   Source* ls = 0;
 
   std::unique_lock<std::mutex> lock(m, std::defer_lock);
-  
+
   for(int i = 0; i < 500; i++) {
     ls = new Source();
 
     lock.lock();
-    ls->event1().connect(&c, static_cast<void (Consumer::*)(int)>(&Consumer::OnTest1));      
+    ls->event1().connect(&c, static_cast<void (Consumer::*)(int)>(&Consumer::OnTest1));
     lock.unlock();
-    
+
     ls->DoTest1(3);
 
     lock.lock();
@@ -133,7 +135,7 @@ TEST_F(Test, connect_method_once)
 TEST_F(Test, connect_consumer_in_threads)
 {
   thread t[100];
-  
+
   for(int i = 0; i < 100; i++) {
     t[i] = thread(thread3);
   }
@@ -150,7 +152,7 @@ TEST_F(Test, complex)
   thread tb[100];
   thread tc[100];
   thread td[100];
-  
+
   for(int i = 0; i < 100; i++) {
     ta[i] = thread(thread1);
   }

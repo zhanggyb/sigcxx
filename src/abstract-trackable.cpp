@@ -32,14 +32,14 @@ Binding::~Binding()
 {
   if (previous) previous->next = next;
   if (next) next->previous = previous;
-	
+
   if (trackable_object) {
     if (!previous)
       trackable_object->first_binding_ = next;
     if (!next)
       trackable_object->last_binding_ = previous;
   }
-	
+
   previous = 0;
   next = 0;
 
@@ -75,7 +75,7 @@ Token::~Token()
 
 AbstractTrackable::~AbstractTrackable ()
 {
-  RemoveAllBindings();
+  RemoveAllInConnections();
 }
 
 void AbstractTrackable::PushBackBinding (Binding* node)
@@ -172,7 +172,7 @@ void AbstractTrackable::InsertBinding (int index, Binding* node)
   node->trackable_object = this;
 }
 
-void AbstractTrackable::RemoveAllBindings ()
+void AbstractTrackable::RemoveAllInConnections ()
 {
   Binding* tmp = 0;
   Binding* p = first_binding_;

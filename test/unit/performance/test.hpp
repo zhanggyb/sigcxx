@@ -38,7 +38,7 @@ class Consumer: public CppEvent::Observer
   {
     return count_;
   }
-  
+
  private:
 
   size_t count_;
@@ -56,14 +56,14 @@ class Source
 
   void DoTest ()
   {
-    foo_.Emit();
+    foo_.Fire();
   }
-  
+
   CppEvent::EventRef<> foo ()
   {
     return foo_;
   }
-  
+
  private:
 
   CppEvent::Event<> foo_;

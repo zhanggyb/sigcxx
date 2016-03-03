@@ -25,16 +25,16 @@ TEST_F(Test, connect_method_once)
 
   CppEvent::Event<int> event3;
   event3.Connect(dynamic_cast<Consumer*>(obj2), &Consumer::OnVirtualTest); // this still connect to the method in sub class
-  
-  event1.Emit(1);
-  event2.Emit(2);
-  event3.Emit(3);
+
+  event1.Fire(1);
+  event2.Fire(2);
+  event3.Fire(3);
 
   bool result = (obj1->virtualtest_count() == 1) && (obj2->virtualtest_count() == 2);
-    
+
   delete obj1;
   delete obj2;
-    
+
   ASSERT_TRUE(result);
 }
 
