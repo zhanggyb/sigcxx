@@ -30,6 +30,8 @@
 #include <cassert>
 #endif
 
+#include <cstddef>
+
 namespace CppEvent {
 
 // forward declaration
@@ -99,6 +101,8 @@ class AbstractTrackable
 
   void RemoveAllInConnections ();
 
+  std::size_t CountInConnections () const;
+
  protected:
 
   virtual void AuditDestroyingToken (Token* token) = 0;
@@ -119,15 +123,21 @@ class AbstractTrackable
     binding->token = token;
   }
 
-  static inline void add_binding (AbstractTrackable* trackable,
-                                  Binding* conn)
+  static inline void push_front (AbstractTrackable* trackable,
+                                 Binding* conn)
   {
     trackable->PushBackBinding(conn);
   }
 
-  static inline void insert_binding (AbstractTrackable* trackable,
-                                     Binding* conn,
-                                     int index = 0)
+  static inline void push_back (AbstractTrackable* trackable,
+                                Binding* conn)
+  {
+    trackable->PushBackBinding(conn);
+  }
+
+  static inline void insert (AbstractTrackable* trackable,
+                             Binding* conn,
+                             int index = 0)
   {
     trackable->InsertBinding(index, conn);
   }

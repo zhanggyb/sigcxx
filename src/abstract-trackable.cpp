@@ -184,4 +184,13 @@ void AbstractTrackable::RemoveAllInConnections ()
   }
 }
 
+std::size_t AbstractTrackable::CountInConnections () const
+{
+  std::size_t count = 0;
+  for(Binding* p = first_binding_; p; p = p->next) {
+    count++;
+  }
+  return count;
+}
+
 }

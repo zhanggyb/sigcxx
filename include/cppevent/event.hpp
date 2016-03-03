@@ -34,6 +34,17 @@
 
 namespace CppEvent {
 
+enum ConnectOption {
+  ConnectFirst = 0,
+  ConnectLast = 1
+};
+
+enum DisconnectOption {
+  DisconnectFirst = 0,
+  DisconnectLast = 1,
+  DisconnectAll = 2
+};
+
 /**
  * @brief The base class for observer
  */
@@ -69,33 +80,34 @@ class Event: public AbstractTrackable
    * @brief Connect this event to a method in a observer
    */
   template<typename T>
-  void Connect (T* obj, void (T::*method) (ParamTypes...));
+  void Connect (T* obj, void (T::*method) (ParamTypes...), ConnectOption opt = ConnectLast);
 
-  void Connect (Event<ParamTypes...>& other);
+  void Connect (Event<ParamTypes...>& other, ConnectOption opt = ConnectLast);
 
   /**
    * @brief Disconnect the last delegate to a method
    */
   template<typename T>
-  void Disconnect1 (T* obj, void (T::*method) (ParamTypes...));
-
-  /**
-   * @brief Disconnect all delegates to a method
-   */
-  template<typename T>
-  void Disconnect (T* obj, void (T::*method) (ParamTypes...));
+  void Disconnect (T* obj, void (T::*method) (ParamTypes...), DisconnectOption opt = DisconnectLast);
 
   /**
    * @brief Disconnect the last event
    */
-  void Disconnect1 (Event<ParamTypes...>& other);
-
-  /**
-   * @brief Disconnect all events
-   */
-  void Disconnect (Event<ParamTypes...>& other);
+  void Disconnect (Event<ParamTypes...>& other, DisconnectOption opt = DisconnectLast);
 
   void RemoveAllOutConnections ();
+
+  template<typename T>
+  bool IsConnected (T* obj, void (T::*method) (ParamTypes...)) const;
+
+  bool IsConnected (Event<ParamTypes...>& other) const;
+
+  template<typename T>
+  std::size_t CountConnections (T* obj, void (T::*method) (ParamTypes...)) const;
+
+  std::size_t CountConnections (Event<ParamTypes...>& other) const;
+
+  std::size_t CountOutConnections () const;
 
   void Fire (ParamTypes ... Args);
 
@@ -145,58 +157,65 @@ class EventRef
 
   ~EventRef() {}
 
-  EventRef<ParamTypes...>& operator = (const EventRef<ParamTypes...>& orig)
-  {
+  inline EventRef<ParamTypes...>& operator = (const EventRef<ParamTypes...>& orig) {
     event_ = orig.event_;
     return *this;
   }
 
   template<typename T>
-  inline void connect (T* obj, void (T::*method)(ParamTypes...))
-  {
-    event_->Connect(obj, method);
+  inline void connect (T* obj, void (T::*method)(ParamTypes...), ConnectOption opt = ConnectLast) {
+    event_->Connect(obj, method, opt);
   }
 
   template<typename T>
-  inline void disconnect1 (T* obj, void (T::*method)(ParamTypes...))
-  {
-    event_->Disconnect1(obj, method);
+  inline void disconnect (T* obj, void (T::*method)(ParamTypes...), DisconnectOption opt = DisconnectLast) {
+    event_->Disconnect(obj, method, opt);
+  }
+
+  inline void connect (Event<ParamTypes...>& event, ConnectOption opt = ConnectLast) {
+    event_->Connect(event, opt);
+  }
+
+  inline void disconnect (Event<ParamTypes...>& event, DisconnectOption opt = DisconnectLast) {
+    event_->Disconnect(event, opt);
+  }
+
+  inline void connect (const EventRef<ParamTypes...>& other, ConnectOption opt = ConnectLast) {
+    event_->Connect(*other.event_, opt);
+  }
+
+  inline void disconnect (const EventRef<ParamTypes...>& other, DisconnectOption opt = DisconnectLast) {
+    event_->Disconnect(*other.event_, opt);
+  }
+
+  inline void remove_all_out_connections () {
+    event_->RemoveAllOutConnections();
+  }
+
+  inline void remove_all_in_connections () {
+    event_->RemoveAllInConnections();
   }
 
   template<typename T>
-  inline void disconnect (T* obj, void (T::*method)(ParamTypes...))
-  {
-    event_->Disconnect(obj, method);
+  inline bool is_connected (T* obj, void (T::*method) (ParamTypes...)) const {
+    return event_->IsConnected(obj, method);
   }
 
-  inline void connect (Event<ParamTypes...>& event)
-  {
-    event_->Connect(event);
+  inline bool is_connected (Event<ParamTypes...>& other) const {
+    return event_->IsConnected(other);
   }
 
-  inline void disconnect1 (Event<ParamTypes...>& event)
-  {
-    event_->Disconnect1(event);
+  template<typename T>
+  inline std::size_t count_connections (T* obj, void (T::*method) (ParamTypes...)) const {
+    return event_->CountConnections(obj, method);
   }
 
-  inline void disconnect (Event<ParamTypes...>& event)
-  {
-    event_->Disconnect(event);
+  inline std::size_t count_connections (Event<ParamTypes...>& other) const {
+    return event_->CountConnections(other);
   }
 
-  inline void connect (const EventRef<ParamTypes...>& other)
-  {
-    event_->Connect(*other.event_);
-  }
-
-  inline void disconnect1 (const EventRef<ParamTypes...>& other)
-  {
-    event_->Disconnect1(*other.event_);
-  }
-
-  inline void disconnect (const EventRef<ParamTypes...>& other)
-  {
-    event_->Disconnect(*other.event_);
+  inline std::size_t count_out_connections () const {
+    return event_->CountOutConnections();
   }
 
  private:
@@ -224,7 +243,7 @@ Event<ParamTypes...>::~Event ()
 
 template<typename ... ParamTypes>
 template<typename T>
-void Event<ParamTypes...>::Connect (T* obj, void (T::*method) (ParamTypes...))
+void Event<ParamTypes...>::Connect (T* obj, void (T::*method) (ParamTypes...), ConnectOption opt)
 {
   Binding* downstream = new Binding;
   Delegate<void, ParamTypes...> d =
@@ -233,90 +252,219 @@ void Event<ParamTypes...>::Connect (T* obj, void (T::*method) (ParamTypes...))
     ParamTypes...>(d);
 
   link(upstream, downstream);
-  this->PushBackToken(upstream);
-  add_binding(obj, downstream);
+  switch (opt) {
+    case ConnectFirst:
+      this->PushFrontToken(upstream);
+      push_front(obj, downstream);
+      break;
+    default:
+      this->PushBackToken(upstream);
+      push_back(obj, downstream);
+      break;
+  }
 }
 
 template<typename ... ParamTypes>
-void Event<ParamTypes...>::Connect (Event<ParamTypes...>& other)
+void Event<ParamTypes...>::Connect (Event<ParamTypes...>& other, ConnectOption opt)
 {
   EventToken<ParamTypes...>* upstream = new EventToken<ParamTypes...>(
       other);
   Binding* downstream = new Binding;
+
   link(upstream, downstream);
-  this->PushBackToken(upstream);
-  add_binding(&other, downstream);
+  switch (opt) {
+    case ConnectFirst:
+      this->PushFrontToken(upstream);
+      push_front(&other, downstream);
+      break;
+    default:
+      this->PushBackToken(upstream);
+      push_back(&other, downstream);
+      break;
+  }
 }
 
 template<typename ... ParamTypes>
 template<typename T>
-void Event<ParamTypes...>::Disconnect1 (T* obj, void (T::*method) (ParamTypes...))
+void Event<ParamTypes...>::Disconnect (T* obj, void (T::*method) (ParamTypes...), DisconnectOption opt)
 {
   DelegateToken<ParamTypes...>* conn = 0;
-  for (Token* p = last_token_; p; p = p->previous) {
+
+  switch(opt) {
+    case DisconnectFirst: {
+      for (Token* p = first_token_; p; p = p->next) {
+        conn = dynamic_cast<DelegateToken<ParamTypes...>*>(p);
+        if (conn && (conn->delegate().template equal<T>(obj, method))) {
+          delete conn;
+          break;
+        }
+      }
+      break;
+    }
+    case DisconnectLast: {
+      for (Token* p = last_token_; p; p = p->previous) {
+        conn = dynamic_cast<DelegateToken<ParamTypes...>*>(p);
+        if (conn && (conn->delegate().template equal<T>(obj, method))) {
+          delete conn;
+          break;
+        }
+      }
+      break;
+    }
+    default: {
+      Token* p1 = 0;
+      Token* p2 = 0;
+
+      if(flag_ & EventIteratorDirectionMask) {
+        p1 = last_token_;
+        while(p1) {
+          p2 = p1->previous;
+          conn = dynamic_cast<DelegateToken<ParamTypes...>*>(p1);
+          if (conn && (conn->delegate().template equal<T>(obj, method))) {
+            delete conn;
+          }
+          p1 = p2;
+        }
+      } else {
+        p1 = first_token_;
+        while(p1) {
+          p2 = p1->next;
+          conn = dynamic_cast<DelegateToken<ParamTypes...>*>(p1);
+          if (conn && (conn->delegate().template equal<T>(obj, method))) {
+            delete conn;
+          }
+          p1 = p2;
+        }
+      }
+      break;
+    }
+  }
+}
+
+template<typename ... ParamTypes>
+void Event<ParamTypes...>::Disconnect (Event<ParamTypes...>& other, DisconnectOption opt)
+{
+  EventToken<ParamTypes...>* conn = 0;
+
+  switch(opt) {
+    case DisconnectFirst: {
+      for (Token* p = first_token_; p; p = p->next) {
+        conn = dynamic_cast<EventToken<ParamTypes...>*>(p);
+        if (conn && (conn->event() == (&other))) {
+          delete conn;
+          break;
+        }
+      }
+      break;
+    }
+    case DisconnectLast: {
+      for (Token* p = last_token_; p; p = p->previous) {
+        conn = dynamic_cast<EventToken<ParamTypes...>*>(p);
+        if (conn && (conn->event() == (&other))) {
+          delete conn;
+          break;
+        }
+      }
+      break;
+    }
+    default: {
+      Token* p1 = 0;
+      Token* p2 = 0;
+
+      if(flag_ & EventIteratorDirectionMask) {
+        p1 = last_token_;
+        while(p1) {
+          p2 = p1->previous;
+          conn = dynamic_cast<EventToken<ParamTypes...>*>(p1);
+          if (conn && (conn->event() == (&other))) {
+            delete conn;
+          }
+          p1 = p2;
+        }
+      } else {
+        p1 = first_token_;
+        while(p1) {
+          p2 = p1->next;
+          conn = dynamic_cast<EventToken<ParamTypes...>*>(p1);
+          if (conn && (conn->event() == (&other))) {
+            delete conn;
+          }
+          p1 = p2;
+        }
+      }
+      break;
+    }
+  }
+}
+
+template<typename ... ParamTypes>
+template<typename T>
+bool Event<ParamTypes...>::IsConnected (T* obj, void (T::*method) (ParamTypes...)) const
+{
+  DelegateToken<ParamTypes...>* conn = 0;
+
+  for(Token* p = first_token_; p; p = p->next) {
     conn = dynamic_cast<DelegateToken<ParamTypes...>*>(p);
     if (conn && (conn->delegate().template equal<T>(obj, method))) {
-      delete conn;
-      break;
+      return true;
     }
   }
+  return false;
+}
+
+template<typename ... ParamTypes>
+bool Event<ParamTypes...>::IsConnected (Event<ParamTypes...>& other) const
+{
+  EventToken<ParamTypes...>* conn = 0;
+
+  for(Token* p = first_token_; p; p = p->next) {
+    conn = dynamic_cast<EventToken<ParamTypes...>*>(p);
+    if (conn && (conn->event() == (&other))) {
+      return true;
+    }
+  }
+  return false;
 }
 
 template<typename ... ParamTypes>
 template<typename T>
-void Event<ParamTypes...>::Disconnect (T* obj, void (T::*method) (ParamTypes...))
+std::size_t Event<ParamTypes...>::CountConnections (T* obj, void (T::*method) (ParamTypes...)) const
 {
+  std::size_t count = 0;
   DelegateToken<ParamTypes...>* conn = 0;
-  set_bit(flag_, EventIteratorDirectionMask);
-  iterator_ = last_token_;
-  while (iterator_) {
-    conn = dynamic_cast<DelegateToken<ParamTypes...>*>(iterator_);
-    if (conn && (conn->delegate().template equal<T>(obj, method)))
-      delete conn;
 
-    // check if iterator was deleted when being invoked
-    // (EventIteratorRemoveMask was set via the virtual AuditDestroyingConnection()
-    if (flag_ & EventIteratorRemoveMask)
-      clear_bit(flag_, EventIteratorRemoveMask);
-    else
-      iterator_ = iterator_->previous;
-  }
-  clear_bit(flag_, EventIteratorRemoveMask);
-  iterator_ = 0;
-}
-
-template<typename ... ParamTypes>
-void Event<ParamTypes...>::Disconnect1 (Event<ParamTypes...>& other)
-{
-  EventToken<ParamTypes...>* conn = 0;
-  for (Token* p = last_token_; p; p = p->previous) {
-    conn = dynamic_cast<EventToken<ParamTypes...>*>(p);
-    if (conn && (conn->event() == (&other))) {
-      delete conn;
-      break;
+  for(Token* p = first_token_; p; p = p->next) {
+    conn = dynamic_cast<DelegateToken<ParamTypes...>*>(p);
+    if (conn && (conn->delegate().template equal<T>(obj, method))) {
+      count++;
     }
   }
+  return count;
 }
 
 template<typename ... ParamTypes>
-void Event<ParamTypes...>::Disconnect (Event<ParamTypes...>& other)
+std::size_t Event<ParamTypes...>::CountConnections (Event<ParamTypes...>& other) const
 {
+  std::size_t count = 0;
   EventToken<ParamTypes...>* conn = 0;
-  set_bit(flag_, EventIteratorDirectionMask);
-  iterator_ = last_token_;
-  while (iterator_) {
-    conn = dynamic_cast<EventToken<ParamTypes...>*>(iterator_);
-    if (conn && (conn->event() == (&other))) delete conn;
 
-    // check if iterator was deleted when being invoked
-    // (EventIteratorRemoveMask was set via the virtual AuditDestroyingConnection()
-    if (flag_ & EventIteratorRemoveMask)
-      clear_bit(flag_, EventIteratorRemoveMask);
-    else
-      iterator_ = iterator_->previous;
+  for(Token* p = first_token_; p; p = p->next) {
+    conn = dynamic_cast<EventToken<ParamTypes...>*>(p);
+    if (conn && (conn->event() == (&other))) {
+      count++;
+    }
   }
-  iterator_ = 0;
-  clear_bit(flag_, EventIteratorRemoveMask);
+  return count;
+}
+
+template<typename ... ParamTypes>
+std::size_t Event<ParamTypes...>::CountOutConnections () const
+{
+  std::size_t count = 0;
+  for(Token* p = first_token_; p; p = p->next) {
+    count++;
+  }
+  return count;
 }
 
 template<typename ... ParamTypes>
