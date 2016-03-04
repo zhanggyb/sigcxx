@@ -59,6 +59,14 @@ class Observer: public AbstractTrackable
   virtual ~Observer ()
   { }
 
+  inline Observer(const Observer& orig)
+  { }
+  
+  inline Observer& operator = (const Observer& orig)
+  {
+    return *this;
+  }
+  
  protected:
 
   virtual void AuditDestroyingToken (Token* token) final
@@ -76,6 +84,10 @@ class Event: public AbstractTrackable
 
   virtual ~Event ();
 
+  Event (const Event& orig) = delete;
+  
+  Event& operator = (const Event& orig) = delete;
+  
   /**
    * @brief Connect this event to a method in a observer
    */
@@ -136,91 +148,6 @@ class Event: public AbstractTrackable
 
   Token* iterator_;  // a pointer to iterate through all connections
   int flag_;
-};
-
-// EventRef declaration:
-
-template<typename ... ParamTypes>
-class EventRef
-{
- public:
-
-  EventRef () = delete;
-
-  inline EventRef(Event<ParamTypes...>& event)
-      : event_(&event)
-  { }
-
-  inline EventRef(const EventRef<ParamTypes...>& orig)
-      : event_(orig.event_)
-  { }
-
-  ~EventRef() {}
-
-  inline EventRef<ParamTypes...>& operator = (const EventRef<ParamTypes...>& orig) {
-    event_ = orig.event_;
-    return *this;
-  }
-
-  template<typename T>
-  inline void connect (T* obj, void (T::*method)(ParamTypes...), ConnectOption opt = ConnectLast) {
-    event_->Connect(obj, method, opt);
-  }
-
-  template<typename T>
-  inline void disconnect (T* obj, void (T::*method)(ParamTypes...), DisconnectOption opt = DisconnectLast) {
-    event_->Disconnect(obj, method, opt);
-  }
-
-  inline void connect (Event<ParamTypes...>& event, ConnectOption opt = ConnectLast) {
-    event_->Connect(event, opt);
-  }
-
-  inline void disconnect (Event<ParamTypes...>& event, DisconnectOption opt = DisconnectLast) {
-    event_->Disconnect(event, opt);
-  }
-
-  inline void connect (const EventRef<ParamTypes...>& other, ConnectOption opt = ConnectLast) {
-    event_->Connect(*other.event_, opt);
-  }
-
-  inline void disconnect (const EventRef<ParamTypes...>& other, DisconnectOption opt = DisconnectLast) {
-    event_->Disconnect(*other.event_, opt);
-  }
-
-  inline void remove_all_out_connections () {
-    event_->RemoveAllOutConnections();
-  }
-
-  inline void remove_all_in_connections () {
-    event_->RemoveAllInConnections();
-  }
-
-  template<typename T>
-  inline bool is_connected (T* obj, void (T::*method) (ParamTypes...)) const {
-    return event_->IsConnected(obj, method);
-  }
-
-  inline bool is_connected (Event<ParamTypes...>& other) const {
-    return event_->IsConnected(other);
-  }
-
-  template<typename T>
-  inline std::size_t count_connections (T* obj, void (T::*method) (ParamTypes...)) const {
-    return event_->CountConnections(obj, method);
-  }
-
-  inline std::size_t count_connections (Event<ParamTypes...>& other) const {
-    return event_->CountConnections(other);
-  }
-
-  inline std::size_t count_out_connections () const {
-    return event_->CountOutConnections();
-  }
-
- private:
-
-  Event<ParamTypes...>* event_;
 };
 
 // Event implementation:

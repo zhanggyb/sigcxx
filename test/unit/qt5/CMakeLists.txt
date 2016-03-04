@@ -7,6 +7,7 @@ set(CMAKE_AUTOMOC ON)
 find_package(Qt5Core)
 
 file(GLOB sources "*.cpp")
+file(GLOB headers "*.hpp")
 
-add_executable(testCompareQt5 ${sources})
+add_executable(testCompareQt5 ${sources} ${headers})
 target_link_libraries(testCompareQt5 cppevent gtest Qt5::Core)

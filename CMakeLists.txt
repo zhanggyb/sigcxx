@@ -6,6 +6,7 @@ cmake_minimum_required(VERSION 2.8.11)
 project(libCppEvent)
 
 # You may need to set environment variable CMAKE_PREFIX_PATH, see http://doc.qt.io/qt-5/cmake-manual.html
+option(BUILD_UNIT_TEST "Build unit test code" OFF)
 option(WITH_QT5 "Build unit test to compare this with Qt5" OFF)
 
 if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
@@ -21,6 +22,9 @@ endif()
 include_directories(${PROJECT_SOURCE_DIR}/include)
 
 add_subdirectory(src)
-add_subdirectory(test)
+
+if(BUILD_UNIT_TEST)
+  add_subdirectory(test)
+endif()
 
 install(DIRECTORY "${PROJECT_SOURCE_DIR}/include/cppevent" DESTINATION include)

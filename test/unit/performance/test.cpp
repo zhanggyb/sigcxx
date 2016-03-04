@@ -22,7 +22,7 @@ TEST_F(Test, connect_event_once)
 
   for(int i = 0; i < 1000000; i++)
   {
-    source.foo().connect(&consumer, &Consumer::onCallback);
+    source.foo().Connect(&consumer, &Consumer::onCallback);
   }
 
   source.DoTest();

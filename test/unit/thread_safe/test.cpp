@@ -46,13 +46,13 @@ void thread1 () {
   for(int i = 0; i < 100; i++) {
 
     lock.lock();
-    s.event1().connect(&c, static_cast<void (Consumer::*)(int)>(&Consumer::OnTest1));
+    s.event1().Connect(&c, static_cast<void (Consumer::*)(int)>(&Consumer::OnTest1));
     lock.unlock();
 
     s.DoTest1(1);
 
     lock.lock();
-    s.event1().disconnect(&c, static_cast<void (Consumer::*)(int)>(&Consumer::OnTest1));
+    s.event1().Disconnect(&c, static_cast<void (Consumer::*)(int)>(&Consumer::OnTest1));
     lock.unlock();
 
     //std::this_thread::sleep_for(std::chrono::milliseconds(100));
@@ -65,13 +65,13 @@ void thread2 () {
 
   for(int i = 0; i < 100; i++) {
     lock.lock();
-    s.event1().connect(&c, static_cast<void (Consumer::*)(int)>(&Consumer::OnTest1));
+    s.event1().Connect(&c, static_cast<void (Consumer::*)(int)>(&Consumer::OnTest1));
     lock.unlock();
 
     s.DoTest1(1);
 
     lock.lock();
-    s.event1().disconnect(&c, static_cast<void (Consumer::*)(int)>(&Consumer::OnTest1));
+    s.event1().Disconnect(&c, static_cast<void (Consumer::*)(int)>(&Consumer::OnTest1));
     lock.unlock();
     //std::this_thread::sleep_for(std::chrono::milliseconds(100));
   }
@@ -86,7 +86,7 @@ void thread3 () {
     lc = new Consumer();
 
     lock.lock();
-    s.event1().connect(lc, static_cast<void (Consumer::*)(int)>(&Consumer::OnTest1));
+    s.event1().Connect(lc, static_cast<void (Consumer::*)(int)>(&Consumer::OnTest1));
     lock.unlock();
 
     s.DoTest1(3);
@@ -106,7 +106,7 @@ void thread4 () {
     ls = new Source();
 
     lock.lock();
-    ls->event1().connect(&c, static_cast<void (Consumer::*)(int)>(&Consumer::OnTest1));
+    ls->event1().Connect(&c, static_cast<void (Consumer::*)(int)>(&Consumer::OnTest1));
     lock.unlock();
 
     ls->DoTest1(3);

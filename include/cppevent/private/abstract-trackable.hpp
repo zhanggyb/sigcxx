@@ -102,7 +102,7 @@ class AbstractTrackable
   void RemoveAllInConnections ();
 
   std::size_t CountInConnections () const;
-
+  
  protected:
 
   virtual void AuditDestroyingToken (Token* token) = 0;

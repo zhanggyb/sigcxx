@@ -31,7 +31,7 @@ class Source
     event1_.Fire(n);
   }
 
-  inline CppEvent::EventRef<int> event1 ()
+  inline CppEvent::Event<int>& event1 ()
   {
     return event1_;
   }

@@ -27,7 +27,7 @@ class Source
     event_.Fire(this);
   }
 
-  inline CppEvent::EventRef<Source*> event ()
+  inline CppEvent::Event<Source*>& event ()
   {
     return event_;
   }
@@ -53,17 +53,17 @@ class Consumer: public CppEvent::Observer
 
   void OnTestDisconnectFirst (Source* sender)
   {
-    sender->event().disconnect(this, &Consumer::OnTestDisconnectFirst, CppEvent::DisconnectFirst);
+    sender->event().Disconnect(this, &Consumer::OnTestDisconnectFirst, CppEvent::DisconnectFirst);
   }
 
   void OnTestDisconnectLast (Source* sender)
   {
-    sender->event().disconnect(this, &Consumer::OnTestDisconnectLast, CppEvent::DisconnectLast);
+    sender->event().Disconnect(this, &Consumer::OnTestDisconnectLast, CppEvent::DisconnectLast);
   }
 
   void OnTestDisconnectAll (Source* sender)
   {
-    sender->event().disconnect(this, &Consumer::OnTestDisconnectAll, CppEvent::DisconnectAll);
+    sender->event().Disconnect(this, &Consumer::OnTestDisconnectAll, CppEvent::DisconnectAll);
   }
 
 };
@@ -76,9 +76,9 @@ TEST_F(Test, disconnect_first_on_fire1)
   Source s;
   Consumer c;
 
-  s.event().connect(&c, &Consumer::OnTestDisconnectFirst);
-  s.event().connect(&c, &Consumer::OnTestNothing);
-  s.event().connect(&c, &Consumer::OnTestNothing);
+  s.event().Connect(&c, &Consumer::OnTestDisconnectFirst);
+  s.event().Connect(&c, &Consumer::OnTestNothing);
+  s.event().Connect(&c, &Consumer::OnTestNothing);
 
   s.DoTest();
   ASSERT_TRUE(c.CountInConnections() == 2);
@@ -92,9 +92,9 @@ TEST_F(Test, disconnect_first_on_fire2)
   Source s;
   Consumer c;
 
-  s.event().connect(&c, &Consumer::OnTestNothing);
-  s.event().connect(&c, &Consumer::OnTestDisconnectFirst);
-  s.event().connect(&c, &Consumer::OnTestNothing);
+  s.event().Connect(&c, &Consumer::OnTestNothing);
+  s.event().Connect(&c, &Consumer::OnTestDisconnectFirst);
+  s.event().Connect(&c, &Consumer::OnTestNothing);
 
   s.DoTest();
   ASSERT_TRUE(c.CountInConnections() == 2);
@@ -108,9 +108,9 @@ TEST_F(Test, disconnect_last_on_fire1)
   Source s;
   Consumer c;
 
-  s.event().connect(&c, &Consumer::OnTestNothing);
-  s.event().connect(&c, &Consumer::OnTestNothing);
-  s.event().connect(&c, &Consumer::OnTestDisconnectLast);
+  s.event().Connect(&c, &Consumer::OnTestNothing);
+  s.event().Connect(&c, &Consumer::OnTestNothing);
+  s.event().Connect(&c, &Consumer::OnTestDisconnectLast);
 
   s.DoTest();
   ASSERT_TRUE(c.CountInConnections() == 2);
@@ -124,9 +124,9 @@ TEST_F(Test, disconnect_last_on_fire2)
   Source s;
   Consumer c;
 
-  s.event().connect(&c, &Consumer::OnTestDisconnectLast);
-  s.event().connect(&c, &Consumer::OnTestNothing);
-  s.event().connect(&c, &Consumer::OnTestNothing);
+  s.event().Connect(&c, &Consumer::OnTestDisconnectLast);
+  s.event().Connect(&c, &Consumer::OnTestNothing);
+  s.event().Connect(&c, &Consumer::OnTestNothing);
 
   s.DoTest();
   ASSERT_TRUE(c.CountInConnections() == 2);
@@ -140,11 +140,11 @@ TEST_F(Test, disconnect_all_on_fire1)
   Source s;
   Consumer c;
 
-  s.event().connect(&c, &Consumer::OnTestDisconnectAll);
-  s.event().connect(&c, &Consumer::OnTestDisconnectAll);
-  s.event().connect(&c, &Consumer::OnTestNothing);
-  s.event().connect(&c, &Consumer::OnTestDisconnectAll);
-  s.event().connect(&c, &Consumer::OnTestDisconnectAll);
+  s.event().Connect(&c, &Consumer::OnTestDisconnectAll);
+  s.event().Connect(&c, &Consumer::OnTestDisconnectAll);
+  s.event().Connect(&c, &Consumer::OnTestNothing);
+  s.event().Connect(&c, &Consumer::OnTestDisconnectAll);
+  s.event().Connect(&c, &Consumer::OnTestDisconnectAll);
 
   s.DoTest();
   ASSERT_TRUE(c.CountInConnections() == 1);

@@ -1,7 +1,7 @@
 # CMake file for libCppEvent project
 #
 
-file(GLOB Header_Files "${PROJECT_SOURCE_DIR}/include/cppevent/*.hpp")
+file(GLOB Header_Files "${PROJECT_SOURCE_DIR}/include/cppevent/*.hpp" "${PROJECT_SOURCE_DIR}/include/cppevent/private/*.hpp")
 file(GLOB Source_Files "*.cpp")
 
 add_library (cppevent ${Header_Files} ${Source_Files})

@@ -35,12 +35,12 @@ class Source
     event2_.Fire(n1, n2);
   }
 
-  inline CppEvent::EventRef<int> event1 ()
+  inline CppEvent::Event<int>& event1 ()
   {
     return event1_;
   }
 
-  inline CppEvent::EventRef<int, int> event2 ()
+  inline CppEvent::Event<int, int>& event2 ()
   {
     return event2_;
   }
@@ -51,7 +51,16 @@ class Source
   CppEvent::Event<int, int> event2_;
 };
 
-class Consumer: public CppEvent::Observer
+class AbstractConsumer: public CppEvent::Observer
+{
+public:
+  AbstractConsumer() {}
+  virtual ~AbstractConsumer() {}
+
+  virtual void OnVirtualTest (int n) = 0;
+};
+
+class Consumer: public AbstractConsumer
 {
  public:
 
@@ -79,7 +88,7 @@ class Consumer: public CppEvent::Observer
               << std::endl;
   }
 
-  virtual void OnVirtualTest (int n)
+  virtual void OnVirtualTest (int n) override
   {
     virtualtest_count_++;
     std::cout << "Virtual test in base class, param: " << n << ", " << virtualtest_count_ << " times."
@@ -122,7 +131,7 @@ class SubConsumer: public Consumer
 
   virtual ~SubConsumer() {}
 
-  virtual void OnVirtualTest (int n)
+  virtual void OnVirtualTest (int n) override
   {
     set_virtualtest_count(virtualtest_count() + 1);
     std::cout << "Virtual test in sub class, param: " << n << ", " << virtualtest_count() << " times."

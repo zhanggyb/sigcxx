@@ -59,7 +59,7 @@ class Source
     foo_.Fire();
   }
 
-  CppEvent::EventRef<> foo ()
+  CppEvent::Event<>& foo ()
   {
     return foo_;
   }

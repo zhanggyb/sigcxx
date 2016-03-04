@@ -29,12 +29,12 @@ class Source
 
   void DoTest2 (int n1, int n2);
 
-  inline CppEvent::EventRef<int> event1 ()
+  inline CppEvent::Event<int>& event1 ()
   {
     return event1_;
   }
 
-  inline CppEvent::EventRef<int, int> event2 ()
+  inline CppEvent::Event<int, int>& event2 ()
   {
     return event2_;
   }
