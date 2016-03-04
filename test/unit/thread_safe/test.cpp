@@ -52,7 +52,7 @@ void thread1 () {
     s.DoTest1(1);
 
     lock.lock();
-    s.event1().Disconnect(&c, static_cast<void (Consumer::*)(int)>(&Consumer::OnTest1));
+    s.event1().DisconnectAll(&c, static_cast<void (Consumer::*)(int)>(&Consumer::OnTest1));
     lock.unlock();
 
     //std::this_thread::sleep_for(std::chrono::milliseconds(100));
@@ -71,7 +71,7 @@ void thread2 () {
     s.DoTest1(1);
 
     lock.lock();
-    s.event1().Disconnect(&c, static_cast<void (Consumer::*)(int)>(&Consumer::OnTest1));
+    s.event1().DisconnectAll(&c, static_cast<void (Consumer::*)(int)>(&Consumer::OnTest1));
     lock.unlock();
     //std::this_thread::sleep_for(std::chrono::milliseconds(100));
   }

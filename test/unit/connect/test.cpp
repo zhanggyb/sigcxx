@@ -185,7 +185,7 @@ TEST_F(Test, disconnect)
   Consumer c;
 
   s.event1().Connect(&c, &Consumer::OnTest1);
-  s.event1().Disconnect(&c, &Consumer::OnTest1);
+  s.event1().DisconnectAll(&c, &Consumer::OnTest1);
 
   s.DoTest1(1);	// nothing should be output in stdout
   ASSERT_TRUE(c.test1_count() == 0 && c.CountInConnections() == 0);
@@ -221,7 +221,7 @@ TEST_F(Test, disconnect_all)
   s.event1().Connect(&c, &Consumer::OnTest1);
   s.event1().Connect(&c, &Consumer::OnTest1);
 
-  s.event1().Disconnect(&c, &Consumer::OnTest1, CppEvent::DisconnectAll);
+  s.event1().DisconnectAll(&c, &Consumer::OnTest1);
 
   s.DoTest1(1);	// nothing should be output in stdout
 
@@ -257,8 +257,8 @@ TEST_F(Test, disconnect_once)
   s.event1().Connect(&c, &Consumer::OnTest1);
   s.event1().Connect(&c, &Consumer::OnTest1);
 
-  s.event1().Disconnect(&c, &Consumer::OnTest1, CppEvent::DisconnectFirst);
-  s.event1().Disconnect(&c, &Consumer::OnTest1, CppEvent::DisconnectLast);
+  s.event1().DisconnectOnce(&c, &Consumer::OnTest1, 0);
+  s.event1().DisconnectOnce(&c, &Consumer::OnTest1, -1);
 
   s.DoTest1(1);
 

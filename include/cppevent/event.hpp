@@ -34,17 +34,6 @@
 
 namespace CppEvent {
 
-enum ConnectOption {
-  ConnectFirst = 0,
-  ConnectLast = 1
-};
-
-enum DisconnectOption {
-  DisconnectFirst = 0,
-  DisconnectLast = 1,
-  DisconnectAll = 2
-};
-
 /**
  * @brief The base class for observer
  */
@@ -92,20 +81,31 @@ class Event: public AbstractTrackable
    * @brief Connect this event to a method in a observer
    */
   template<typename T>
-  void Connect (T* obj, void (T::*method) (ParamTypes...), ConnectOption opt = ConnectLast);
+  void Connect (T* obj, void (T::*method) (ParamTypes...), int index = -1);
 
-  void Connect (Event<ParamTypes...>& other, ConnectOption opt = ConnectLast);
+  void Connect (Event<ParamTypes...>& other, int index = -1);
+
+  /**
+   * @brief Disconnect all delegates to a method
+   */
+  template<typename T>
+  void DisconnectAll (T* obj, void (T::*method) (ParamTypes...));
+
+  /**
+   * @brief Disconnect all events
+   */
+  void DisconnectAll (Event<ParamTypes...>& other);
 
   /**
    * @brief Disconnect the last delegate to a method
    */
   template<typename T>
-  void Disconnect (T* obj, void (T::*method) (ParamTypes...), DisconnectOption opt = DisconnectLast);
+  void DisconnectOnce (T* obj, void (T::*method) (ParamTypes...), int start_pos = -1);
 
   /**
    * @brief Disconnect the last event
    */
-  void Disconnect (Event<ParamTypes...>& other, DisconnectOption opt = DisconnectLast);
+  void DisconnectOnce (Event<ParamTypes...>& other, int start_pos = -1);
 
   void RemoveAllOutConnections ();
 
@@ -122,6 +122,8 @@ class Event: public AbstractTrackable
   std::size_t CountOutConnections () const;
 
   void Fire (ParamTypes ... Args);
+  
+  inline void operator () (ParamTypes ... Args);
 
  protected:
 
@@ -133,6 +135,16 @@ class Event: public AbstractTrackable
 
   void InsertToken (int index, InvokableToken<ParamTypes...>* token);
 
+  inline Token* first_token () const
+  {
+    return first_token_;
+  }
+  
+  inline Token* last_token () const
+  {
+    return last_token_;
+  }
+  
  private:
 
   static inline void set_bit (int& v, int m) { v |= m;}
@@ -170,7 +182,7 @@ Event<ParamTypes...>::~Event ()
 
 template<typename ... ParamTypes>
 template<typename T>
-void Event<ParamTypes...>::Connect (T* obj, void (T::*method) (ParamTypes...), ConnectOption opt)
+void Event<ParamTypes...>::Connect (T* obj, void (T::*method) (ParamTypes...), int index)
 {
   Binding* downstream = new Binding;
   Delegate<void, ParamTypes...> d =
@@ -179,56 +191,120 @@ void Event<ParamTypes...>::Connect (T* obj, void (T::*method) (ParamTypes...), C
     ParamTypes...>(d);
 
   link(upstream, downstream);
-  switch (opt) {
-    case ConnectFirst:
-      this->PushFrontToken(upstream);
-      push_front(obj, downstream);
-      break;
-    default:
-      this->PushBackToken(upstream);
-      push_back(obj, downstream);
-      break;
-  }
+  InsertToken(index, upstream);
+  push_back(obj, downstream);  // always push back binding, don't care about the position in observer
 }
 
 template<typename ... ParamTypes>
-void Event<ParamTypes...>::Connect (Event<ParamTypes...>& other, ConnectOption opt)
+void Event<ParamTypes...>::Connect (Event<ParamTypes...>& other, int index)
 {
   EventToken<ParamTypes...>* upstream = new EventToken<ParamTypes...>(
       other);
   Binding* downstream = new Binding;
 
   link(upstream, downstream);
-  switch (opt) {
-    case ConnectFirst:
-      this->PushFrontToken(upstream);
-      push_front(&other, downstream);
-      break;
-    default:
-      this->PushBackToken(upstream);
-      push_back(&other, downstream);
-      break;
-  }
+  InsertToken(index, upstream);
+  push_back(&other, downstream);  // always push back binding, don't care about the position in observer
 }
 
 template<typename ... ParamTypes>
 template<typename T>
-void Event<ParamTypes...>::Disconnect (T* obj, void (T::*method) (ParamTypes...), DisconnectOption opt)
+void Event<ParamTypes...>::DisconnectAll (T* obj, void (T::*method) (ParamTypes...))
 {
   DelegateToken<ParamTypes...>* conn = 0;
 
-  switch(opt) {
-    case DisconnectFirst: {
-      for (Token* p = first_token_; p; p = p->next) {
+  Token* p1 = 0;
+  Token* p2 = 0;
+  
+  if(flag_ & EventIteratorDirectionMask) {
+    p1 = last_token_;
+    while(p1) {
+      p2 = p1->previous;
+      conn = dynamic_cast<DelegateToken<ParamTypes...>*>(p1);
+      if (conn && (conn->delegate().template equal<T>(obj, method))) {
+        delete conn;
+      }
+      p1 = p2;
+    }
+  } else {
+    p1 = first_token_;
+    while(p1) {
+      p2 = p1->next;
+      conn = dynamic_cast<DelegateToken<ParamTypes...>*>(p1);
+      if (conn && (conn->delegate().template equal<T>(obj, method))) {
+        delete conn;
+      }
+      p1 = p2;
+    }
+  }
+
+}
+  
+template<typename ... ParamTypes>
+void Event<ParamTypes...>::DisconnectAll (Event<ParamTypes...>& other)
+{
+  EventToken<ParamTypes...>* conn = 0;
+
+  Token* p1 = 0;
+  Token* p2 = 0;
+  
+  if(flag_ & EventIteratorDirectionMask) {
+    p1 = last_token_;
+    while(p1) {
+      p2 = p1->previous;
+      conn = dynamic_cast<EventToken<ParamTypes...>*>(p1);
+      if (conn && (conn->event() == (&other))) {
+        delete conn;
+      }
+      p1 = p2;
+    }
+  } else {
+    p1 = first_token_;
+    while(p1) {
+      p2 = p1->next;
+      conn = dynamic_cast<EventToken<ParamTypes...>*>(p1);
+      if (conn && (conn->event() == (&other))) {
+        delete conn;
+      }
+      p1 = p2;
+    }
+  }
+
+}
+  
+template<typename ... ParamTypes>
+template<typename T>
+void Event<ParamTypes...>::DisconnectOnce (T* obj, void (T::*method) (ParamTypes...), int start_pos)
+{
+  DelegateToken<ParamTypes...>* conn = 0;
+  Token* start = 0;
+
+  if (start_pos >= 0) {
+    start = first_token_;
+    
+    while (start && (start_pos > 0)) {
+      start = start->next;
+      start_pos--;
+    }
+    
+    if (start) {
+      for (Token* p = start; p; p = p->next) {
         conn = dynamic_cast<DelegateToken<ParamTypes...>*>(p);
         if (conn && (conn->delegate().template equal<T>(obj, method))) {
           delete conn;
           break;
         }
       }
-      break;
     }
-    case DisconnectLast: {
+  } else {
+    start = last_token_;
+    
+    while (start && (start_pos < -1)) {
+      start = start->previous;
+      start_pos++;
+    }
+    
+    if (start) {
       for (Token* p = last_token_; p; p = p->previous) {
         conn = dynamic_cast<DelegateToken<ParamTypes...>*>(p);
         if (conn && (conn->delegate().template equal<T>(obj, method))) {
@@ -236,55 +312,43 @@ void Event<ParamTypes...>::Disconnect (T* obj, void (T::*method) (ParamTypes...)
           break;
         }
       }
-      break;
     }
-    default: {
-      Token* p1 = 0;
-      Token* p2 = 0;
-
-      if(flag_ & EventIteratorDirectionMask) {
-        p1 = last_token_;
-        while(p1) {
-          p2 = p1->previous;
-          conn = dynamic_cast<DelegateToken<ParamTypes...>*>(p1);
-          if (conn && (conn->delegate().template equal<T>(obj, method))) {
-            delete conn;
-          }
-          p1 = p2;
-        }
-      } else {
-        p1 = first_token_;
-        while(p1) {
-          p2 = p1->next;
-          conn = dynamic_cast<DelegateToken<ParamTypes...>*>(p1);
-          if (conn && (conn->delegate().template equal<T>(obj, method))) {
-            delete conn;
-          }
-          p1 = p2;
-        }
-      }
-      break;
-    }
+    
   }
 }
 
 template<typename ... ParamTypes>
-void Event<ParamTypes...>::Disconnect (Event<ParamTypes...>& other, DisconnectOption opt)
+void Event<ParamTypes...>::DisconnectOnce (Event<ParamTypes...>& other, int start_pos)
 {
   EventToken<ParamTypes...>* conn = 0;
-
-  switch(opt) {
-    case DisconnectFirst: {
-      for (Token* p = first_token_; p; p = p->next) {
+  Token* start = 0;
+  
+  if (start_pos >= 0) {
+    start = first_token_;
+    
+    while (start && (start_pos > 0)) {
+      start = start->next;
+      start_pos--;
+    }
+    
+    if (start) {
+      for (Token* p = start; p; p = p->next) {
         conn = dynamic_cast<EventToken<ParamTypes...>*>(p);
         if (conn && (conn->event() == (&other))) {
           delete conn;
           break;
         }
       }
-      break;
     }
-    case DisconnectLast: {
+  } else {
+    start = last_token_;
+    
+    while (start && (start_pos < -1)) {
+      start = start->previous;
+      start_pos++;
+    }
+    
+    if (start) {
       for (Token* p = last_token_; p; p = p->previous) {
         conn = dynamic_cast<EventToken<ParamTypes...>*>(p);
         if (conn && (conn->event() == (&other))) {
@@ -292,35 +356,8 @@ void Event<ParamTypes...>::Disconnect (Event<ParamTypes...>& other, DisconnectOp
           break;
         }
       }
-      break;
     }
-    default: {
-      Token* p1 = 0;
-      Token* p2 = 0;
-
-      if(flag_ & EventIteratorDirectionMask) {
-        p1 = last_token_;
-        while(p1) {
-          p2 = p1->previous;
-          conn = dynamic_cast<EventToken<ParamTypes...>*>(p1);
-          if (conn && (conn->event() == (&other))) {
-            delete conn;
-          }
-          p1 = p2;
-        }
-      } else {
-        p1 = first_token_;
-        while(p1) {
-          p2 = p1->next;
-          conn = dynamic_cast<EventToken<ParamTypes...>*>(p1);
-          if (conn && (conn->event() == (&other))) {
-            delete conn;
-          }
-          p1 = p2;
-        }
-      }
-      break;
-    }
+    
   }
 }
 
@@ -412,6 +449,12 @@ void Event<ParamTypes...>::Fire (ParamTypes ... Args)
   iterator_ = 0;
   clear_bit(flag_, EventIteratorRemoveMask);
 }
+  
+template<typename ... ParamTypes>
+inline void Event<ParamTypes...>::operator()(ParamTypes ... Args)
+{
+  Fire(Args...);
+}
 
 template<typename ... ParamTypes>
 void Event<ParamTypes...>::AuditDestroyingToken (Token* token)
@@ -479,47 +522,78 @@ void Event<ParamTypes...>::InsertToken(int index, InvokableToken<ParamTypes...>*
 #ifdef DEBUG
   assert(token->trackable_object == 0);
 #endif
-
+  
   if (first_token_ == 0) {
 #ifdef DEBUG
     assert(last_token_ == 0);
 #endif
-
     token->next = 0;
     last_token_ = token;
     first_token_ = token;
     token->previous = 0;
   } else {
-    if (index > 0) {
-
+    if (index >= 0) {
+      
       Token* p = first_token_;
-
+#ifdef DEBUG
+      assert(p != 0);
+#endif
+      
       while (p && (index > 0)) {
-        if (p->next == 0) break;
         p = p->next;
         index--;
       }
-
-      if (index == 0) {  // insert
+      
+      if (p) {  // insert before p
+        
         token->previous = p->previous;
         token->next = p;
-        p->previous->next = token;
+        
+        if (p->previous) p->previous->next = token;
+        else first_token_ = token;
+        
         p->previous = token;
-      } else {  // same as push back
-#ifdef DEBUG
-        assert(p == last_token_);
-#endif
+        
+      } else {  // push back
+        
         last_token_->next = token;
         token->previous = last_token_;
         last_token_ = token;
         token->next = 0;
+        
       }
-
-    } else {  // same as push front
-      first_token_->previous = token;
-      token->next = first_token_;
-      first_token_ = token;
-      token->previous = 0;
+      
+    } else {
+      
+      Token* p = last_token_;
+#ifdef DEBUG
+      assert(p != 0);
+#endif
+      
+      while (p && (index < -1)) {
+        p = p->previous;
+        index++;
+      }
+      
+      if (p) {  // insert after p
+        
+        token->next = p->next;
+        token->previous = p;
+        
+        if (p->next) p->next->previous = token;
+        else last_token_ = token;
+        
+        p->next = token;
+        
+      } else {  // push front
+        
+        first_token_->previous = token;
+        token->next = first_token_;
+        first_token_ = token;
+        token->previous = 0;
+        
+      }
+      
     }
   }
   token->trackable_object = this;

@@ -53,17 +53,17 @@ class Consumer: public CppEvent::Observer
 
   void OnTestDisconnectFirst (Source* sender)
   {
-    sender->event().Disconnect(this, &Consumer::OnTestDisconnectFirst, CppEvent::DisconnectFirst);
+    sender->event().DisconnectOnce(this, &Consumer::OnTestDisconnectFirst, 0);
   }
 
   void OnTestDisconnectLast (Source* sender)
   {
-    sender->event().Disconnect(this, &Consumer::OnTestDisconnectLast, CppEvent::DisconnectLast);
+    sender->event().DisconnectOnce(this, &Consumer::OnTestDisconnectLast, -1);
   }
 
   void OnTestDisconnectAll (Source* sender)
   {
-    sender->event().Disconnect(this, &Consumer::OnTestDisconnectAll, CppEvent::DisconnectAll);
+    sender->event().DisconnectAll(this, &Consumer::OnTestDisconnectAll);
   }
 
 };

@@ -4,8 +4,9 @@
 
 set(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)
 
+add_subdirectory(trackable)
+add_subdirectory(event)
 add_subdirectory(delegate)
-add_subdirectory(basic)
 add_subdirectory(connect)
 add_subdirectory(disconnect_on_fire)
 add_subdirectory(derived)

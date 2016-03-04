@@ -131,42 +131,73 @@ void AbstractTrackable::InsertBinding (int index, Binding* node)
 #ifdef DEBUG
     assert(last_binding_ == 0);
 #endif
-
     node->next = 0;
     last_binding_ = node;
     first_binding_ = node;
     node->previous = 0;
   } else {
-    if (index > 0) {
+    if (index >= 0) {
 
       Binding* p = first_binding_;
+#ifdef DEBUG
+      assert(p != 0);
+#endif
 
       while (p && (index > 0)) {
-        if (p->next == 0) break;
         p = p->next;
         index--;
       }
 
-      if (index == 0) {  // insert
+      if (p) {  // insert before p
+
         node->previous = p->previous;
         node->next = p;
-        p->previous->next = node;
+
+        if (p->previous) p->previous->next = node;
+        else first_binding_ = node;
+
         p->previous = node;
-      } else {  // same as push back
-#ifdef DEBUG
-        assert(p == last_binding_);
-#endif
+
+      } else {  // push back
+
         last_binding_->next = node;
         node->previous = last_binding_;
         last_binding_ = node;
         node->next = 0;
-      }
 
-    } else {  // same as push front
-      first_binding_->previous = node;
-      node->next = first_binding_;
-      first_binding_ = node;
-      node->previous = 0;
+      }
+      
+    } else {
+      
+      Binding* p = last_binding_;
+#ifdef DEBUG
+      assert(p != 0);
+#endif
+
+      while (p && (index < -1)) {
+        p = p->previous;
+        index++;
+      }
+      
+      if (p) {  // insert after p
+
+        node->next = p->next;
+        node->previous = p;
+        
+        if (p->next) p->next->previous = node;
+        else last_binding_ = node;
+
+        p->next = node;
+      
+      } else {  // push front
+
+        first_binding_->previous = node;
+        node->next = first_binding_;
+        first_binding_ = node;
+        node->previous = 0;
+
+      }
+      
     }
   }
   node->trackable_object = this;

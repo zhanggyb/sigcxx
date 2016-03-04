@@ -141,6 +141,16 @@ class AbstractTrackable
   {
     trackable->InsertBinding(index, conn);
   }
+  
+  inline Binding* first_binding () const
+  {
+    return first_binding_;
+  }
+  
+  inline Binding* last_binding () const
+  {
+    return last_binding_;
+  }
 
  private:
 
