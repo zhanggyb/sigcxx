@@ -43,28 +43,3 @@ class Consumer: public CppEvent::Observer
 
   size_t count_;
 };
-
-class Source
-{
- public:
-
-  Source ()
-  {}
-
-  ~Source ()
-  {}
-
-  void DoTest ()
-  {
-    foo_.Fire();
-  }
-
-  CppEvent::Event<>& foo ()
-  {
-    return foo_;
-  }
-
- private:
-
-  CppEvent::Event<> foo_;
-};

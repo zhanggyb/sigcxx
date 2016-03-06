@@ -14,7 +14,7 @@ Test::Test()
 
 Test::~Test()
 {
-  
+
 }
 
 TEST_F(Test, qt_signal_slot)
@@ -25,7 +25,7 @@ TEST_F(Test, qt_signal_slot)
   QObject::connect(&s, &QtSource::valueChanged, &c, &QtConsumer::setValue);
 
   for(int i = 0; i < TEST_CYCLE_NUM; i++) {
-    s.DoTest1(i);	// this should call 1 times
+    s.DoTest1(i);
   }
   ASSERT_TRUE(true);
 }
@@ -41,7 +41,7 @@ TEST_F(Test, cppevent)
   s.event1().Connect(&c, &Consumer::OnTest1);
 
   for(int i = 0; i < TEST_CYCLE_NUM; i++) {
-    s.DoTest1(i);	// this should call 1 times
+    s.DoTest1(i);
   }
   ASSERT_TRUE(true);
 }
