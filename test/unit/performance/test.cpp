@@ -50,10 +50,10 @@ TEST_F(Test, connect_many_events)
 
 struct Simple
 {
-public:
+ public:
 
   Simple ()
-  : value(0) {}
+      : value(0) {}
 
   void operator()()
   {

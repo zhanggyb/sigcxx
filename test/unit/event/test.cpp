@@ -17,9 +17,9 @@ Test::~Test()
 
 struct VToken: public CppEvent::InvokableToken<>
 {
-public:
+ public:
   VToken(int value = 0)
-  : CppEvent::InvokableToken<>(), v(value)
+      : CppEvent::InvokableToken<>(), v(value)
   {}
   
   int v;
@@ -27,9 +27,9 @@ public:
 
 class Event: public CppEvent::Event<>
 {
-public:
+ public:
   Event ()
-  : CppEvent::Event<>()
+      : CppEvent::Event<>()
   { }
   
   virtual ~Event()

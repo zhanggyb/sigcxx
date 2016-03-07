@@ -144,8 +144,15 @@ TEST_F(Test, connect_consumer_in_threads)
     t[i].join();
   }
 
+  ASSERT_TRUE(true);
 }
 
+/*
+ * Test complex sinario in which there're a large mount connection and disconnection
+ *
+ * It will take a long time to complete, and the result is always true.
+ * The purpose is to make sure there's no segment fault occurs.
+ */
 TEST_F(Test, complex)
 {
   thread ta[100];
@@ -178,4 +185,6 @@ TEST_F(Test, complex)
   for(int i = 0; i < 100; i++) {
     td[i].join();
   }
+
+  ASSERT_TRUE(true);
 }

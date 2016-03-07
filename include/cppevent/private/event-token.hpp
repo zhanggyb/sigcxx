@@ -36,7 +36,7 @@ template<typename ... ParamTypes> class Event;
 template<typename ... ParamTypes>
 class EventToken : public InvokableToken < ParamTypes... >
 {
-public:
+ public:
 
   EventToken () = delete;
 
@@ -48,14 +48,13 @@ public:
 
   inline const Event<ParamTypes...>* event () const;
 
-private:
+ private:
 
   Event<ParamTypes...>* event_;
 };
 
 template<typename ... ParamTypes>
-inline EventToken<ParamTypes...>::EventToken (Event<
-    ParamTypes...>& event)
+inline EventToken<ParamTypes...>::EventToken (Event<ParamTypes...>& event)
     : InvokableToken<ParamTypes...>(), event_(&event)
 {
 }

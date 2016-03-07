@@ -34,6 +34,18 @@
 
 namespace CppEvent {
 
+inline const char* string_version () {
+  return "0.9";
+}
+
+inline int major_version () {
+  return 0;
+}
+
+inline int minor_version () {
+  return 9;
+}
+
 /**
  * @brief The base class for observer
  */
