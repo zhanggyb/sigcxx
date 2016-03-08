@@ -42,16 +42,16 @@ Binding::~Binding()
       trackable_object->last_binding_ = previous;
   }
 
-  previous = 0;
-  next = 0;
+  previous = nullptr;
+  next = nullptr;
 
   if (token) {
 #ifdef DEBUG
     assert(token->binding == this);
 #endif
-    token->binding = 0;
+    token->binding = nullptr;
     delete token;
-    token = 0;
+    token = nullptr;
   }
 }
 
@@ -62,16 +62,16 @@ Token::~Token()
   if (previous) previous->next = next;
   if (next) next->previous = previous;
 
-  previous = 0;
-  next = 0;
+  previous = nullptr;
+  next = nullptr;
 
   if (binding) {
 #ifdef DEBUG
     assert(binding->token == this);
 #endif
-    binding->token = 0;
+    binding->token = nullptr;
     delete binding;
-    binding = 0;
+    binding = nullptr;
   }
 }
 
@@ -85,7 +85,7 @@ AbstractTrackable::~AbstractTrackable ()
 void AbstractTrackable::PushBackBinding (details::Binding* node)
 {
 #ifdef DEBUG
-  assert(node->trackable_object == 0);
+  assert(node->trackable_object == nullptr);
 #endif
 
   if (last_binding_) {
@@ -93,20 +93,20 @@ void AbstractTrackable::PushBackBinding (details::Binding* node)
     node->previous = last_binding_;
   } else {
 #ifdef DEBUG
-    assert(first_binding_ == 0);
+    assert(first_binding_ == nullptr);
 #endif
-    node->previous = 0;
+    node->previous = nullptr;
     first_binding_ = node;
   }
   last_binding_ = node;
-  node->next = 0;
+  node->next = nullptr;
   node->trackable_object = this;
 }
 
 void AbstractTrackable::PushFrontBinding (details::Binding* node)
 {
 #ifdef DEBUG
-  assert(node->trackable_object == 0);
+  assert(node->trackable_object == nullptr);
 #endif
 
   if (first_binding_) {
@@ -114,37 +114,37 @@ void AbstractTrackable::PushFrontBinding (details::Binding* node)
     node->next = first_binding_;
   } else {
 #ifdef DEBUG
-    assert(last_binding_ == 0);
+    assert(last_binding_ == nullptr);
 #endif
-    node->next = 0;
+    node->next = nullptr;
     last_binding_ = node;
   }
   first_binding_ = node;
 
-  node->previous = 0;
+  node->previous = nullptr;
   node->trackable_object = this;
 }
 
 void AbstractTrackable::InsertBinding (int index, details::Binding* node)
 {
 #ifdef DEBUG
-  assert(node->trackable_object == 0);
+  assert(node->trackable_object == nullptr);
 #endif
 
-  if (first_binding_ == 0) {
+  if (first_binding_ == nullptr) {
 #ifdef DEBUG
-    assert(last_binding_ == 0);
+    assert(last_binding_ == nullptr);
 #endif
-    node->next = 0;
+    node->next = nullptr;
     last_binding_ = node;
     first_binding_ = node;
-    node->previous = 0;
+    node->previous = nullptr;
   } else {
     if (index >= 0) {
 
       details::Binding* p = first_binding_;
 #ifdef DEBUG
-      assert(p != 0);
+      assert(p != nullptr);
 #endif
 
       while (p && (index > 0)) {
@@ -167,7 +167,7 @@ void AbstractTrackable::InsertBinding (int index, details::Binding* node)
         last_binding_->next = node;
         node->previous = last_binding_;
         last_binding_ = node;
-        node->next = 0;
+        node->next = nullptr;
 
       }
       
@@ -175,7 +175,7 @@ void AbstractTrackable::InsertBinding (int index, details::Binding* node)
       
       details::Binding* p = last_binding_;
 #ifdef DEBUG
-      assert(p != 0);
+      assert(p != nullptr);
 #endif
 
       while (p && (index < -1)) {
@@ -198,7 +198,7 @@ void AbstractTrackable::InsertBinding (int index, details::Binding* node)
         first_binding_->previous = node;
         node->next = first_binding_;
         first_binding_ = node;
-        node->previous = 0;
+        node->previous = nullptr;
 
       }
       
@@ -209,7 +209,7 @@ void AbstractTrackable::InsertBinding (int index, details::Binding* node)
 
 void AbstractTrackable::RemoveAllInConnections ()
 {
-  details::Binding* tmp = 0;
+  details::Binding* tmp = nullptr;
   details::Binding* p = first_binding_;
 
   while (p) {

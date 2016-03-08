@@ -52,9 +52,9 @@ class Delegate
   {
 
     inline PointerData()
-        : object_pointer(0),
-          method_stub(0),
-          method_pointer(0)
+        : object_pointer(nullptr),
+          method_stub(nullptr),
+          method_pointer(nullptr)
     { }
 
     inline PointerData(const PointerData& orig)
@@ -146,7 +146,7 @@ class Delegate
   inline operator bool () const
   {
     // Support method delegate only, no need to check other members:
-    return data_.method_pointer != 0;
+    return data_.method_pointer != nullptr;
   }
   
   inline bool operator == (const Delegate& other) const
