@@ -15,11 +15,11 @@ Test::~Test()
 
 }
 
-struct VToken: public CppEvent::InvokableToken<>
+struct VToken: public CppEvent::details::InvokableToken<>
 {
  public:
   VToken(int value = 0)
-      : CppEvent::InvokableToken<>(), v(value)
+      : CppEvent::details::InvokableToken<>(), v(value)
   {}
   
   int v;
@@ -53,7 +53,7 @@ class Event: public CppEvent::Event<>
   void print () const
   {
     VToken* v = 0;
-    for (CppEvent::Token* p = first_token(); p; p = p->next) {
+    for (CppEvent::details::Token* p = first_token(); p; p = p->next) {
       v = static_cast<VToken*>(p);
       cout << v->v << endl;
     }

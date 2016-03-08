@@ -28,6 +28,8 @@
 
 namespace CppEvent {
 
+namespace details{
+  
 Binding::~Binding()
 {
   if (previous) previous->next = next;
@@ -73,12 +75,14 @@ Token::~Token()
   }
 }
 
+}  // namespace details
+  
 AbstractTrackable::~AbstractTrackable ()
 {
   RemoveAllInConnections();
 }
 
-void AbstractTrackable::PushBackBinding (Binding* node)
+void AbstractTrackable::PushBackBinding (details::Binding* node)
 {
 #ifdef DEBUG
   assert(node->trackable_object == 0);
@@ -99,7 +103,7 @@ void AbstractTrackable::PushBackBinding (Binding* node)
   node->trackable_object = this;
 }
 
-void AbstractTrackable::PushFrontBinding (Binding* node)
+void AbstractTrackable::PushFrontBinding (details::Binding* node)
 {
 #ifdef DEBUG
   assert(node->trackable_object == 0);
@@ -121,7 +125,7 @@ void AbstractTrackable::PushFrontBinding (Binding* node)
   node->trackable_object = this;
 }
 
-void AbstractTrackable::InsertBinding (int index, Binding* node)
+void AbstractTrackable::InsertBinding (int index, details::Binding* node)
 {
 #ifdef DEBUG
   assert(node->trackable_object == 0);
@@ -138,7 +142,7 @@ void AbstractTrackable::InsertBinding (int index, Binding* node)
   } else {
     if (index >= 0) {
 
-      Binding* p = first_binding_;
+      details::Binding* p = first_binding_;
 #ifdef DEBUG
       assert(p != 0);
 #endif
@@ -169,7 +173,7 @@ void AbstractTrackable::InsertBinding (int index, Binding* node)
       
     } else {
       
-      Binding* p = last_binding_;
+      details::Binding* p = last_binding_;
 #ifdef DEBUG
       assert(p != 0);
 #endif
@@ -205,8 +209,8 @@ void AbstractTrackable::InsertBinding (int index, Binding* node)
 
 void AbstractTrackable::RemoveAllInConnections ()
 {
-  Binding* tmp = 0;
-  Binding* p = first_binding_;
+  details::Binding* tmp = 0;
+  details::Binding* p = first_binding_;
 
   while (p) {
     tmp = p->next;
@@ -218,10 +222,10 @@ void AbstractTrackable::RemoveAllInConnections ()
 std::size_t AbstractTrackable::CountInConnections () const
 {
   std::size_t count = 0;
-  for(Binding* p = first_binding_; p; p = p->next) {
+  for(details::Binding* p = first_binding_; p; p = p->next) {
     count++;
   }
   return count;
 }
 
-}
+}  // namespace CppEvent

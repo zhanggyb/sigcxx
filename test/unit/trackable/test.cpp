@@ -15,11 +15,11 @@ Test::~Test()
 
 }
 
-struct VBinding: public CppEvent::Binding
+struct VBinding: public CppEvent::details::Binding
 {
 public:
   VBinding(int value = 0)
-  : CppEvent::Binding(), v(value)
+  : CppEvent::details::Binding(), v(value)
   {}
 
   int v;
@@ -53,7 +53,7 @@ public:
   void print () const
   {
     VBinding* v = 0;
-    for (CppEvent::Binding* p = first_binding(); p; p = p->next) {
+    for (CppEvent::details::Binding* p = first_binding(); p; p = p->next) {
       v = static_cast<VBinding*>(p);
       cout << v->v << endl;
     }
@@ -61,7 +61,7 @@ public:
 
 protected:
 
-  virtual void AuditDestroyingToken (CppEvent::Token* token) override
+  virtual void AuditDestroyingToken (CppEvent::details::Token* token) override
   { }
 
 };

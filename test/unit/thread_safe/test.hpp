@@ -60,14 +60,14 @@ class Consumer: public CppEvent::Observer
   void OnTest1 (int n)
   {
     test1_count_++;
-    std::cout << "Event received in OnTest1, n " << n << ", " << test1_count_ << " times." << std::endl;
+    //std::cout << "Event received in OnTest1, n " << n << ", " << test1_count_ << " times." << std::endl;
   }
 
   void OnTest2 (int n1, int n2)
   {
     test2_count_++;
-    std::cout << "Event received in OnTest2, n1: " << n1 << " n2: " << n2 << ", " << test2_count_ << " times."
-              << std::endl;
+    //std::cout << "Event received in OnTest2, n1: " << n1 << " n2: " << n2 << ", " << test2_count_ << " times."
+    //        << std::endl;
   }
 
   inline size_t test1_count() const
