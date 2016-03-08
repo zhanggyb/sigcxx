@@ -79,10 +79,10 @@ class Delegate
   template<typename T, typename TFxn>
   struct MethodStub
   {
-    static void invoke (void* obj_ptr, GenericMethodPointer any, ParamTypes ... Args)
+    static ReturnType invoke (void* obj_ptr, GenericMethodPointer any, ParamTypes ... Args)
     {
       T* obj = static_cast<T*>(obj_ptr);
-      (obj->*reinterpret_cast<TFxn>(any))(Args...);
+      return (obj->*reinterpret_cast<TFxn>(any))(Args...);
     }
   };
 

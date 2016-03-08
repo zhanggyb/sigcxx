@@ -60,3 +60,15 @@ TEST_F(Test, delegate2)
   d1(1);
   ASSERT_TRUE(true);  
 }
+
+/*
+ *
+ */
+TEST_F(Test, delegate3)
+{
+  TestClassBase obj1;
+
+  Delegate<int, int> d = Delegate<int, int>::from_method(&obj1, &TestClassBase::MethodWithReturn);
+
+  ASSERT_TRUE(d(1) == 1);
+}

@@ -29,6 +29,11 @@ class TestClassBase
   {
   }
 
+  int MethodWithReturn (int n)
+  {
+    return n;
+  }
+  
   virtual void Method0 ()
   {
     std::cout << "Method0 in base class" << std::endl;
