@@ -72,3 +72,35 @@ TEST_F(Test, delegate3)
 
   ASSERT_TRUE(d(1) == 1);
 }
+
+/*
+ *
+ */
+TEST_F(Test, delegate4)
+{
+  TestClassBase obj1;
+  
+  Delegate<int, int> d;
+  ASSERT_FALSE(d);
+  
+  d = Delegate<int, int>::from_method(&obj1, &TestClassBase::MethodWithReturn);
+  
+  ASSERT_TRUE(d(1) == 1);
+}
+
+/*
+ *
+ */
+TEST_F(Test, delegate5)
+{
+  TestClassBase obj1;
+  
+  Delegate<void, int> d1(&obj1, &TestClassBase::ConstMethod1);
+  Delegate<void, int> d2(&obj1, &TestClassBase::Method1);
+  
+  d2 = d1;
+  
+  d2(1);  // check the stdout print
+
+  ASSERT_TRUE(d1 && d2);
+}

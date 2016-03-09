@@ -116,6 +116,28 @@ class Delegate
     return d;
   }
   
+  inline Delegate () { }
+  
+  template<typename T>
+  inline Delegate (T* object_ptr, ReturnType (T::*method) (ParamTypes...))
+  {
+    typedef ReturnType (T::*TMethod)(ParamTypes...);
+    
+    data_.object_pointer = object_ptr;
+    data_.method_stub = &MethodStub<T, TMethod>::invoke;
+    data_.method_pointer = reinterpret_cast<GenericMethodPointer>(method);
+  }
+
+  template<typename T>
+  inline Delegate (T* object_ptr, ReturnType (T::*method) (ParamTypes...) const)
+  {
+    typedef ReturnType (T::*TMethod)(ParamTypes...) const;
+    
+    data_.object_pointer = object_ptr;
+    data_.method_stub = &MethodStub<T, TMethod>::invoke;
+    data_.method_pointer = reinterpret_cast<GenericMethodPointer>(method);
+  }
+
   inline Delegate (const Delegate& orig)
       : data_(orig.data_)
   { }
@@ -180,8 +202,6 @@ class Delegate
   }
 
  private:
-
-  inline Delegate () { }
   
   template<typename ReturnTypeAlias, typename ... ParamTypesAlias>
   friend inline bool operator == (const Delegate<ReturnTypeAlias,

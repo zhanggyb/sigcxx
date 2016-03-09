@@ -36,22 +36,6 @@
 
 namespace CppEvent {
 
-inline const char* string_version () {
-  return "0.9.1";
-}
-
-inline int major_version () {
-  return 0;
-}
-
-inline int minor_version () {
-  return 9;
-}
-
-inline int patch_version () {
-  return 1;
-}
-
 // forward declaration
 class AbstractTrackable;
 template<typename ... ParamTypes> class Event;
