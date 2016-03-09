@@ -62,7 +62,7 @@ class Delegate
           method_stub(orig.method_stub),
           method_pointer(orig.method_pointer)
     { }
-    
+
     inline PointerData& operator = (const PointerData& orig)
     {
       object_pointer = orig.object_pointer;
@@ -70,12 +70,12 @@ class Delegate
       method_pointer = orig.method_pointer;
       return *this;
     }
-    
+
     void* object_pointer;
     MethodStubType method_stub;
     GenericMethodPointer method_pointer;
   };
-  
+
   template<typename T, typename TFxn>
   struct MethodStub
   {
@@ -115,14 +115,14 @@ class Delegate
 
     return d;
   }
-  
+
   inline Delegate () { }
-  
+
   template<typename T>
   inline Delegate (T* object_ptr, ReturnType (T::*method) (ParamTypes...))
   {
     typedef ReturnType (T::*TMethod)(ParamTypes...);
-    
+
     data_.object_pointer = object_ptr;
     data_.method_stub = &MethodStub<T, TMethod>::invoke;
     data_.method_pointer = reinterpret_cast<GenericMethodPointer>(method);
@@ -132,7 +132,7 @@ class Delegate
   inline Delegate (T* object_ptr, ReturnType (T::*method) (ParamTypes...) const)
   {
     typedef ReturnType (T::*TMethod)(ParamTypes...) const;
-    
+
     data_.object_pointer = object_ptr;
     data_.method_stub = &MethodStub<T, TMethod>::invoke;
     data_.method_pointer = reinterpret_cast<GenericMethodPointer>(method);
@@ -148,67 +148,64 @@ class Delegate
   {
     memset(&data_, 0, sizeof(PointerData));
   }
-  
+
   inline Delegate& operator = (const Delegate& orig)
   {
     data_ = orig.data_;
     return *this;
   }
-  
+
   inline ReturnType operator () (ParamTypes... Args) const
   {
     return (*data_.method_stub)(data_.object_pointer, data_.method_pointer, Args...);
   }
-  
+
   inline ReturnType invoke(ParamTypes... Args) const
   {
     return (*data_.method_stub)(data_.object_pointer, data_.method_pointer, Args...);
   }
-  
+
   inline operator bool () const
   {
     // Support method delegate only, no need to check other members:
     return data_.method_pointer != nullptr;
   }
-  
-  inline bool operator == (const Delegate& other) const
-  {
-    return memcmp(&data_, &other.data_, sizeof(PointerData)) == 0;
-  }
-  
-  inline bool operator != (const Delegate& other) const
-  {
-    return memcmp(&data_, &other.data_, sizeof(PointerData)) != 0;
-  }
-  
+
   template<typename T>
   inline bool equal(T* object_ptr, ReturnType(T::*method) (ParamTypes...)) const
   {
     typedef ReturnType (T::*TMethod)(ParamTypes...);
-    
+
     return (data_.object_pointer == object_ptr) &&
         (data_.method_stub == &MethodStub<T, TMethod>::invoke) &&
         (data_.method_pointer == reinterpret_cast<GenericMethodPointer>(method));
   }
-  
+
   template<typename T>
   inline bool equal(T* object_ptr, ReturnType(T::*method) (ParamTypes...) const) const
   {
     typedef ReturnType (T::*TMethod)(ParamTypes...) const;
-    
+
     return (data_.object_pointer == object_ptr) &&
         (data_.method_stub == &MethodStub<T, TMethod>::invoke) &&
         (data_.method_pointer == reinterpret_cast<GenericMethodPointer>(method));
   }
 
  private:
-  
+
   template<typename ReturnTypeAlias, typename ... ParamTypesAlias>
   friend inline bool operator == (const Delegate<ReturnTypeAlias,
                                   ParamTypesAlias...>& src,
                                   const Delegate<ReturnTypeAlias,
                                   ParamTypesAlias...>& dst);
-
+  
+  template<typename ReturnTypeAlias, typename ... ParamTypesAlias>
+  friend inline bool operator != (const Delegate<ReturnTypeAlias,
+                                  ParamTypesAlias...>& src,
+                                  const Delegate<ReturnTypeAlias,
+                                  ParamTypesAlias...>& dst);
+  
+  
   template<typename ReturnTypeAlias, typename ... ParamTypesAlias>
   friend inline bool operator < (const Delegate<ReturnTypeAlias,
                                  ParamTypesAlias...>& src,
@@ -232,6 +229,16 @@ inline bool operator == (const Delegate<ReturnType, ParamTypes...>& src,
                 sizeof(typename Delegate<ReturnType, ParamTypes...>::PointerData)
                 ) == 0;
 }
+
+template<typename ReturnType, typename ... ParamTypes>
+inline bool operator != (const Delegate<ReturnType, ParamTypes...>& src,
+                         const Delegate<ReturnType, ParamTypes...>& dst)
+{
+  return memcmp(&src.data_, &dst.data_,
+                sizeof(typename Delegate<ReturnType, ParamTypes...>::PointerData)
+                ) != 0;
+}
+
 
 template<typename ReturnType, typename ... ParamTypes>
 inline bool operator < (const Delegate<ReturnType, ParamTypes...>& src,
