@@ -28,10 +28,9 @@
 
 namespace CppEvent {
 
-namespace details{
-  
-Binding::~Binding()
-{
+namespace details {
+
+Binding::~Binding() {
   if (previous) previous->next = next;
   if (next) next->previous = previous;
 
@@ -55,8 +54,7 @@ Binding::~Binding()
   }
 }
 
-Token::~Token()
-{
+Token::~Token() {
   if (trackable_object) trackable_object->AuditDestroyingToken(this);
 
   if (previous) previous->next = next;
@@ -76,24 +74,21 @@ Token::~Token()
 }
 
 }  // namespace details
-  
-Trackable::~Trackable ()
-{
-  DisconnectAllFrom(nullptr);
+
+Trackable::~Trackable() {
+  DisconnectAllFrom();
 }
 
-void Trackable::DisconnectOnceFrom (const Sender* sender)
-{
+void Trackable::DisconnectOnceFrom(const Sender *sender) {
   if (sender && sender->token_->binding->trackable_object == this) {
-    details::Token* tmp = sender->token_;
-    const_cast<Sender*>(sender)->token_ = sender->token_->next;
+    details::Token *tmp = sender->token_;
+    const_cast<Sender *>(sender)->token_ = sender->token_->next;
     delete tmp;
-    const_cast<Sender*>(sender)->skip_ = true;
+    const_cast<Sender *>(sender)->skip_ = true;
   }
 }
 
-void Trackable::PushBackBinding (details::Binding* node)
-{
+void Trackable::PushBackBinding(details::Binding *node) {
 #ifdef DEBUG
   assert(node->trackable_object == nullptr);
 #endif
@@ -113,8 +108,7 @@ void Trackable::PushBackBinding (details::Binding* node)
   node->trackable_object = this;
 }
 
-void Trackable::PushFrontBinding (details::Binding* node)
-{
+void Trackable::PushFrontBinding(details::Binding *node) {
 #ifdef DEBUG
   assert(node->trackable_object == nullptr);
 #endif
@@ -135,8 +129,7 @@ void Trackable::PushFrontBinding (details::Binding* node)
   node->trackable_object = this;
 }
 
-void Trackable::InsertBinding (int index, details::Binding* node)
-{
+void Trackable::InsertBinding(int index, details::Binding *node) {
 #ifdef DEBUG
   assert(node->trackable_object == nullptr);
 #endif
@@ -152,7 +145,7 @@ void Trackable::InsertBinding (int index, details::Binding* node)
   } else {
     if (index >= 0) {
 
-      details::Binding* p = first_binding_;
+      details::Binding *p = first_binding_;
 #ifdef DEBUG
       assert(p != nullptr);
 #endif
@@ -180,10 +173,10 @@ void Trackable::InsertBinding (int index, details::Binding* node)
         node->next = nullptr;
 
       }
-      
+
     } else {
-      
-      details::Binding* p = last_binding_;
+
+      details::Binding *p = last_binding_;
 #ifdef DEBUG
       assert(p != nullptr);
 #endif
@@ -192,17 +185,17 @@ void Trackable::InsertBinding (int index, details::Binding* node)
         p = p->previous;
         index++;
       }
-      
+
       if (p) {  // insert after p
 
         node->next = p->next;
         node->previous = p;
-        
+
         if (p->next) p->next->previous = node;
         else last_binding_ = node;
 
         p->next = node;
-      
+
       } else {  // push front
 
         first_binding_->previous = node;
@@ -211,17 +204,16 @@ void Trackable::InsertBinding (int index, details::Binding* node)
         node->previous = nullptr;
 
       }
-      
+
     }
   }
   node->trackable_object = this;
 }
 
-void Trackable::DisconnectAllFrom (const Sender* sender)
-{
-  if ((sender == nullptr) || (sender->token_->binding->trackable_object == this)) {
-    details::Binding* tmp = nullptr;
-    details::Binding* p = first_binding_;
+void Trackable::DisconnectAllFrom(const Sender *sender) {
+  if (sender && (sender->token_->binding->trackable_object == this)) {
+    details::Binding *tmp = nullptr;
+    details::Binding *p = first_binding_;
 
     while (p) {
       tmp = p->next;
@@ -229,18 +221,25 @@ void Trackable::DisconnectAllFrom (const Sender* sender)
       p = tmp;
     }
 
-    if (sender) {
-      const_cast<Sender*>(sender)->token_ = nullptr;
-      const_cast<Sender*>(sender)->skip_ = true;
-    }
+    const_cast<Sender *>(sender)->token_ = nullptr;
+    const_cast<Sender *>(sender)->skip_ = true;
   }
-  
 }
 
-std::size_t Trackable::CountInConnections () const
-{
+void Trackable::DisconnectAllFrom() {
+  details::Binding *tmp = nullptr;
+  details::Binding *p = first_binding_;
+
+  while (p) {
+    tmp = p->next;
+    delete p;
+    p = tmp;
+  }
+}
+
+std::size_t Trackable::CountConnectionsFrom() const {
   std::size_t count = 0;
-  for(details::Binding* p = first_binding_; p; p = p->next) {
+  for (details::Binding *p = first_binding_; p; p = p->next) {
     count++;
   }
   return count;

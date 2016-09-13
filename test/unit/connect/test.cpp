@@ -190,7 +190,7 @@ TEST_F(Test, disconnect)
   s.event1().DisconnectAll(&c, &Consumer::OnTest1);
 
   s.DoTest1(1);	// nothing should be output in stdout
-  ASSERT_TRUE(c.test1_count() == 0 && c.CountInConnections() == 0);
+  ASSERT_TRUE(c.test1_count() == 0 && c.CountConnectionsFrom() == 0);
 }
 
 /*
@@ -207,7 +207,7 @@ TEST_F(Test, connect_method_4_times)
   s.event1().Connect(&c, &Consumer::OnTest1);
 
   s.DoTest1(1);	// this should call 4 times
-  ASSERT_TRUE(c.test1_count() == 4 && s.event1().CountOutConnections() == 4 && c.CountInConnections() == 4);
+  ASSERT_TRUE(c.test1_count() == 4 && s.event1().CountConnections() == 4 && c.CountConnectionsFrom() == 4);
 }
 
 /*
@@ -227,7 +227,7 @@ TEST_F(Test, disconnect_all)
 
   s.DoTest1(1);	// nothing should be output in stdout
 
-  ASSERT_TRUE(c.test1_count() == 0 && s.event1().CountOutConnections() == 0 && c.CountInConnections() == 0);
+  ASSERT_TRUE(c.test1_count() == 0 && s.event1().CountConnections() == 0 && c.CountConnectionsFrom() == 0);
 }
 
 /*
@@ -310,7 +310,7 @@ TEST_F(Test, event_chaining)
 
   s1.DoTest1(1);
 
-  ASSERT_TRUE(c.CountInConnections() == 1 && c.test1_count() == 1);
+  ASSERT_TRUE(c.CountConnectionsFrom() == 1 && c.test1_count() == 1);
 }
 
 TEST_F(Test, delete_more_when_called)

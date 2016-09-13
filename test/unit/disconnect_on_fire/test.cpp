@@ -86,7 +86,7 @@ TEST_F(Test, disconnect_first_on_fire1)
   s.event().Connect(&c, &Consumer::OnTestNothing);
 
   s.DoTest();
-  ASSERT_TRUE(c.CountInConnections() == 2);
+  ASSERT_TRUE(c.CountConnectionsFrom() == 2);
 }
 
 /*
@@ -102,7 +102,7 @@ TEST_F(Test, disconnect_first_on_fire2)
   s.event().Connect(&c, &Consumer::OnTestNothing);
 
   s.DoTest();
-  ASSERT_TRUE(c.CountInConnections() == 2);
+  ASSERT_TRUE(c.CountConnectionsFrom() == 2);
 }
 
 /*
@@ -118,7 +118,7 @@ TEST_F(Test, disconnect_last_on_fire1)
   s.event().Connect(&c, &Consumer::OnTestDisconnectLast);
 
   s.DoTest();
-  ASSERT_TRUE(c.CountInConnections() == 2);
+  ASSERT_TRUE(c.CountConnectionsFrom() == 2);
 }
 
 /*
@@ -134,7 +134,7 @@ TEST_F(Test, disconnect_last_on_fire2)
   s.event().Connect(&c, &Consumer::OnTestNothing);
 
   s.DoTest();
-  ASSERT_TRUE(c.CountInConnections() == 2);
+  ASSERT_TRUE(c.CountConnectionsFrom() == 2);
 }
 
 /*
@@ -152,5 +152,5 @@ TEST_F(Test, disconnect_all_on_fire1)
   s.event().Connect(&c, &Consumer::OnTestDisconnectAll);
 
   s.DoTest();
-  ASSERT_TRUE(c.CountInConnections() == 1);
+  ASSERT_TRUE(c.CountConnectionsFrom() == 1);
 }

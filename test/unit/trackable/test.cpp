@@ -109,7 +109,7 @@ TEST_F(Test, push_back1)
 
   c.print();
 
-  ASSERT_TRUE(c.CountInConnections() == 3);
+  ASSERT_TRUE(c.CountConnectionsFrom() == 3);
 }
 
 TEST_F(Test, push_front1)
@@ -122,7 +122,7 @@ TEST_F(Test, push_front1)
 
   c.print();
 
-  ASSERT_TRUE(c.CountInConnections() == 3);
+  ASSERT_TRUE(c.CountConnectionsFrom() == 3);
 }
 
 TEST_F(Test, insert1)
@@ -136,7 +136,7 @@ TEST_F(Test, insert1)
 
   c.print();
 
-  ASSERT_TRUE(c.CountInConnections() == 3);
+  ASSERT_TRUE(c.CountConnectionsFrom() == 3);
 }
 
 TEST_F(Test, insert2)
@@ -150,7 +150,7 @@ TEST_F(Test, insert2)
 
   c.print();
 
-  ASSERT_TRUE(c.CountInConnections() == 3);
+  ASSERT_TRUE(c.CountConnectionsFrom() == 3);
 }
 
 TEST_F(Test, insert3)
@@ -166,7 +166,7 @@ TEST_F(Test, insert3)
 
   c.print();
 
-  ASSERT_TRUE(c.CountInConnections() == 4);
+  ASSERT_TRUE(c.CountConnectionsFrom() == 4);
 }
 
 TEST_F(Test, insert4)
@@ -182,7 +182,7 @@ TEST_F(Test, insert4)
 
   c.print();
 
-  ASSERT_TRUE(c.CountInConnections() == 4);
+  ASSERT_TRUE(c.CountConnectionsFrom() == 4);
 }
 
 TEST_F(Test, remove_connections_from_event)
@@ -191,11 +191,11 @@ TEST_F(Test, remove_connections_from_event)
   Consumer c;
   
   s.event().Connect(&c, &Consumer::OnTestNothing);
-  ASSERT_TRUE(s.event().CountOutConnections() == 1);
+  ASSERT_TRUE(s.event().CountConnections() == 1);
   
   s.event().DisconnectAll();
 
-  ASSERT_TRUE(s.event().CountOutConnections() == 0);
+  ASSERT_TRUE(s.event().CountConnections() == 0);
 }
 
 //TEST_F(Test, copy_observer)
@@ -208,5 +208,5 @@ TEST_F(Test, remove_connections_from_event)
 //
 // c2 = c1;
 //
-// ASSERT_TRUE(c1.CountInConnections() == 1 && c2.CountInConnections() == 0);
+// ASSERT_TRUE(c1.CountConnectionsFrom() == 1 && c2.CountConnectionsFrom() == 0);
 //}
