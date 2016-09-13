@@ -77,12 +77,12 @@ Token::~Token()
 
 }  // namespace details
   
-AbstractTrackable::~AbstractTrackable ()
+Trackable::~Trackable ()
 {
   RemoveAllInConnections();
 }
 
-void AbstractTrackable::PushBackBinding (details::Binding* node)
+void Trackable::PushBackBinding (details::Binding* node)
 {
 #ifdef DEBUG
   assert(node->trackable_object == nullptr);
@@ -103,7 +103,7 @@ void AbstractTrackable::PushBackBinding (details::Binding* node)
   node->trackable_object = this;
 }
 
-void AbstractTrackable::PushFrontBinding (details::Binding* node)
+void Trackable::PushFrontBinding (details::Binding* node)
 {
 #ifdef DEBUG
   assert(node->trackable_object == nullptr);
@@ -125,7 +125,7 @@ void AbstractTrackable::PushFrontBinding (details::Binding* node)
   node->trackable_object = this;
 }
 
-void AbstractTrackable::InsertBinding (int index, details::Binding* node)
+void Trackable::InsertBinding (int index, details::Binding* node)
 {
 #ifdef DEBUG
   assert(node->trackable_object == nullptr);
@@ -207,7 +207,7 @@ void AbstractTrackable::InsertBinding (int index, details::Binding* node)
   node->trackable_object = this;
 }
 
-void AbstractTrackable::RemoveAllInConnections ()
+void Trackable::RemoveAllInConnections ()
 {
   details::Binding* tmp = nullptr;
   details::Binding* p = first_binding_;
@@ -219,7 +219,7 @@ void AbstractTrackable::RemoveAllInConnections ()
   }
 }
 
-std::size_t AbstractTrackable::CountInConnections () const
+std::size_t Trackable::CountInConnections () const
 {
   std::size_t count = 0;
   for(details::Binding* p = first_binding_; p; p = p->next) {

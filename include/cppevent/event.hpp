@@ -37,11 +37,11 @@
 namespace CppEvent {
 
 // forward declaration
-class AbstractTrackable;
+class Trackable;
 template<typename ... ParamTypes> class Event;
 
 namespace details {
-
+    
 struct Token;
     
 /**
@@ -59,7 +59,7 @@ struct Binding
       
   ~Binding ();
       
-  AbstractTrackable* trackable_object;
+  Trackable* trackable_object;
   Binding* previous;
   Binding* next;
   Token* token;
@@ -80,12 +80,34 @@ struct Token
       
   virtual ~Token ();
       
-  AbstractTrackable* trackable_object;
+  Trackable* trackable_object;
   Token* previous;
   Token* next;
   Binding* binding;
       
 };
+    
+    
+}
+
+class Meta
+{
+  template<typename ... ParamTypes> friend class Event;
+    
+ public:
+    
+  inline Meta ()
+      : iterator_(nullptr)
+  {
+  }
+    
+  ~Meta();
+    
+ private:
+  details::Token* iterator_;
+};
+  
+namespace details {
 
 template<typename ... ParamTypes>
 class InvokableToken: public Token
@@ -96,7 +118,7 @@ class InvokableToken: public Token
       
   virtual ~InvokableToken ();
       
-  virtual void Invoke (ParamTypes ... Args);
+  virtual void Invoke (const Meta* meta_ptr, ParamTypes ... Args);
 };
     
 template<typename ... ParamTypes>
@@ -111,7 +133,7 @@ InvokableToken<ParamTypes...>::~InvokableToken ()
 }
     
 template<typename ... ParamTypes>
-void InvokableToken<ParamTypes...>::Invoke (ParamTypes ... Args)
+void InvokableToken<ParamTypes...>::Invoke (const Meta* meta_ptr, ParamTypes ... Args)
 {
   // Override this in sub class
 }
@@ -123,11 +145,11 @@ class DelegateToken : public InvokableToken < ParamTypes... >
       
   DelegateToken() = delete;
       
-  inline DelegateToken(const Delegate<void, ParamTypes...>& d);
+  inline DelegateToken(const Delegate<void, const Meta*, ParamTypes...>& d);
       
   virtual ~DelegateToken();
       
-  virtual void Invoke(ParamTypes... Args) override;
+  virtual void Invoke(const Meta* meta_ptr, ParamTypes... Args) override;
       
   const Delegate<void, ParamTypes...>& delegate () const
   {
@@ -136,12 +158,12 @@ class DelegateToken : public InvokableToken < ParamTypes... >
       
  private:
       
-  Delegate<void, ParamTypes...> delegate_;
+  Delegate<void, const Meta*,ParamTypes...> delegate_;
       
 };
     
 template<typename ... ParamTypes>
-inline DelegateToken<ParamTypes...>::DelegateToken(const Delegate<void, ParamTypes...>& d)
+inline DelegateToken<ParamTypes...>::DelegateToken(const Delegate<void, const Meta*, ParamTypes...>& d)
     : InvokableToken<ParamTypes...>(), delegate_(d)
 {
 }
@@ -152,9 +174,9 @@ DelegateToken<ParamTypes...>::~DelegateToken()
 }
     
 template<typename ... ParamTypes>
-void DelegateToken<ParamTypes...>::Invoke(ParamTypes... Args)
+void DelegateToken<ParamTypes...>::Invoke(const Meta* meta_ptr, ParamTypes... Args)
 {
-  delegate_(Args...);
+  delegate_(meta_ptr, Args...);
 }
 
     
@@ -169,7 +191,7 @@ class EventToken : public InvokableToken < ParamTypes... >
       
   virtual ~EventToken();
       
-  virtual void Invoke(ParamTypes... Args) override;
+  virtual void Invoke(const Meta* meta_ptr, ParamTypes... Args) override;
       
   inline const Event<ParamTypes...>* event () const;
       
@@ -190,7 +212,7 @@ EventToken<ParamTypes...>::~EventToken()
 }
     
 template<typename ... ParamTypes>
-void EventToken<ParamTypes...>::Invoke(ParamTypes... Args)
+void EventToken<ParamTypes...>::Invoke(const Meta* meta_ptr, ParamTypes... Args)
 {
   event_->Fire(Args...);
 }
@@ -202,32 +224,41 @@ inline const Event<ParamTypes...>* EventToken<ParamTypes...>::event() const
 }
 
 }  // namespace details
-  
+
 /**
  * @brief Abstract class for event
  */
-class AbstractTrackable
+class Trackable
 {
   friend struct details::Binding;
   friend struct details::Token;
     
  public:
     
-  inline AbstractTrackable ()
+  inline Trackable ()
       : first_binding_(nullptr), last_binding_(nullptr)
   {
   }
     
-  virtual ~AbstractTrackable ();
-    
+  virtual ~Trackable ();
+
+  inline Trackable(const Trackable& orig)
+  { }
+  
+  inline Trackable& operator = (const Trackable& orig)
+  {
+    return *this;
+  }
+  
   void RemoveAllInConnections ();
     
   std::size_t CountInConnections () const;
     
  protected:
-    
-  virtual void AuditDestroyingToken (details::Token* token) = 0;
-    
+
+  virtual void AuditDestroyingToken (details::Token* token)
+  {}
+
   void PushBackBinding (details::Binding* binding);
     
   void PushFrontBinding (details::Binding* binding);
@@ -244,19 +275,19 @@ class AbstractTrackable
     binding->token = token;
   }
     
-  static inline void push_front (AbstractTrackable* trackable,
+  static inline void push_front (Trackable* trackable,
                                  details::Binding* conn)
   {
     trackable->PushBackBinding(conn);
   }
     
-  static inline void push_back (AbstractTrackable* trackable,
+  static inline void push_back (Trackable* trackable,
                                 details::Binding* conn)
   {
     trackable->PushBackBinding(conn);
   }
     
-  static inline void insert (AbstractTrackable* trackable,
+  static inline void insert (Trackable* trackable,
                              details::Binding* conn,
                              int index = 0)
   {
@@ -279,38 +310,11 @@ class AbstractTrackable
   details::Binding* last_binding_;
 };
   
-/**
- * @brief The base class for observer
- */
-class Observer: public AbstractTrackable
-{
- public:
-
-  inline Observer ()
-      : AbstractTrackable()
-  { }
-
-  virtual ~Observer ()
-  { }
-
-  inline Observer(const Observer& orig)
-  { }
-  
-  inline Observer& operator = (const Observer& orig)
-  {
-    return *this;
-  }
-  
- protected:
-
-  virtual void AuditDestroyingToken (details::Token* token) final
-  { }
-};
 
 // Event declaration:
 
 template<typename ... ParamTypes>
-class Event: public AbstractTrackable
+class Event: public Trackable
 {
  public:
 
@@ -326,7 +330,7 @@ class Event: public AbstractTrackable
    * @brief Connect this event to a method in a observer
    */
   template<typename T>
-  void Connect (T* obj, void (T::*method) (ParamTypes...), int index = -1);
+  void Connect (T* obj, void (T::*method) (const Meta*, ParamTypes...), int index = -1);
 
   void Connect (Event<ParamTypes...>& other, int index = -1);
 
@@ -334,7 +338,7 @@ class Event: public AbstractTrackable
    * @brief Disconnect all delegates to a method
    */
   template<typename T>
-  void DisconnectAll (T* obj, void (T::*method) (ParamTypes...));
+  void DisconnectAll (T* obj, void (T::*method) (const Meta*, ParamTypes...));
 
   /**
    * @brief Disconnect all events
@@ -345,7 +349,7 @@ class Event: public AbstractTrackable
    * @brief Disconnect the last delegate to a method
    */
   template<typename T>
-  void DisconnectOnce (T* obj, void (T::*method) (ParamTypes...), int start_pos = -1);
+  void DisconnectOnce (T* obj, void (T::*method) (const Meta*, ParamTypes...), int start_pos = -1);
 
   /**
    * @brief Disconnect the last event
@@ -355,12 +359,12 @@ class Event: public AbstractTrackable
   void RemoveAllOutConnections ();
 
   template<typename T>
-  bool IsConnected (T* obj, void (T::*method) (ParamTypes...)) const;
+  bool IsConnected (T* obj, void (T::*method) (const Meta*, ParamTypes...)) const;
 
   bool IsConnected (Event<ParamTypes...>& other) const;
 
   template<typename T>
-  std::size_t CountConnections (T* obj, void (T::*method) (ParamTypes...)) const;
+  std::size_t CountConnections (T* obj, void (T::*method) (const Meta*, ParamTypes...)) const;
 
   std::size_t CountConnections (Event<ParamTypes...>& other) const;
 
@@ -373,12 +377,12 @@ class Event: public AbstractTrackable
  protected:
 
   virtual void AuditDestroyingToken (details::Token* token) final;
+  
+  void PushBackToken (details::Token* token);
 
-  void PushBackToken (details::InvokableToken<ParamTypes...>* token);
+  void PushFrontToken (details::Token* token);
 
-  void PushFrontToken (details::InvokableToken<ParamTypes...>* token);
-
-  void InsertToken (int index, details::InvokableToken<ParamTypes...>* token);
+  void InsertToken (int index, details::Token* token);
 
   inline details::Token* first_token () const
   {
@@ -395,27 +399,17 @@ class Event: public AbstractTrackable
   static inline void set_bit (int& v, int m) { v |= m;}
   static inline void clear_bit (int& v, int m) {v &= ~m;}
 
-  enum EventFlagMask {
-    EventIteratorRemoveMask    = 0x01,	// if iterator removed: 1 - true, 0 - false
-    EventIteratorDirectionMask = 0x01 << 1 // direction when iterating: 0 - forward, 1 - backward
-  };
-
   details::Token* first_token_;
   details::Token* last_token_;
-
-  details::Token* iterator_;  // a pointer to iterate through all connections
-  int flag_;
 };
 
 // Event implementation:
 
 template<typename ... ParamTypes>
 inline Event<ParamTypes...>::Event ()
-    : AbstractTrackable(),
+    : Trackable(),
       first_token_(nullptr),
-      last_token_(nullptr),
-      iterator_(nullptr),
-      flag_(0)
+      last_token_(nullptr)
 {
 }
 
@@ -427,11 +421,11 @@ Event<ParamTypes...>::~Event ()
 
 template<typename ... ParamTypes>
 template<typename T>
-void Event<ParamTypes...>::Connect (T* obj, void (T::*method) (ParamTypes...), int index)
+void Event<ParamTypes...>::Connect (T* obj, void (T::*method) (const Meta*, ParamTypes...), int index)
 {
   details::Binding* downstream = new details::Binding;
-  Delegate<void, ParamTypes...> d =
-      Delegate<void, ParamTypes...>::template from_method<T>(obj, method);
+  Delegate<void, const Meta*, ParamTypes...> d =
+      Delegate<void, const Meta*, ParamTypes...>::template from_method<T>(obj, method);
   details::DelegateToken<ParamTypes...>* upstream = new details::DelegateToken<
     ParamTypes...>(d);
 
@@ -454,33 +448,21 @@ void Event<ParamTypes...>::Connect (Event<ParamTypes...>& other, int index)
 
 template<typename ... ParamTypes>
 template<typename T>
-void Event<ParamTypes...>::DisconnectAll (T* obj, void (T::*method) (ParamTypes...))
+void Event<ParamTypes...>::DisconnectAll (T* obj, void (T::*method) (const Meta*, ParamTypes...))
 {
-  details::DelegateToken<ParamTypes...>* conn = nullptr;
+  details::DelegateToken<const Meta*, ParamTypes...>* conn = nullptr;
 
   details::Token* p1 = nullptr;
   details::Token* p2 = nullptr;
-  
-  if(flag_ & EventIteratorDirectionMask) {
-    p1 = last_token_;
-    while(p1) {
-      p2 = p1->previous;
-      conn = dynamic_cast<details::DelegateToken<ParamTypes...>*>(p1);
-      if (conn && (conn->delegate().template equal<T>(obj, method))) {
-        delete conn;
-      }
-      p1 = p2;
+
+  p1 = last_token_;
+  while(p1) {
+    p2 = p1->previous;
+    conn = dynamic_cast<details::DelegateToken<const Meta*, ParamTypes...>*>(p1);
+    if (conn && (conn->delegate().template equal<T>(obj, method))) {
+      delete conn;
     }
-  } else {
-    p1 = first_token_;
-    while(p1) {
-      p2 = p1->next;
-      conn = dynamic_cast<details::DelegateToken<ParamTypes...>*>(p1);
-      if (conn && (conn->delegate().template equal<T>(obj, method))) {
-        delete conn;
-      }
-      p1 = p2;
-    }
+    p1 = p2;
   }
 
 }
@@ -492,36 +474,24 @@ void Event<ParamTypes...>::DisconnectAll (Event<ParamTypes...>& other)
 
   details::Token* p1 = nullptr;
   details::Token* p2 = nullptr;
-  
-  if(flag_ & EventIteratorDirectionMask) {
-    p1 = last_token_;
-    while(p1) {
-      p2 = p1->previous;
-      conn = dynamic_cast<details::EventToken<ParamTypes...>*>(p1);
-      if (conn && (conn->event() == (&other))) {
-        delete conn;
-      }
-      p1 = p2;
+
+  p1 = last_token_;
+  while(p1) {
+    p2 = p1->previous;
+    conn = dynamic_cast<details::EventToken<ParamTypes...>*>(p1);
+    if (conn && (conn->event() == (&other))) {
+      delete conn;
     }
-  } else {
-    p1 = first_token_;
-    while(p1) {
-      p2 = p1->next;
-      conn = dynamic_cast<details::EventToken<ParamTypes...>*>(p1);
-      if (conn && (conn->event() == (&other))) {
-        delete conn;
-      }
-      p1 = p2;
-    }
+    p1 = p2;
   }
 
 }
   
 template<typename ... ParamTypes>
 template<typename T>
-void Event<ParamTypes...>::DisconnectOnce (T* obj, void (T::*method) (ParamTypes...), int start_pos)
+void Event<ParamTypes...>::DisconnectOnce (T* obj, void (T::*method) (const Meta*, ParamTypes...), int start_pos)
 {
-  details::DelegateToken<ParamTypes...>* conn = nullptr;
+  details::DelegateToken<const Meta*, ParamTypes...>* conn = nullptr;
   details::Token* start = nullptr;
 
   if (start_pos >= 0) {
@@ -534,7 +504,7 @@ void Event<ParamTypes...>::DisconnectOnce (T* obj, void (T::*method) (ParamTypes
     
     if (start) {
       for (details::Token* p = start; p; p = p->next) {
-        conn = dynamic_cast<details::DelegateToken<ParamTypes...>*>(p);
+        conn = dynamic_cast<details::DelegateToken<const Meta*, ParamTypes...>*>(p);
         if (conn && (conn->delegate().template equal<T>(obj, method))) {
           delete conn;
           break;
@@ -551,7 +521,7 @@ void Event<ParamTypes...>::DisconnectOnce (T* obj, void (T::*method) (ParamTypes
     
     if (start) {
       for (details::Token* p = last_token_; p; p = p->previous) {
-        conn = dynamic_cast<details::DelegateToken<ParamTypes...>*>(p);
+        conn = dynamic_cast<details::DelegateToken<const Meta*, ParamTypes...>*>(p);
         if (conn && (conn->delegate().template equal<T>(obj, method))) {
           delete conn;
           break;
@@ -608,12 +578,12 @@ void Event<ParamTypes...>::DisconnectOnce (Event<ParamTypes...>& other, int star
 
 template<typename ... ParamTypes>
 template<typename T>
-bool Event<ParamTypes...>::IsConnected (T* obj, void (T::*method) (ParamTypes...)) const
+bool Event<ParamTypes...>::IsConnected (T* obj, void (T::*method) (const Meta*, ParamTypes...)) const
 {
-  details::DelegateToken<ParamTypes...>* conn = nullptr;
+  details::DelegateToken<const Meta*, ParamTypes...>* conn = nullptr;
 
   for(details::Token* p = first_token_; p; p = p->next) {
-    conn = dynamic_cast<details::DelegateToken<ParamTypes...>*>(p);
+    conn = dynamic_cast<details::DelegateToken<const Meta*, ParamTypes...>*>(p);
     if (conn && (conn->delegate().template equal<T>(obj, method))) {
       return true;
     }
@@ -637,13 +607,13 @@ bool Event<ParamTypes...>::IsConnected (Event<ParamTypes...>& other) const
 
 template<typename ... ParamTypes>
 template<typename T>
-std::size_t Event<ParamTypes...>::CountConnections (T* obj, void (T::*method) (ParamTypes...)) const
+std::size_t Event<ParamTypes...>::CountConnections (T* obj, void (T::*method) (const Meta*, ParamTypes...)) const
 {
   std::size_t count = 0;
-  details::DelegateToken<ParamTypes...>* conn = nullptr;
+  details::DelegateToken<const Meta*, ParamTypes...>* conn = nullptr;
 
   for(details::Token* p = first_token_; p; p = p->next) {
-    conn = dynamic_cast<details::DelegateToken<ParamTypes...>*>(p);
+    conn = dynamic_cast<details::DelegateToken<const Meta*, ParamTypes...>*>(p);
     if (conn && (conn->delegate().template equal<T>(obj, method))) {
       count++;
     }
@@ -679,20 +649,14 @@ std::size_t Event<ParamTypes...>::CountOutConnections () const
 template<typename ... ParamTypes>
 void Event<ParamTypes...>::Fire (ParamTypes ... Args)
 {
-  clear_bit(flag_, EventIteratorDirectionMask);
-  iterator_ = first_token_;
-  while (iterator_) {
-    static_cast<details::InvokableToken<ParamTypes...>*>(iterator_)->Invoke(Args...);
+  Meta m;
+  m.iterator_ = first_token_;
+  
+  while (m.iterator_) {
+    static_cast<details::InvokableToken<ParamTypes...>*>(m.iterator_)->Invoke(&m, Args...);
 
-    // check if iterator was deleted when being invoked
-    // (EventIteratorRemoveMask was set via the virtual AuditDestroyingConnection()
-    if (flag_ & EventIteratorRemoveMask)
-      clear_bit(flag_, EventIteratorRemoveMask);
-    else
-      iterator_ = iterator_->next;
+    m.iterator_ = m.iterator_->next;
   }
-  iterator_ = nullptr;
-  clear_bit(flag_, EventIteratorRemoveMask);
 }
   
 template<typename ... ParamTypes>
@@ -706,18 +670,10 @@ void Event<ParamTypes...>::AuditDestroyingToken (details::Token* token)
 {
   if (token == first_token_) first_token_ = token->next;
   if (token == last_token_) last_token_ = token->previous;
-  if (token == iterator_) {
-    if(flag_ & EventIteratorDirectionMask)
-      iterator_ = iterator_->previous;
-    else
-      iterator_ = iterator_->next;
-
-    set_bit(flag_, EventIteratorRemoveMask);
-  }
 }
-
+  
 template<typename ... ParamTypes>
-void Event<ParamTypes...>::PushBackToken(details::InvokableToken<ParamTypes...>* token)
+void Event<ParamTypes...>::PushBackToken(details::Token* token)
 {
 #ifdef DEBUG
   assert(token->trackable_object == nullptr);
@@ -739,7 +695,7 @@ void Event<ParamTypes...>::PushBackToken(details::InvokableToken<ParamTypes...>*
 }
 
 template<typename ... ParamTypes>
-void Event<ParamTypes...>::PushFrontToken(details::InvokableToken<ParamTypes...>* token)
+void Event<ParamTypes...>::PushFrontToken(details::Token* token)
 {
 #ifdef DEBUG
   assert(token->trackable_object == nullptr);
@@ -762,7 +718,7 @@ void Event<ParamTypes...>::PushFrontToken(details::InvokableToken<ParamTypes...>
 }
 
 template<typename ... ParamTypes>
-void Event<ParamTypes...>::InsertToken(int index, details::InvokableToken<ParamTypes...>* token)
+void Event<ParamTypes...>::InsertToken(int index, details::Token* token)
 {
 #ifdef DEBUG
   assert(token->trackable_object == nullptr);

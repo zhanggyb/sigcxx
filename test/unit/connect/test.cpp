@@ -28,6 +28,11 @@ class Source
     event1_.Fire(n);
   }
 
+  void DoTestWithMeta1 (int n)
+  {
+    event1_.FireWithMeta(n);
+  }
+  
   void DoTest2 (int n1, int n2)
   {
     event2_.Fire(n1, n2);
@@ -77,6 +82,11 @@ class Consumer: public CppEvent::Observer
     // << std::endl;
   }
 
+  void OnTestWithMeta (const CppEvent::Meta* m, int n)
+  {
+    std::cout << "Event received in OnTestWithMeta, n: " << n << std::endl;
+  }
+  
   inline size_t test1_count() const
   {
     return test1_count_;
@@ -333,4 +343,16 @@ TEST_F(Test, delete_more_when_called)
   ASSERT_TRUE((c1.test1_count() == 1) &&
               (c2.test1_count() == 1) &&
               (c3.test1_count() == 1));
+}
+
+TEST_F(Test, meta_connect)
+{
+  Source s;
+  Consumer c;
+  
+  s.event1().Connect(&c, &Consumer::OnTestWithMeta);
+  
+  s.DoTestWithMeta1(999);
+  
+  ASSERT_TRUE(true);
 }

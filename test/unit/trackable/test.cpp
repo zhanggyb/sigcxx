@@ -25,11 +25,11 @@ public:
   int v;
 };
 
-class Trackable: public CppEvent::AbstractTrackable
+class Trackable: public CppEvent::Trackable
 {
 public:
   Trackable ()
-  : CppEvent::AbstractTrackable()
+  : CppEvent::Trackable()
   { }
 
   virtual ~Trackable()
@@ -59,11 +59,6 @@ public:
     }
   }
 
-protected:
-
-  virtual void AuditDestroyingToken (CppEvent::details::Token* token) override
-  { }
-
 };
 
 class Source
@@ -88,7 +83,7 @@ class Source
   CppEvent::Event<Source*> event_;
 };
 
-class Consumer: public CppEvent::Observer
+class Consumer: public CppEvent::Trackable
 {
  public:
 
@@ -97,11 +92,11 @@ class Consumer: public CppEvent::Observer
 
   virtual ~Consumer () { }
 
-  void OnTestNothing (Source* sender)
+  void OnTestNothing (const CppEvent::Meta* meta_ptr, Source* sender)
   {
     // do nothing...
   }
-
+  
 };
 
 TEST_F(Test, push_back1)
@@ -190,15 +185,33 @@ TEST_F(Test, insert4)
   ASSERT_TRUE(c.CountInConnections() == 4);
 }
 
-TEST_F(Test, copy_observer)
+TEST_F(Test, remove_connections_from_event)
 {
- Source s;
- Consumer c1;
- Consumer c2;
+  Source s;
+  Consumer c;
+  
+  s.event().Connect(&c, &Consumer::OnTestNothing);
+  
+  std::cout << "hello" << std::endl;
+  std::cout << s.event().CountOutConnections() << std::endl;
+  
+  s.event().RemoveAllOutConnections();
 
- s.event().Connect(&c1, &Consumer::OnTestNothing);
-
- c2 = c1;
-
- ASSERT_TRUE(c1.CountInConnections() == 1 && c2.CountInConnections() == 0);
+  std::cout << "show this line?" << std::endl;
+  std::cout << s.event().CountOutConnections() << std::endl;
+  
+  ASSERT_TRUE(true);
 }
+
+//TEST_F(Test, copy_observer)
+//{
+// Source s;
+// Consumer c1;
+// Consumer c2;
+//
+// s.event().Connect(&c1, &Consumer::OnTestNothing);
+//
+// c2 = c1;
+//
+// ASSERT_TRUE(c1.CountInConnections() == 1 && c2.CountInConnections() == 0);
+//}
