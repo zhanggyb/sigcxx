@@ -6,6 +6,8 @@
 
 #include <cppevent/event.hpp>
 
+using CppEvent::Sender;
+
 class Test: public testing::Test
 {
  public:
@@ -45,7 +47,7 @@ class Source
   CppEvent::Event<int, int> event2_;
 };
 
-class Consumer: public CppEvent::Observer
+class Consumer: public CppEvent::Trackable
 {
  public:
 
@@ -57,13 +59,13 @@ class Consumer: public CppEvent::Observer
 
   void DisconnectAll ();
 
-  void OnTest1 (int n)
+  void OnTest1 (const Sender* sender, int n)
   {
     test1_count_++;
     //std::cout << "Event received in OnTest1, n " << n << ", " << test1_count_ << " times." << std::endl;
   }
 
-  void OnTest2 (int n1, int n2)
+  void OnTest2 (const Sender* sender, int n1, int n2)
   {
     test2_count_++;
     //std::cout << "Event received in OnTest2, n1: " << n1 << " n2: " << n2 << ", " << test2_count_ << " times."

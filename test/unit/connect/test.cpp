@@ -4,6 +4,7 @@
 #include <iostream>
 
 using namespace std;
+using CppEvent::Sender;
 
 Test::Test()
     : testing::Test()
@@ -28,11 +29,6 @@ class Source
     event1_.Fire(n);
   }
 
-  void DoTestWithMeta1 (int n)
-  {
-    event1_.FireWithMeta(n);
-  }
-  
   void DoTest2 (int n1, int n2)
   {
     event2_.Fire(n1, n2);
@@ -54,7 +50,7 @@ class Source
   CppEvent::Event<int, int> event2_;
 };
 
-class Consumer: public CppEvent::Observer
+class Consumer: public CppEvent::Trackable
 {
  public:
 
@@ -64,25 +60,20 @@ class Consumer: public CppEvent::Observer
 
   virtual ~Consumer () { }
 
-  void DisconnectAll ()
-  {
-    RemoveAllInConnections();
-  }
-
-  void OnTest1 (int n)
+  void OnTest1 (const Sender* sender, int n)
   {
     test1_count_++;
     //std::cout << "Event received in OnTest1, n " << n << ", " << test1_count_ << " times." << std::endl;
   }
 
-  void OnTest2 (int n1, int n2)
+  void OnTest2 (const Sender* sender, int n1, int n2)
   {
     test2_count_++;
     //std::cout << "Event received in OnTest2, n1: " << n1 << " n2: " << n2 << ", " << test2_count_ << " times."
     // << std::endl;
   }
 
-  void OnTestWithMeta (const CppEvent::Meta* m, int n)
+  void OnTestWithMeta (const Sender* sender, int n)
   {
     std::cout << "Event received in OnTestWithMeta, n: " << n << std::endl;
   }
@@ -102,7 +93,7 @@ class Consumer: public CppEvent::Observer
   size_t test2_count_;
 };
 
-class SelfDestroyConsumer: public CppEvent::Observer
+class SelfDestroyConsumer: public CppEvent::Trackable
 {
  public:
 
@@ -110,7 +101,7 @@ class SelfDestroyConsumer: public CppEvent::Observer
 
   virtual ~SelfDestroyConsumer();
 
-  void OnTest1 (int n);
+  void OnTest1 (const Sender* sender, int n);
 
  private:
 
@@ -118,7 +109,7 @@ class SelfDestroyConsumer: public CppEvent::Observer
 
 };
 
-class SelfConsumer: public CppEvent::Observer
+class SelfConsumer: public CppEvent::Trackable
 {
  public:
 
@@ -139,7 +130,7 @@ class SelfConsumer: public CppEvent::Observer
     event_.Fire();
   }
 
-  void OnTest () {event_count_++;}
+  void OnTest (const Sender* sender) {event_count_++;}
 
   inline size_t event_count() const
   {
@@ -159,7 +150,7 @@ SelfDestroyConsumer* SelfDestroyConsumer::Create()
 }
 
 SelfDestroyConsumer::SelfDestroyConsumer()
-    : CppEvent::Observer()
+    : CppEvent::Trackable()
 {}
 
 SelfDestroyConsumer::~SelfDestroyConsumer()
@@ -167,8 +158,9 @@ SelfDestroyConsumer::~SelfDestroyConsumer()
   cout << "object destroyed" << endl;
 }
 
-void SelfDestroyConsumer::OnTest1(int n)
+void SelfDestroyConsumer::OnTest1(const Sender* sender, int n)
 {
+  DisconnectOnceFrom(sender);
   delete this;
 }
 
@@ -352,7 +344,7 @@ TEST_F(Test, meta_connect)
   
   s.event1().Connect(&c, &Consumer::OnTestWithMeta);
   
-  s.DoTestWithMeta1(999);
+  s.DoTest1(999);
   
   ASSERT_TRUE(true);
 }

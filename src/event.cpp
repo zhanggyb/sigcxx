@@ -79,7 +79,17 @@ Token::~Token()
   
 Trackable::~Trackable ()
 {
-  RemoveAllInConnections();
+  DisconnectAllFrom(nullptr);
+}
+
+void Trackable::DisconnectOnceFrom (const Sender* sender)
+{
+  if (sender && sender->token_->binding->trackable_object == this) {
+    details::Token* tmp = sender->token_;
+    const_cast<Sender*>(sender)->token_ = sender->token_->next;
+    delete tmp;
+    const_cast<Sender*>(sender)->skip_ = true;
+  }
 }
 
 void Trackable::PushBackBinding (details::Binding* node)
@@ -207,16 +217,24 @@ void Trackable::InsertBinding (int index, details::Binding* node)
   node->trackable_object = this;
 }
 
-void Trackable::RemoveAllInConnections ()
+void Trackable::DisconnectAllFrom (const Sender* sender)
 {
-  details::Binding* tmp = nullptr;
-  details::Binding* p = first_binding_;
+  if ((sender == nullptr) || (sender->token_->binding->trackable_object == this)) {
+    details::Binding* tmp = nullptr;
+    details::Binding* p = first_binding_;
 
-  while (p) {
-    tmp = p->next;
-    delete p;
-    p = tmp;
+    while (p) {
+      tmp = p->next;
+      delete p;
+      p = tmp;
+    }
+
+    if (sender) {
+      const_cast<Sender*>(sender)->token_ = nullptr;
+      const_cast<Sender*>(sender)->skip_ = true;
+    }
   }
+  
 }
 
 std::size_t Trackable::CountInConnections () const

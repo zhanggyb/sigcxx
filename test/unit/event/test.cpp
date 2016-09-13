@@ -83,7 +83,7 @@ class Source
   CppEvent::Event<Source*> event_;
 };
 
-class Consumer: public CppEvent::Observer
+class Consumer: public CppEvent::Trackable
 {
  public:
 

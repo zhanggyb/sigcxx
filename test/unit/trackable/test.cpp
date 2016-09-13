@@ -68,19 +68,19 @@ class Source
   Source () { }
   ~Source () { }
 
-  void DoTest ()
+  void DoTest (int n)
   {
-    event_.Fire(this);
+    event_.Fire(n);
   }
 
-  inline CppEvent::Event<Source*>& event ()
+  inline CppEvent::Event<int>& event ()
   {
     return event_;
   }
 
  private:
 
-  CppEvent::Event<Source*> event_;
+  CppEvent::Event<int> event_;
 };
 
 class Consumer: public CppEvent::Trackable
@@ -92,7 +92,7 @@ class Consumer: public CppEvent::Trackable
 
   virtual ~Consumer () { }
 
-  void OnTestNothing (const CppEvent::Meta* meta_ptr, Source* sender)
+  void OnTestNothing (const CppEvent::Sender* sender, int)
   {
     // do nothing...
   }
@@ -191,16 +191,11 @@ TEST_F(Test, remove_connections_from_event)
   Consumer c;
   
   s.event().Connect(&c, &Consumer::OnTestNothing);
+  ASSERT_TRUE(s.event().CountOutConnections() == 1);
   
-  std::cout << "hello" << std::endl;
-  std::cout << s.event().CountOutConnections() << std::endl;
-  
-  s.event().RemoveAllOutConnections();
+  s.event().DisconnectAll();
 
-  std::cout << "show this line?" << std::endl;
-  std::cout << s.event().CountOutConnections() << std::endl;
-  
-  ASSERT_TRUE(true);
+  ASSERT_TRUE(s.event().CountOutConnections() == 0);
 }
 
 //TEST_F(Test, copy_observer)
