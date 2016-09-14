@@ -76,7 +76,7 @@ Token::~Token() {
 }  // namespace details
 
 Trackable::~Trackable() {
-  DisconnectAllFrom();
+  DisconnectFromAll();
 }
 
 void Trackable::DisconnectOnceFrom(const Sender *sender) {
@@ -226,7 +226,7 @@ void Trackable::DisconnectAllFrom(const Sender *sender) {
   }
 }
 
-void Trackable::DisconnectAllFrom() {
+void Trackable::DisconnectFromAll() {
   details::Binding *tmp = nullptr;
   details::Binding *p = first_binding_;
 

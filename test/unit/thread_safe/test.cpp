@@ -24,7 +24,7 @@ void Source::DoTest2 (int n1, int n2)
 void Consumer::DisconnectAll()
 {
   lock_guard<mutex> lock(m);
-  DisconnectAllFrom();
+  DisconnectFromAll();
 }
 
 Test::Test()

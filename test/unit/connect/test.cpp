@@ -63,14 +63,14 @@ class Consumer: public CppEvent::Trackable
   void OnTest1 (const Sender* sender, int n)
   {
     test1_count_++;
-    //std::cout << "Event received in OnTest1, n " << n << ", " << test1_count_ << " times." << std::endl;
+    std::cout << "Event received in OnTest1, n " << n << ", " << test1_count_ << " times." << std::endl;
   }
 
   void OnTest2 (const Sender* sender, int n1, int n2)
   {
     test2_count_++;
-    //std::cout << "Event received in OnTest2, n1: " << n1 << " n2: " << n2 << ", " << test2_count_ << " times."
-    // << std::endl;
+    std::cout << "Event received in OnTest2, n1: " << n1 << " n2: " << n2 << ", " << test2_count_ << " times."
+     << std::endl;
   }
 
   void OnTestWithMeta (const Sender* sender, int n)
@@ -308,7 +308,7 @@ TEST_F(Test, event_chaining)
   s1.event1().Connect(s2.event1());
   s2.event1().Connect(&c, &Consumer::OnTest1);
 
-  s1.DoTest1(1);
+  s1.DoTest1(555);
 
   ASSERT_TRUE(c.CountConnectionsFrom() == 1 && c.test1_count() == 1);
 }

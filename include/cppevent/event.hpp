@@ -240,7 +240,7 @@ class Trackable {
 
   void DisconnectAllFrom(const Sender *sender);
 
-  void DisconnectAllFrom();
+  void DisconnectFromAll();
 
   std::size_t CountConnectionsFrom() const;
 
@@ -312,7 +312,7 @@ void Trackable::DisconnectAllFrom(const Sender *sender, T *obj, void (T::*method
     p1 = last_binding_;
     while (p1) {
       p2 = p1->previous;
-      conn = dynamic_cast<details::DelegateToken<ParamTypes...> *>(p1->token);
+      conn = dynamic_cast<details::DelegateToken<ParamTypes...>*>(p1->token);
       if (conn && (conn->delegate().template equal<T>(obj, method))) {
         delete conn;
       }
