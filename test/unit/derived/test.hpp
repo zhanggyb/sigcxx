@@ -6,6 +6,8 @@
 
 #include <cppevent/event.hpp>
 
+using CppEvent::Sender;
+
 class Test: public testing::Test
 {
  public:
@@ -51,13 +53,13 @@ class Source
   CppEvent::Event<int, int> event2_;
 };
 
-class AbstractConsumer: public CppEvent::Observer
+class AbstractConsumer: public CppEvent::Trackable
 {
 public:
   AbstractConsumer() {}
   virtual ~AbstractConsumer() {}
 
-  virtual void OnVirtualTest (int n) = 0;
+  virtual void OnVirtualTest (const Sender* sender, int n) = 0;
 };
 
 class Consumer: public AbstractConsumer
@@ -70,25 +72,20 @@ class Consumer: public AbstractConsumer
 
   virtual ~Consumer () { }
 
-  void DisconnectAll ()
-  {
-    RemoveAllInConnections();
-  }
-
-  void OnTest1 (int n)
+  void OnTest1 (const Sender* sender, int n)
   {
 	  test1_count_++;
 	  std::cout << "Event received in OnTest1, n " << n << ", " << test1_count_ << " times." << std::endl;
   }
 
-  void OnTest2 (int n1, int n2)
+  void OnTest2 (const Sender* sender, int n1, int n2)
   {
 	  test2_count_++;
     std::cout << "Event received in OnTest2, n1: " << n1 << " n2: " << n2 << ", " << test2_count_ << " times."
               << std::endl;
   }
 
-  virtual void OnVirtualTest (int n) override
+  virtual void OnVirtualTest (const Sender* sender, int n) override
   {
     virtualtest_count_++;
     std::cout << "Virtual test in base class, param: " << n << ", " << virtualtest_count_ << " times."
@@ -131,7 +128,7 @@ class SubConsumer: public Consumer
 
   virtual ~SubConsumer() {}
 
-  virtual void OnVirtualTest (int n) override
+  virtual void OnVirtualTest (const Sender* sender, int n) override
   {
     set_virtualtest_count(virtualtest_count() + 1);
     std::cout << "Virtual test in sub class, param: " << n << ", " << virtualtest_count() << " times."

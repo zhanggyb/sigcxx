@@ -4,6 +4,7 @@
 #include <iostream>
 
 using namespace std;
+using CppEvent::Sender;
 
 Test::Test()
     : testing::Test()
@@ -22,22 +23,22 @@ class Source
   Source () { }
   ~Source () { }
 
-  void DoTest ()
+  void DoTest (int n = 0)
   {
-    event_.Fire(this);
+    event_.Fire(n);
   }
 
-  inline CppEvent::Event<Source*>& event ()
+  inline CppEvent::Event<int>& event ()
   {
     return event_;
   }
 
  private:
 
-  CppEvent::Event<Source*> event_;
+  CppEvent::Event<int> event_;
 };
 
-class Consumer: public CppEvent::Observer
+class Consumer: public CppEvent::Trackable
 {
  public:
 
@@ -46,24 +47,28 @@ class Consumer: public CppEvent::Observer
 
   virtual ~Consumer () { }
 
-  void OnTestNothing (Source* sender)
+  void OnTestNothing (const Sender* sender, int n)
   {
     // do nothing...
   }
 
-  void OnTestDisconnectFirst (Source* sender)
+  void OnTestDisconnectFirst (const Sender* sender, int n)
   {
-    sender->event().DisconnectOnce(this, &Consumer::OnTestDisconnectFirst, 0);
+    DisconnectOnceFrom(sender);
+    // sender->event().DisconnectOnce(this, &Consumer::OnTestDisconnectFirst, 0);
   }
 
-  void OnTestDisconnectLast (Source* sender)
+  void OnTestDisconnectLast (const Sender* sender, int n)
   {
-    sender->event().DisconnectOnce(this, &Consumer::OnTestDisconnectLast, -1);
+    DisconnectOnceFrom(sender);
+    // sender->event().DisconnectOnce(this, &Consumer::OnTestDisconnectLast, -1);
   }
 
-  void OnTestDisconnectAll (Source* sender)
+  void OnTestDisconnectAll (const Sender* sender, int n)
   {
-    sender->event().DisconnectAll(this, &Consumer::OnTestDisconnectAll);
+    // RemoveAllInConnections(sender);
+    // sender->event().DisconnectAll(this, &Consumer::OnTestDisconnectAll);
+    DisconnectAllFrom(sender, this, &Consumer::OnTestDisconnectAll);
   }
 
 };
@@ -81,7 +86,7 @@ TEST_F(Test, disconnect_first_on_fire1)
   s.event().Connect(&c, &Consumer::OnTestNothing);
 
   s.DoTest();
-  ASSERT_TRUE(c.CountInConnections() == 2);
+  ASSERT_TRUE(c.CountConnectionsFrom() == 2);
 }
 
 /*
@@ -97,7 +102,7 @@ TEST_F(Test, disconnect_first_on_fire2)
   s.event().Connect(&c, &Consumer::OnTestNothing);
 
   s.DoTest();
-  ASSERT_TRUE(c.CountInConnections() == 2);
+  ASSERT_TRUE(c.CountConnectionsFrom() == 2);
 }
 
 /*
@@ -113,7 +118,7 @@ TEST_F(Test, disconnect_last_on_fire1)
   s.event().Connect(&c, &Consumer::OnTestDisconnectLast);
 
   s.DoTest();
-  ASSERT_TRUE(c.CountInConnections() == 2);
+  ASSERT_TRUE(c.CountConnectionsFrom() == 2);
 }
 
 /*
@@ -129,7 +134,7 @@ TEST_F(Test, disconnect_last_on_fire2)
   s.event().Connect(&c, &Consumer::OnTestNothing);
 
   s.DoTest();
-  ASSERT_TRUE(c.CountInConnections() == 2);
+  ASSERT_TRUE(c.CountConnectionsFrom() == 2);
 }
 
 /*
@@ -147,5 +152,5 @@ TEST_F(Test, disconnect_all_on_fire1)
   s.event().Connect(&c, &Consumer::OnTestDisconnectAll);
 
   s.DoTest();
-  ASSERT_TRUE(c.CountInConnections() == 1);
+  ASSERT_TRUE(c.CountConnectionsFrom() == 1);
 }

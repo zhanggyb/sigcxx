@@ -4,6 +4,7 @@
 #include <iostream>
 
 using namespace std;
+using CppEvent::Sender;
 
 Test::Test()
     : testing::Test()
@@ -49,7 +50,7 @@ class Source
   CppEvent::Event<int, int> event2_;
 };
 
-class Consumer: public CppEvent::Observer
+class Consumer: public CppEvent::Trackable
 {
  public:
 
@@ -59,24 +60,24 @@ class Consumer: public CppEvent::Observer
 
   virtual ~Consumer () { }
 
-  void DisconnectAll ()
-  {
-    RemoveAllInConnections();
-  }
-
-  void OnTest1 (int n)
+  void OnTest1 (const Sender* sender, int n)
   {
     test1_count_++;
-    //std::cout << "Event received in OnTest1, n " << n << ", " << test1_count_ << " times." << std::endl;
+    std::cout << "Event received in OnTest1, n " << n << ", " << test1_count_ << " times." << std::endl;
   }
 
-  void OnTest2 (int n1, int n2)
+  void OnTest2 (const Sender* sender, int n1, int n2)
   {
     test2_count_++;
-    //std::cout << "Event received in OnTest2, n1: " << n1 << " n2: " << n2 << ", " << test2_count_ << " times."
-    // << std::endl;
+    std::cout << "Event received in OnTest2, n1: " << n1 << " n2: " << n2 << ", " << test2_count_ << " times."
+     << std::endl;
   }
 
+  void OnTestWithMeta (const Sender* sender, int n)
+  {
+    std::cout << "Event received in OnTestWithMeta, n: " << n << std::endl;
+  }
+  
   inline size_t test1_count() const
   {
     return test1_count_;
@@ -92,7 +93,7 @@ class Consumer: public CppEvent::Observer
   size_t test2_count_;
 };
 
-class SelfDestroyConsumer: public CppEvent::Observer
+class SelfDestroyConsumer: public CppEvent::Trackable
 {
  public:
 
@@ -100,7 +101,7 @@ class SelfDestroyConsumer: public CppEvent::Observer
 
   virtual ~SelfDestroyConsumer();
 
-  void OnTest1 (int n);
+  void OnTest1 (const Sender* sender, int n);
 
  private:
 
@@ -108,7 +109,7 @@ class SelfDestroyConsumer: public CppEvent::Observer
 
 };
 
-class SelfConsumer: public CppEvent::Observer
+class SelfConsumer: public CppEvent::Trackable
 {
  public:
 
@@ -129,7 +130,7 @@ class SelfConsumer: public CppEvent::Observer
     event_.Fire();
   }
 
-  void OnTest () {event_count_++;}
+  void OnTest (const Sender* sender) {event_count_++;}
 
   inline size_t event_count() const
   {
@@ -149,7 +150,7 @@ SelfDestroyConsumer* SelfDestroyConsumer::Create()
 }
 
 SelfDestroyConsumer::SelfDestroyConsumer()
-    : CppEvent::Observer()
+    : CppEvent::Trackable()
 {}
 
 SelfDestroyConsumer::~SelfDestroyConsumer()
@@ -157,8 +158,9 @@ SelfDestroyConsumer::~SelfDestroyConsumer()
   cout << "object destroyed" << endl;
 }
 
-void SelfDestroyConsumer::OnTest1(int n)
+void SelfDestroyConsumer::OnTest1(const Sender* sender, int n)
 {
+  DisconnectOnceFrom(sender);
   delete this;
 }
 
@@ -188,7 +190,7 @@ TEST_F(Test, disconnect)
   s.event1().DisconnectAll(&c, &Consumer::OnTest1);
 
   s.DoTest1(1);	// nothing should be output in stdout
-  ASSERT_TRUE(c.test1_count() == 0 && c.CountInConnections() == 0);
+  ASSERT_TRUE(c.test1_count() == 0 && c.CountConnectionsFrom() == 0);
 }
 
 /*
@@ -205,7 +207,7 @@ TEST_F(Test, connect_method_4_times)
   s.event1().Connect(&c, &Consumer::OnTest1);
 
   s.DoTest1(1);	// this should call 4 times
-  ASSERT_TRUE(c.test1_count() == 4 && s.event1().CountOutConnections() == 4 && c.CountInConnections() == 4);
+  ASSERT_TRUE(c.test1_count() == 4 && s.event1().CountConnections() == 4 && c.CountConnectionsFrom() == 4);
 }
 
 /*
@@ -225,7 +227,7 @@ TEST_F(Test, disconnect_all)
 
   s.DoTest1(1);	// nothing should be output in stdout
 
-  ASSERT_TRUE(c.test1_count() == 0 && s.event1().CountOutConnections() == 0 && c.CountInConnections() == 0);
+  ASSERT_TRUE(c.test1_count() == 0 && s.event1().CountConnections() == 0 && c.CountConnectionsFrom() == 0);
 }
 
 /*
@@ -306,9 +308,9 @@ TEST_F(Test, event_chaining)
   s1.event1().Connect(s2.event1());
   s2.event1().Connect(&c, &Consumer::OnTest1);
 
-  s1.DoTest1(1);
+  s1.DoTest1(555);
 
-  ASSERT_TRUE(c.CountInConnections() == 1 && c.test1_count() == 1);
+  ASSERT_TRUE(c.CountConnectionsFrom() == 1 && c.test1_count() == 1);
 }
 
 TEST_F(Test, delete_more_when_called)
@@ -333,4 +335,16 @@ TEST_F(Test, delete_more_when_called)
   ASSERT_TRUE((c1.test1_count() == 1) &&
               (c2.test1_count() == 1) &&
               (c3.test1_count() == 1));
+}
+
+TEST_F(Test, meta_connect)
+{
+  Source s;
+  Consumer c;
+  
+  s.event1().Connect(&c, &Consumer::OnTestWithMeta);
+  
+  s.DoTest1(999);
+  
+  ASSERT_TRUE(true);
 }

@@ -7,6 +7,8 @@
 #include <cppevent/event.hpp>
 #include <QtCore>
 
+using CppEvent::Sender;
+
 class Test: public testing::Test
 {
  public:
@@ -41,7 +43,7 @@ class Source
   CppEvent::Event<int> event1_;
 };
 
-class Consumer: public CppEvent::Observer
+class Consumer: public CppEvent::Trackable
 {
  public:
 
@@ -51,12 +53,7 @@ class Consumer: public CppEvent::Observer
 
   virtual ~Consumer () { }
 
-  void DisconnectAll ()
-  {
-    RemoveAllInConnections();
-  }
-
-  void OnTest1 (int n)
+  void OnTest1 (const Sender* sender, int n)
   {
 	  test1_count_++;
   }

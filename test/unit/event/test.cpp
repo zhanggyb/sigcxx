@@ -83,7 +83,7 @@ class Source
   CppEvent::Event<Source*> event_;
 };
 
-class Consumer: public CppEvent::Observer
+class Consumer: public CppEvent::Trackable
 {
  public:
 
@@ -109,7 +109,7 @@ TEST_F(Test, push_back1)
   
   e.print();
   
-  ASSERT_TRUE(e.CountOutConnections() == 3);
+  ASSERT_TRUE(e.CountConnections() == 3);
 }
 
 TEST_F(Test, push_front1)
@@ -122,7 +122,7 @@ TEST_F(Test, push_front1)
   
   c.print();
   
-  ASSERT_TRUE(c.CountOutConnections() == 3);
+  ASSERT_TRUE(c.CountConnections() == 3);
 }
 
 TEST_F(Test, insert1)
@@ -136,7 +136,7 @@ TEST_F(Test, insert1)
   
   c.print();
   
-  ASSERT_TRUE(c.CountOutConnections() == 3);
+  ASSERT_TRUE(c.CountConnections() == 3);
 }
 
 TEST_F(Test, insert2)
@@ -150,7 +150,7 @@ TEST_F(Test, insert2)
   
   c.print();
   
-  ASSERT_TRUE(c.CountOutConnections() == 3);
+  ASSERT_TRUE(c.CountConnections() == 3);
 }
 
 TEST_F(Test, insert3)
@@ -166,7 +166,7 @@ TEST_F(Test, insert3)
   
   c.print();
   
-  ASSERT_TRUE(c.CountOutConnections() == 4);
+  ASSERT_TRUE(c.CountConnections() == 4);
 }
 
 TEST_F(Test, insert4)
@@ -182,7 +182,7 @@ TEST_F(Test, insert4)
   
   c.print();
   
-  ASSERT_TRUE(c.CountOutConnections() == 4);
+  ASSERT_TRUE(c.CountConnections() == 4);
 }
 
 //TEST_F(Test, copy_observer)
@@ -195,5 +195,5 @@ TEST_F(Test, insert4)
 //
 //  c2 = c1;
 //  
-//  ASSERT_TRUE(c1.CountOutConnections() == 1 && c2.CountOutConnections() == 0);
+//  ASSERT_TRUE(c1.CountConnections() == 1 && c2.CountConnections() == 0);
 //}

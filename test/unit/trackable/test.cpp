@@ -25,11 +25,11 @@ public:
   int v;
 };
 
-class Trackable: public CppEvent::AbstractTrackable
+class Trackable: public CppEvent::Trackable
 {
 public:
   Trackable ()
-  : CppEvent::AbstractTrackable()
+  : CppEvent::Trackable()
   { }
 
   virtual ~Trackable()
@@ -59,11 +59,6 @@ public:
     }
   }
 
-protected:
-
-  virtual void AuditDestroyingToken (CppEvent::details::Token* token) override
-  { }
-
 };
 
 class Source
@@ -73,22 +68,22 @@ class Source
   Source () { }
   ~Source () { }
 
-  void DoTest ()
+  void DoTest (int n)
   {
-    event_.Fire(this);
+    event_.Fire(n);
   }
 
-  inline CppEvent::Event<Source*>& event ()
+  inline CppEvent::Event<int>& event ()
   {
     return event_;
   }
 
  private:
 
-  CppEvent::Event<Source*> event_;
+  CppEvent::Event<int> event_;
 };
 
-class Consumer: public CppEvent::Observer
+class Consumer: public CppEvent::Trackable
 {
  public:
 
@@ -97,11 +92,11 @@ class Consumer: public CppEvent::Observer
 
   virtual ~Consumer () { }
 
-  void OnTestNothing (Source* sender)
+  void OnTestNothing (const CppEvent::Sender* sender, int)
   {
     // do nothing...
   }
-
+  
 };
 
 TEST_F(Test, push_back1)
@@ -114,7 +109,7 @@ TEST_F(Test, push_back1)
 
   c.print();
 
-  ASSERT_TRUE(c.CountInConnections() == 3);
+  ASSERT_TRUE(c.CountConnectionsFrom() == 3);
 }
 
 TEST_F(Test, push_front1)
@@ -127,7 +122,7 @@ TEST_F(Test, push_front1)
 
   c.print();
 
-  ASSERT_TRUE(c.CountInConnections() == 3);
+  ASSERT_TRUE(c.CountConnectionsFrom() == 3);
 }
 
 TEST_F(Test, insert1)
@@ -141,7 +136,7 @@ TEST_F(Test, insert1)
 
   c.print();
 
-  ASSERT_TRUE(c.CountInConnections() == 3);
+  ASSERT_TRUE(c.CountConnectionsFrom() == 3);
 }
 
 TEST_F(Test, insert2)
@@ -155,7 +150,7 @@ TEST_F(Test, insert2)
 
   c.print();
 
-  ASSERT_TRUE(c.CountInConnections() == 3);
+  ASSERT_TRUE(c.CountConnectionsFrom() == 3);
 }
 
 TEST_F(Test, insert3)
@@ -171,7 +166,7 @@ TEST_F(Test, insert3)
 
   c.print();
 
-  ASSERT_TRUE(c.CountInConnections() == 4);
+  ASSERT_TRUE(c.CountConnectionsFrom() == 4);
 }
 
 TEST_F(Test, insert4)
@@ -187,18 +182,31 @@ TEST_F(Test, insert4)
 
   c.print();
 
-  ASSERT_TRUE(c.CountInConnections() == 4);
+  ASSERT_TRUE(c.CountConnectionsFrom() == 4);
 }
 
-TEST_F(Test, copy_observer)
+TEST_F(Test, remove_connections_from_event)
 {
- Source s;
- Consumer c1;
- Consumer c2;
+  Source s;
+  Consumer c;
+  
+  s.event().Connect(&c, &Consumer::OnTestNothing);
+  ASSERT_TRUE(s.event().CountConnections() == 1);
+  
+  s.event().DisconnectAll();
 
- s.event().Connect(&c1, &Consumer::OnTestNothing);
-
- c2 = c1;
-
- ASSERT_TRUE(c1.CountInConnections() == 1 && c2.CountInConnections() == 0);
+  ASSERT_TRUE(s.event().CountConnections() == 0);
 }
+
+//TEST_F(Test, copy_observer)
+//{
+// Source s;
+// Consumer c1;
+// Consumer c2;
+//
+// s.event().Connect(&c1, &Consumer::OnTestNothing);
+//
+// c2 = c1;
+//
+// ASSERT_TRUE(c1.CountConnectionsFrom() == 1 && c2.CountConnectionsFrom() == 0);
+//}

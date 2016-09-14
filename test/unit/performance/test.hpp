@@ -6,6 +6,8 @@
 
 #include <cppevent/event.hpp>
 
+using CppEvent::Sender;
+
 class Test: public testing::Test
 {
  public:
@@ -17,19 +19,19 @@ class Test: public testing::Test
   virtual void TearDown() {  }
 };
 
-class Consumer: public CppEvent::Observer
+class Consumer: public CppEvent::Trackable
 {
  public:
 
   Consumer()
-      : CppEvent::Observer(),
+      : CppEvent::Trackable(),
         count_(0)
   {}
 
   virtual ~Consumer()
   {}
 
-  void onCallback ()
+  void onCallback (const Sender* sender)
   {
     count_++;
   }
