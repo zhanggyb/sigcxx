@@ -1,5 +1,7 @@
 #include "observer.hpp"
 
+#include <iostream>
+
 Observer::Observer()
 : Trackable(), test0_count_(0), test1_count_(0), test2_count_(0) {
 
@@ -24,4 +26,9 @@ void Observer::OnTest2IntegerParams(const Sender *sender, int n1, int n2) {
 void Observer::OnTestDestroy(const Sender *sender) {
   UnbindOnce(sender); // call this before delete self
   delete this;
+}
+
+void Observer::OnTestUnbindAll(const Sender* sender) {
+  UnbindAll(sender);
+  std::cout << "This message should be printed only once" << std::endl;
 }

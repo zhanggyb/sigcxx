@@ -242,6 +242,9 @@ class Trackable {
 
   void UnbindAll(const Sender *sender);
 
+  template<typename T, typename ... ParamTypes>
+  void UnbindAll(const Sender *sender, T *obj, void (T::*method)(const Sender*, ParamTypes...));
+
   void UnbindAll();
 
   /**
@@ -303,6 +306,46 @@ class Trackable {
   details::Binding *first_binding_;
   details::Binding *last_binding_;
 };
+
+template<typename T, typename ... ParamTypes>
+void Trackable::UnbindAll(const Sender *sender, T *obj, void (T::*method)(const Sender*, ParamTypes...)) {
+  if (sender && (sender->token_->binding->trackable_object == this)) {
+    details::DelegateToken<ParamTypes...> *delegate_token = nullptr;
+
+    details::Token *p = nullptr;
+    details::Token *tmp = nullptr;
+
+    p = sender->token_;
+    while(p) {
+      tmp = p->previous;
+      delegate_token = dynamic_cast<details::EventToken<ParamTypes...> *>(p);
+      if (delegate_token &&
+          (delegate_token->delegate().template equal<T>(obj, method))) {
+        if (p == sender->token_) {
+          const_cast<Sender *>(sender)->token_ = sender->token_->next;
+          const_cast<Sender *>(sender)->skip_ = true;
+        }
+        delete p;
+      }
+      p = tmp;
+    }
+
+    p = sender->token_;
+    while(p) {
+      tmp = p->next;
+      delegate_token = dynamic_cast<details::EventToken<ParamTypes...> *>(p);
+      if (delegate_token &&
+          (delegate_token->delegate().template equal<T>(obj, method))) {
+        if (p == sender->token_) {
+          const_cast<Sender *>(sender)->token_ = sender->token_->next;
+          const_cast<Sender *>(sender)->skip_ = true;
+        }
+        delete p;
+      }
+      p = tmp;
+    }
+  }
+}
 
 template<typename T, typename ... ParamTypes>
 void Trackable::UnbindAll(T *obj, void (T::*method)(const Sender *, ParamTypes...)) {
@@ -470,37 +513,37 @@ void Event<ParamTypes...>::Connect(Event<ParamTypes...> &other, int index) {
 template<typename ... ParamTypes>
 template<typename T>
 void Event<ParamTypes...>::DisconnectAll(T *obj, void (T::*method)(const Sender *, ParamTypes...)) {
-  details::DelegateToken<ParamTypes...> *conn = nullptr;
+  details::DelegateToken<ParamTypes...> *token = nullptr;
 
-  details::Token *p1 = nullptr;
-  details::Token *p2 = nullptr;
+  details::Token *p = nullptr;
+  details::Token *tmp = nullptr;
 
-  p1 = last_token_;
-  while (p1) {
-    p2 = p1->previous;
-    conn = dynamic_cast<details::DelegateToken<ParamTypes...> * > (p1);
-    if (conn && (conn->delegate().template equal<T>(obj, method))) {
-      delete conn;
+  p = last_token_;
+  while (p) {
+    tmp = p->previous;
+    token = dynamic_cast<details::DelegateToken<ParamTypes...> * > (p);
+    if (token && (token->delegate().template equal<T>(obj, method))) {
+      delete token;
     }
-    p1 = p2;
+    p = tmp;
   }
 }
 
 template<typename ... ParamTypes>
 void Event<ParamTypes...>::DisconnectAll(Event<ParamTypes...> &other) {
-  details::EventToken<ParamTypes...> *conn = nullptr;
+  details::EventToken<ParamTypes...> *token = nullptr;
 
-  details::Token *p1 = nullptr;
-  details::Token *p2 = nullptr;
+  details::Token *p = nullptr;
+  details::Token *tmp = nullptr;
 
-  p1 = last_token_;
-  while (p1) {
-    p2 = p1->previous;
-    conn = dynamic_cast<details::EventToken<ParamTypes...> * > (p1);
-    if (conn && (conn->event() == (&other))) {
-      delete conn;
+  p = last_token_;
+  while (p) {
+    tmp = p->previous;
+    token = dynamic_cast<details::EventToken<ParamTypes...> * > (p);
+    if (token && (token->event() == (&other))) {
+      delete token;
     }
-    p1 = p2;
+    p = tmp;
   }
 }
 

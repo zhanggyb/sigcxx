@@ -91,19 +91,34 @@ void Trackable::UnbindOnce(const Sender *sender) {
 void Trackable::UnbindAll(const Sender *sender) {
   if (sender && (sender->token_->binding->trackable_object == this)) {
 
-    details::Binding *tmp = nullptr;
-    details::Binding *p = first_binding_;
+    details::Token *tmp = nullptr;
+    details::Token *p = nullptr;
 
+    p = sender->token_;
     while (p) {
-      tmp = p->next;
-      if (p->token == sender->token_) {
-        const_cast<Sender *>(sender)->token_ = sender->token_->next;
-        const_cast<Sender *>(sender)->skip_ = true;
+      tmp = p->previous;
+      if (p->binding->trackable_object == this) {
+        if (p == sender->token_) {
+          const_cast<Sender *>(sender)->token_ = sender->token_->next;
+          const_cast<Sender *>(sender)->skip_ = true;
+        }
+        delete p;
       }
-      delete p;
       p = tmp;
     }
 
+    p = sender->token_;
+    while (p) {
+      tmp = p->next;
+      if (p->binding->trackable_object == this) {
+        if (p == sender->token_) {
+          const_cast<Sender *>(sender)->token_ = sender->token_->next;
+          const_cast<Sender *>(sender)->skip_ = true;
+        }
+        delete p;
+      }
+      p = tmp;
+    }
   }
 }
 

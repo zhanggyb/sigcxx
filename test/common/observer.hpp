@@ -21,6 +21,8 @@ class Observer: public Trackable
 
   void OnTestDestroy (const Sender* sender);
 
+  void OnTestUnbindAll (const Sender* sender);
+
   inline size_t test0_count () const
   {
     return test0_count_;
