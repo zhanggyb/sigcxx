@@ -2,6 +2,8 @@
 
 #include "test.hpp"
 #include <iostream>
+#include <subject.hpp>
+#include <observer.hpp>
 
 #define TEST_CYCLE_NUM 10000000
 
@@ -35,13 +37,13 @@ TEST_F(Test, qt_signal_slot)
  */
 TEST_F(Test, cppevent)
 {
-  Source s;
-  Consumer c;
+  Subject s;
+  Observer c;
 
-  s.event1().Connect(&c, &Consumer::OnTest1);
+  s.event1().Connect(&c, &Observer::OnTest1IntegerParam);
 
   for(int i = 0; i < TEST_CYCLE_NUM; i++) {
-    s.DoTest1(i);
+    s.fire_event1(i);
   }
   ASSERT_TRUE(true);
 }

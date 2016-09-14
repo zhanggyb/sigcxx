@@ -20,53 +20,6 @@ class Test: public testing::Test
   virtual void TearDown() {  }
 };
 
-class Source
-{
- public:
-
-  Source () { }
-
-  ~Source () { }
-
-  void DoTest1 (int n)
-  {
-    event1_.Fire(n);
-  }
-
-  inline CppEvent::Event<int>& event1 ()
-  {
-    return event1_;
-  }
-
- private:
-
-  CppEvent::Event<int> event1_;
-};
-
-class Consumer: public CppEvent::Trackable
-{
- public:
-
-  Consumer ()
- 	 : test1_count_(0)
- 	 { }
-
-  virtual ~Consumer () { }
-
-  void OnTest1 (const Sender* sender, int n)
-  {
-	  test1_count_++;
-  }
-
-  inline size_t test1_count() const
-  {
-	  return test1_count_;
-  }
-
- private:
-  size_t test1_count_;
-};
-
 class QtSource: public QObject
 {
   Q_OBJECT

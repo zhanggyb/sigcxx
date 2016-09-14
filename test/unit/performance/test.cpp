@@ -2,6 +2,8 @@
 
 #include "test.hpp"
 
+#include <observer.hpp>
+
 #ifdef USE_BOOST_SIGNALS
 #include <boost/signals2.hpp>
 #endif
@@ -18,32 +20,32 @@ Test::~Test()
 
 TEST_F(Test, fire_many_times)
 {
-  Consumer consumer;
+  Observer consumer;
   CppEvent::Event<> event;
 
-  event.Connect(&consumer, &Consumer::onCallback);
+  event.Connect(&consumer, &Observer::OnTest0);
 
   for(int i = 0; i < 1000000; i++)
   {
     event();
   }
 
-  ASSERT_TRUE(consumer.count() == 1000000);
+  ASSERT_TRUE(consumer.test0_count() == 1000000);
 }
 
 TEST_F(Test, connect_many_events)
 {
-  Consumer consumer;
+  Observer consumer;
   CppEvent::Event<> event;
 
   for(int i = 0; i < 1000000; i++)
   {
-    event.Connect(&consumer, &Consumer::onCallback);
+    event.Connect(&consumer, &Observer::OnTest0);
   }
 
   //event();
 
-  ASSERT_TRUE(consumer.count() == 0);
+  ASSERT_TRUE(consumer.test0_count() == 0);
 }
 
 #ifdef USE_BOOST_SIGNALS

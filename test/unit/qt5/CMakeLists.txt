@@ -10,4 +10,4 @@ file(GLOB sources "*.cpp")
 file(GLOB headers "*.hpp")
 
 add_executable(testCompareQt5 ${sources} ${headers})
-target_link_libraries(testCompareQt5 cppevent gtest Qt5::Core)
+target_link_libraries(testCompareQt5 cppevent gtest common Qt5::Core)

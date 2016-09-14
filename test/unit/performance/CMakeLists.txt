@@ -10,4 +10,4 @@ if(Boost_FOUND)
 endif()
 
 add_executable(testPerformance ${sources} ${headers})
-target_link_libraries(testPerformance cppevent gtest ${LIBS})
+target_link_libraries(testPerformance cppevent gtest common ${LIBS})

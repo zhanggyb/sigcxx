@@ -3,348 +3,196 @@
 #include "test.hpp"
 #include <iostream>
 
+#include <subject.hpp>
+#include <observer.hpp>
+
 using namespace std;
 using CppEvent::Sender;
 
 Test::Test()
-    : testing::Test()
-{
+    : testing::Test() {
 }
 
-Test::~Test()
-{
+Test::~Test() {
 
-}
-
-class Source
-{
- public:
-
-  Source () { }
-
-  ~Source () { }
-
-  void DoTest1 (int n)
-  {
-    event1_.Fire(n);
-  }
-
-  void DoTest2 (int n1, int n2)
-  {
-    event2_.Fire(n1, n2);
-  }
-
-  inline CppEvent::Event<int>& event1 ()
-  {
-    return event1_;
-  }
-
-  inline CppEvent::Event<int, int>& event2 ()
-  {
-    return event2_;
-  }
-
- private:
-
-  CppEvent::Event<int> event1_;
-  CppEvent::Event<int, int> event2_;
-};
-
-class Consumer: public CppEvent::Trackable
-{
- public:
-
-  Consumer ()
-      : test1_count_(0), test2_count_(0)
-  { }
-
-  virtual ~Consumer () { }
-
-  void OnTest1 (const Sender* sender, int n)
-  {
-    test1_count_++;
-    std::cout << "Event received in OnTest1, n " << n << ", " << test1_count_ << " times." << std::endl;
-  }
-
-  void OnTest2 (const Sender* sender, int n1, int n2)
-  {
-    test2_count_++;
-    std::cout << "Event received in OnTest2, n1: " << n1 << " n2: " << n2 << ", " << test2_count_ << " times."
-     << std::endl;
-  }
-
-  void OnTestWithMeta (const Sender* sender, int n)
-  {
-    std::cout << "Event received in OnTestWithMeta, n: " << n << std::endl;
-  }
-  
-  inline size_t test1_count() const
-  {
-    return test1_count_;
-  }
-
-  inline size_t test2_count() const
-  {
-    return test2_count_;
-  }
-
- private:
-  size_t test1_count_;
-  size_t test2_count_;
-};
-
-class SelfDestroyConsumer: public CppEvent::Trackable
-{
- public:
-
-  static SelfDestroyConsumer* Create ();
-
-  virtual ~SelfDestroyConsumer();
-
-  void OnTest1 (const Sender* sender, int n);
-
- private:
-
-  SelfDestroyConsumer();
-
-};
-
-class SelfConsumer: public CppEvent::Trackable
-{
- public:
-
-  SelfConsumer()
-      : event_count_(0)
-  {}
-
-  virtual ~SelfConsumer()
-  {}
-
-  inline CppEvent::Event<>& event()
-  {
-    return event_;
-  }
-
-  void DoTest ()
-  {
-    event_.Fire();
-  }
-
-  void OnTest (const Sender* sender) {event_count_++;}
-
-  inline size_t event_count() const
-  {
-    return event_count_;
-  }
-
- private:
-
-  CppEvent::Event<> event_;
-
-  size_t event_count_;
-};
-
-SelfDestroyConsumer* SelfDestroyConsumer::Create()
-{
-  return new SelfDestroyConsumer();
-}
-
-SelfDestroyConsumer::SelfDestroyConsumer()
-    : CppEvent::Trackable()
-{}
-
-SelfDestroyConsumer::~SelfDestroyConsumer()
-{
-  cout << "object destroyed" << endl;
-}
-
-void SelfDestroyConsumer::OnTest1(const Sender* sender, int n)
-{
-  DisconnectOnceFrom(sender);
-  delete this;
 }
 
 /*
  *
  */
-TEST_F(Test, connect_method_once)
-{
-  Source s;
-  Consumer c;
+TEST_F(Test, connect_method_once) {
+  Subject s;
+  Observer o;
 
-  s.event1().Connect(&c, &Consumer::OnTest1);
+  s.event1().Connect(&o, &Observer::OnTest1IntegerParam);
 
-  s.DoTest1(1);	// this should call 1 times
-  ASSERT_TRUE(c.test1_count() == 1);
+  ASSERT_TRUE((s.CountBindings() == 0) && (s.event1().CountConnections() == 1) && (o.CountBindings() == 1));
 }
 
 /*
  *
  */
-TEST_F(Test, disconnect)
-{
-  Source s;
-  Consumer c;
+TEST_F(Test, connect_method_4_times) {
+  Subject s;
+  Observer o;
 
-  s.event1().Connect(&c, &Consumer::OnTest1);
-  s.event1().DisconnectAll(&c, &Consumer::OnTest1);
+  s.event1().Connect(&o, &Observer::OnTest1IntegerParam);
+  s.event1().Connect(&o, &Observer::OnTest1IntegerParam);
+  s.event1().Connect(&o, &Observer::OnTest1IntegerParam);
+  s.event1().Connect(&o, &Observer::OnTest1IntegerParam);
 
-  s.DoTest1(1);	// nothing should be output in stdout
-  ASSERT_TRUE(c.test1_count() == 0 && c.CountConnectionsFrom() == 0);
+  s.fire_event1(1);    // this should call 4 times
+
+  ASSERT_TRUE(o.test1_count() == 4 && s.event1().CountConnections() == 4 && o.CountBindings() == 4);
 }
 
 /*
  *
  */
-TEST_F(Test, connect_method_4_times)
-{
-  Source s;
-  Consumer c;
+TEST_F(Test, disconnect) {
+  Subject s;
+  Observer o;
 
-  s.event1().Connect(&c, &Consumer::OnTest1);
-  s.event1().Connect(&c, &Consumer::OnTest1);
-  s.event1().Connect(&c, &Consumer::OnTest1);
-  s.event1().Connect(&c, &Consumer::OnTest1);
+  s.event1().Connect(&o, &Observer::OnTest1IntegerParam);
+  s.event1().DisconnectAll(&o, &Observer::OnTest1IntegerParam);
 
-  s.DoTest1(1);	// this should call 4 times
-  ASSERT_TRUE(c.test1_count() == 4 && s.event1().CountConnections() == 4 && c.CountConnectionsFrom() == 4);
+  ASSERT_TRUE((o.CountBindings() == 0) && (s.event1().CountConnections() == 0));
 }
 
 /*
  *
  */
-TEST_F(Test, disconnect_all)
-{
-  Source s;
-  Consumer c;
+TEST_F(Test, disconnect_all) {
+  Subject s;
+  Observer o;
 
-  s.event1().Connect(&c, &Consumer::OnTest1);
-  s.event1().Connect(&c, &Consumer::OnTest1);
-  s.event1().Connect(&c, &Consumer::OnTest1);
-  s.event1().Connect(&c, &Consumer::OnTest1);
+  s.event1().Connect(&o, &Observer::OnTest1IntegerParam);
+  s.event1().Connect(&o, &Observer::OnTest1IntegerParam);
+  s.event1().Connect(&o, &Observer::OnTest1IntegerParam);
+  s.event1().Connect(&o, &Observer::OnTest1IntegerParam);
 
-  s.event1().DisconnectAll(&c, &Consumer::OnTest1);
+  s.event1().DisconnectAll(&o, &Observer::OnTest1IntegerParam);
 
-  s.DoTest1(1);	// nothing should be output in stdout
+  s.fire_event1(1);    // nothing should be output in stdout
 
-  ASSERT_TRUE(c.test1_count() == 0 && s.event1().CountConnections() == 0 && c.CountConnectionsFrom() == 0);
+  ASSERT_TRUE(o.test1_count() == 0 && s.event1().CountConnections() == 0 && o.CountBindings() == 0);
 }
 
 /*
  * This testcase test the connectiong between events -- chain load
  */
-TEST_F(Test, connect_event_once)
-{
-  Source s1;
-  Source s2;
-  Consumer c;
+TEST_F(Test, connect_event_once) {
+  Subject s1;
+  Subject s2;
+  Observer o;
 
-  s2.event1().Connect(&c, &Consumer::OnTest1);
+  s2.event1().Connect(&o, &Observer::OnTest1IntegerParam);
   s1.event1().Connect(s2.event1());
 
-  s1.DoTest1(1);  // cause chain event
+  s1.fire_event1(1);  // cause chain event
 
-  ASSERT_TRUE(c.test1_count() == 1);
+  ASSERT_TRUE((o.test1_count() == 1) && (s1.event1().CountConnections() == 1) && (s2.event1().CountBindings() == 1)
+                  && (s2.event1().CountConnections() == 1) && (o.CountBindings() == 1));
 }
 
 /*
  * Disconnect 1
  */
-TEST_F(Test, disconnect_once)
-{
-  Source s;
-  Consumer c;
+TEST_F(Test, disconnect_once) {
+  Subject s;
+  Observer c;
 
-  s.event1().Connect(&c, &Consumer::OnTest1);
-  s.event1().Connect(&c, &Consumer::OnTest1);
-  s.event1().Connect(&c, &Consumer::OnTest1);
+  s.event1().Connect(&c, &Observer::OnTest1IntegerParam);
+  s.event1().Connect(&c, &Observer::OnTest1IntegerParam);
+  s.event1().Connect(&c, &Observer::OnTest1IntegerParam);
 
-  s.event1().DisconnectOnce(&c, &Consumer::OnTest1, 0);
-  s.event1().DisconnectOnce(&c, &Consumer::OnTest1, -1);
+  s.event1().DisconnectOnce(&c, &Observer::OnTest1IntegerParam, 0);
+  s.event1().DisconnectOnce(&c, &Observer::OnTest1IntegerParam, -1);
 
-  s.DoTest1(1);
+  s.fire_event1(1);
 
   ASSERT_TRUE(c.test1_count() == 1);
 }
 
-TEST_F(Test, delete_when_called)
-{
-  Source s;
-  Consumer c1;
-  Consumer c2;
-  Consumer c3;
-  SelfDestroyConsumer* obj = SelfDestroyConsumer::Create();
+TEST_F(Test, selfconsumer) {
+  Subject s;
 
-  s.event1().Connect(&c1, &Consumer::OnTest1);
-  s.event1().Connect(obj, &SelfDestroyConsumer::OnTest1);
-  s.event1().Connect(&c2, &Consumer::OnTest1);
-  s.event1().Connect(&c3, &Consumer::OnTest1);
+  s.event1().Connect(&s, &Subject::OnTest1IntegerParam);
 
-  s.DoTest1(1);  // check the stdout
+  s.fire_event1(1);
+  s.fire_event1(2);
 
-  ASSERT_TRUE((c1.test1_count() == 1) &&
-              (c2.test1_count() == 1) &&
-              (c3.test1_count() == 1));
+  ASSERT_TRUE(s.test1_count() == 2);
 }
 
-TEST_F(Test, selfconsumer)
-{
-  SelfConsumer c;
-
-  c.event().Connect(&c, &SelfConsumer::OnTest);
-
-  c.DoTest();
-  c.DoTest();
-
-  ASSERT_TRUE(c.event_count() == 2);
-}
-
-TEST_F(Test, event_chaining)
-{
-  Source s1;
-  Source s2;
-  Consumer c;
+TEST_F(Test, event_chaining) {
+  Subject s1;
+  Subject s2;
+  Observer c;
 
   s1.event1().Connect(s2.event1());
-  s2.event1().Connect(&c, &Consumer::OnTest1);
+  s2.event1().Connect(&c, &Observer::OnTest1IntegerParam);
 
-  s1.DoTest1(555);
+  s1.fire_event1(1);
 
-  ASSERT_TRUE(c.CountConnectionsFrom() == 1 && c.test1_count() == 1);
+  ASSERT_TRUE(c.CountBindings() == 1 && c.test1_count() == 1);
 }
 
-TEST_F(Test, delete_more_when_called)
-{
-  Source s;
-  Consumer c1;
-  Consumer c2;
-  Consumer c3;
-  SelfDestroyConsumer* obj1 = SelfDestroyConsumer::Create();
-  SelfDestroyConsumer* obj2 = SelfDestroyConsumer::Create();
-  SelfDestroyConsumer* obj3 = SelfDestroyConsumer::Create();
+TEST_F(Test, delete_when_called) {
+  Subject s;
+  Observer c1;
+  Observer c2;
+  Observer c3;
+  Observer *obj = new Observer;
 
-  s.event1().Connect(&c1, &Consumer::OnTest1);
-  s.event1().Connect(obj1, &SelfDestroyConsumer::OnTest1);
-  s.event1().Connect(&c2, &Consumer::OnTest1);
-  s.event1().Connect(&c3, &Consumer::OnTest1);
-  s.event1().Connect(obj2, &SelfDestroyConsumer::OnTest1);
-  s.event1().Connect(obj3, &SelfDestroyConsumer::OnTest1);
+  s.event0().Connect(&c1, &Observer::OnTest0);
+  s.event0().Connect(obj, &Observer::OnTestDestroy);
+  s.event0().Connect(&c2, &Observer::OnTest0);
+  s.event0().Connect(&c3, &Observer::OnTest0);
 
-  s.DoTest1(1);  // check the stdout
+  s.fire_event0();
 
-  ASSERT_TRUE((c1.test1_count() == 1) &&
-              (c2.test1_count() == 1) &&
-              (c3.test1_count() == 1));
+  ASSERT_TRUE((c1.test0_count() == 1) &&
+      (c2.test0_count() == 1) &&
+      (c3.test0_count() == 1) &&
+      (s.event0().CountConnections() == 3));
 }
 
-TEST_F(Test, meta_connect)
-{
-  Source s;
-  Consumer c;
-  
-  s.event1().Connect(&c, &Consumer::OnTestWithMeta);
-  
-  s.DoTest1(999);
-  
-  ASSERT_TRUE(true);
+TEST_F(Test, delete_more_when_called) {
+  Subject s;
+  Observer c1;
+  Observer c2;
+  Observer c3;
+  Observer *obj1 = new Observer;
+  Observer *obj2 = new Observer;
+  Observer *obj3 = new Observer;
+
+  s.event0().Connect(&c1, &Observer::OnTest0);
+  s.event0().Connect(obj1, &Observer::OnTestDestroy);
+  s.event0().Connect(&c2, &Observer::OnTest0);
+  s.event0().Connect(&c3, &Observer::OnTest0);
+  s.event0().Connect(obj2, &Observer::OnTestDestroy);
+  s.event0().Connect(obj3, &Observer::OnTestDestroy);
+
+  s.fire_event0();
+
+  ASSERT_TRUE((c1.test0_count() == 1) &&
+      (c2.test0_count() == 1) &&
+      (c3.test0_count() == 1) &&
+      (s.event0().CountConnections() == 3));
+}
+
+TEST_F(Test, count_event_connections) {
+  Subject s1;
+  Subject s2;
+  Observer c;
+
+  s1.event0().Connect(s2.event0());
+  s1.event0().Connect(&c, &Observer::OnTest0);
+  s1.event0().Connect(s2.event0());
+
+  ASSERT_TRUE(
+      (s1.event0().CountConnections(s2.event0()) == 2) &&
+          (s1.event0().CountConnections(&c, &Observer::OnTest0) == 1)
+  );
 }
