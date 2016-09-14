@@ -2,7 +2,7 @@
 
 #include "test.hpp"
 
-using namespace CppEvent;
+using namespace cppevent;
 
 Test::Test()
     : testing::Test()

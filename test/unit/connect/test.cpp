@@ -7,7 +7,7 @@
 #include <observer.hpp>
 
 using namespace std;
-using CppEvent::Sender;
+using cppevent::Sender;
 
 Test::Test()
     : testing::Test() {
@@ -195,18 +195,4 @@ TEST_F(Test, count_event_connections) {
       (s1.event0().CountConnections(s2.event0()) == 2) &&
           (s1.event0().CountConnections(&c, &Observer::OnTest0) == 1)
   );
-}
-
-TEST_F(Test, unbind_all_in_callback) {
-  Subject s;
-  Observer o;
-
-  s.event0().Connect(&o, &Observer::OnTestUnbindAll);
-  s.event0().Connect(&o, &Observer::OnTestUnbindAll);
-  s.event0().Connect(&o, &Observer::OnTestUnbindAll);
-  s.event0().Connect(&o, &Observer::OnTestUnbindAll);
-
-  s.fire_event0();
-  
-  ASSERT_TRUE(o.CountBindings() == 0);
 }

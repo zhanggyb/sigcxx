@@ -6,7 +6,7 @@
 
 #include <cppevent/event.hpp>
 
-using CppEvent::Sender;
+using cppevent::Sender;
 
 class Test: public testing::Test
 {

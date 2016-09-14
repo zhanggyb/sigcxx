@@ -15,21 +15,21 @@ Test::~Test()
 
 }
 
-struct VBinding: public CppEvent::details::Binding
+struct VBinding: public cppevent::details::Binding
 {
 public:
   VBinding(int value = 0)
-  : CppEvent::details::Binding(), v(value)
+  : cppevent::details::Binding(), v(value)
   {}
 
   int v;
 };
 
-class Trackable: public CppEvent::Trackable
+class Trackable: public cppevent::Trackable
 {
 public:
   Trackable ()
-  : CppEvent::Trackable()
+  : cppevent::Trackable()
   { }
 
   virtual ~Trackable()
@@ -53,7 +53,7 @@ public:
   void print () const
   {
     VBinding* v = 0;
-    for (CppEvent::details::Binding* p = first_binding(); p; p = p->next) {
+    for (cppevent::details::Binding* p = first_binding(); p; p = p->next) {
       v = static_cast<VBinding*>(p);
       cout << v->v << endl;
     }
@@ -73,17 +73,17 @@ class Source
     event_.Fire(n);
   }
 
-  inline CppEvent::Event<int>& event ()
+  inline cppevent::Event<int>& event ()
   {
     return event_;
   }
 
  private:
 
-  CppEvent::Event<int> event_;
+  cppevent::Event<int> event_;
 };
 
-class Consumer: public CppEvent::Trackable
+class Consumer: public cppevent::Trackable
 {
  public:
 
@@ -92,7 +92,7 @@ class Consumer: public CppEvent::Trackable
 
   virtual ~Consumer () { }
 
-  void OnTestNothing (const CppEvent::Sender* sender, int)
+  void OnTestNothing (const cppevent::Sender* sender, int)
   {
     // do nothing...
   }

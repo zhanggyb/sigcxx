@@ -26,7 +26,7 @@
 
 #pragma once
 
-namespace CppEvent {
+namespace cppevent {
 
 // generic classes to calculate method pointer:
 class GenericBase1 {};
@@ -258,4 +258,4 @@ inline bool operator > (const Delegate<ReturnType, ParamTypes...>& src,
                 ) > 0;
 }
 
-} // namespace CppEvent
+} // namespace cppevent

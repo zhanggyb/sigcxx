@@ -17,13 +17,13 @@ TEST_F(Test, connect_method_once)
   Consumer* obj1 = new Consumer;
   SubConsumer* obj2 = new SubConsumer;
 
-  CppEvent::Event<int> event1;
+  cppevent::Event<int> event1;
   event1.Connect(obj1, &Consumer::OnVirtualTest);
 
-  CppEvent::Event<int> event2;
+  cppevent::Event<int> event2;
   event2.Connect(obj2, &SubConsumer::OnVirtualTest); // this connect to the method in sub class
 
-  CppEvent::Event<int> event3;
+  cppevent::Event<int> event3;
   event3.Connect(dynamic_cast<Consumer*>(obj2), &Consumer::OnVirtualTest); // this still connect to the method in sub class
 
   event1.Fire(1);
@@ -40,7 +40,7 @@ TEST_F(Test, connect_method_once)
 
 TEST_F(Test, connect_to_pure_virtual_function)
 {
-  CppEvent::Event<int> event1;
+  cppevent::Event<int> event1;
   AbstractConsumer* obj1 = new Consumer;
 
   event1.Connect(obj1, &AbstractConsumer::OnVirtualTest);

@@ -2,8 +2,8 @@
 
 #include <cppevent/event.hpp>
 
-using CppEvent::Trackable;
-using CppEvent::Sender;
+using cppevent::Trackable;
+using cppevent::Sender;
 
 class Observer: public Trackable
 {
@@ -21,7 +21,11 @@ class Observer: public Trackable
 
   void OnTestDestroy (const Sender* sender);
 
-  void OnTestUnbindAll (const Sender* sender);
+  void OnTestUnbindOnceAt5 (const Sender* sender);
+
+  void OnTestUnbindAllAt5 (const Sender* sender);
+
+  void OnTestUnbindAllMethodAt5 (const Sender* sender);
 
   inline size_t test0_count () const
   {

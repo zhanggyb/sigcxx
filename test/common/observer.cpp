@@ -28,7 +28,23 @@ void Observer::OnTestDestroy(const Sender *sender) {
   delete this;
 }
 
-void Observer::OnTestUnbindAll(const Sender* sender) {
-  UnbindAll(sender);
-  std::cout << "This message should be printed only once" << std::endl;
+void Observer::OnTestUnbindOnceAt5(const Sender* sender) {
+  test0_count_++;
+  if (test0_count_ >= 5) {
+    UnbindOnce(sender);
+  }
+}
+
+void Observer::OnTestUnbindAllAt5(const Sender* sender) {
+  test0_count_++;
+  if (test0_count_ >= 5) {
+    UnbindAll(sender);
+  }
+}
+
+void Observer::OnTestUnbindAllMethodAt5(const Sender* sender) {
+  test0_count_++;
+  if (test0_count_ >= 5) {
+    UnbindAll(sender, this, &Observer::OnTestUnbindAllMethodAt5);
+  }
 }

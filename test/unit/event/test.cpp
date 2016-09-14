@@ -15,21 +15,21 @@ Test::~Test()
 
 }
 
-struct VToken: public CppEvent::details::InvokableToken<>
+struct VToken: public cppevent::details::InvokableToken<>
 {
  public:
   VToken(int value = 0)
-      : CppEvent::details::InvokableToken<>(), v(value)
+      : cppevent::details::InvokableToken<>(), v(value)
   {}
   
   int v;
 };
 
-class Event: public CppEvent::Event<>
+class Event: public cppevent::Event<>
 {
  public:
   Event ()
-      : CppEvent::Event<>()
+      : cppevent::Event<>()
   { }
   
   virtual ~Event()
@@ -53,7 +53,7 @@ class Event: public CppEvent::Event<>
   void print () const
   {
     VToken* v = 0;
-    for (CppEvent::details::Token* p = first_token(); p; p = p->next) {
+    for (cppevent::details::Token* p = first_token(); p; p = p->next) {
       v = static_cast<VToken*>(p);
       cout << v->v << endl;
     }
@@ -73,17 +73,17 @@ class Source
     event_.Fire(this);
   }
 
-  inline CppEvent::Event<Source*>& event ()
+  inline cppevent::Event<Source*>& event ()
   {
     return event_;
   }
 
  private:
 
-  CppEvent::Event<Source*> event_;
+  cppevent::Event<Source*> event_;
 };
 
-class Consumer: public CppEvent::Trackable
+class Consumer: public cppevent::Trackable
 {
  public:
 

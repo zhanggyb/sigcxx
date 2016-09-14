@@ -34,7 +34,7 @@
 
 #include "delegate.hpp"
 
-namespace CppEvent {
+namespace cppevent {
 
 // forward declaration
 class Trackable;
@@ -318,7 +318,7 @@ void Trackable::UnbindAll(const Sender *sender, T *obj, void (T::*method)(const 
     p = sender->token_;
     while(p) {
       tmp = p->previous;
-      delegate_token = dynamic_cast<details::EventToken<ParamTypes...> *>(p);
+      delegate_token = dynamic_cast<details::DelegateToken<ParamTypes...> *>(p);
       if (delegate_token &&
           (delegate_token->delegate().template equal<T>(obj, method))) {
         if (p == sender->token_) {
@@ -333,7 +333,7 @@ void Trackable::UnbindAll(const Sender *sender, T *obj, void (T::*method)(const 
     p = sender->token_;
     while(p) {
       tmp = p->next;
-      delegate_token = dynamic_cast<details::EventToken<ParamTypes...> *>(p);
+      delegate_token = dynamic_cast<details::DelegateToken<ParamTypes...> *>(p);
       if (delegate_token &&
           (delegate_token->delegate().template equal<T>(obj, method))) {
         if (p == sender->token_) {
@@ -492,7 +492,7 @@ void Event<ParamTypes...>::Connect(T *obj, void (T::*method)(const Sender *, Par
   Delegate<void, const Sender *, ParamTypes...> d =
       Delegate<void, const Sender *, ParamTypes...>::template from_method<T>(obj, method);
   details::DelegateToken<ParamTypes...> *upstream = new details::DelegateToken<
-      ParamTypes...>(d);
+    ParamTypes...>(d);
 
   link(upstream, downstream);
   InsertToken(index, upstream);
@@ -862,4 +862,4 @@ void Event<ParamTypes...>::DisconnectAll() {
   }
 }
 
-} // namespace CppEvent
+} // namespace cppevent

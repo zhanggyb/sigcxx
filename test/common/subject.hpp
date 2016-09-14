@@ -2,8 +2,8 @@
 
 #include <cppevent/event.hpp>
 
-using CppEvent::Trackable;
-using CppEvent::Sender;
+using cppevent::Trackable;
+using cppevent::Sender;
 
 class Subject: public Trackable
 {
@@ -32,17 +32,17 @@ class Subject: public Trackable
 
   void OnTest2IntegerParams(const Sender* sender, int n1, int n2);
 
-  inline CppEvent::Event<>& event0 ()
+  inline cppevent::Event<>& event0 ()
   {
     return event_0_;
   }
 
-  inline CppEvent::Event<int>& event1 ()
+  inline cppevent::Event<int>& event1 ()
   {
     return event_1_int_;
   }
 
-  inline CppEvent::Event<int, int>& event2 ()
+  inline cppevent::Event<int, int>& event2 ()
   {
     return event_2_int_;
   }
@@ -59,9 +59,9 @@ class Subject: public Trackable
 
  private:
 
-  CppEvent::Event<> event_0_;
-  CppEvent::Event<int> event_1_int_;
-  CppEvent::Event<int, int> event_2_int_;
+  cppevent::Event<> event_0_;
+  cppevent::Event<int> event_1_int_;
+  cppevent::Event<int, int> event_2_int_;
   size_t test1_count_;
   size_t test2_count_;
 

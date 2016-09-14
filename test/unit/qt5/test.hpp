@@ -7,7 +7,7 @@
 #include <cppevent/event.hpp>
 #include <QtCore>
 
-using CppEvent::Sender;
+using cppevent::Sender;
 
 class Test: public testing::Test
 {

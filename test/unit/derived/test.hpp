@@ -6,7 +6,7 @@
 
 #include <cppevent/event.hpp>
 
-using CppEvent::Sender;
+using cppevent::Sender;
 
 class Test: public testing::Test
 {
@@ -37,23 +37,23 @@ class Source
     event2_.Fire(n1, n2);
   }
 
-  inline CppEvent::Event<int>& event1 ()
+  inline cppevent::Event<int>& event1 ()
   {
     return event1_;
   }
 
-  inline CppEvent::Event<int, int>& event2 ()
+  inline cppevent::Event<int, int>& event2 ()
   {
     return event2_;
   }
 
  private:
 
-  CppEvent::Event<int> event1_;
-  CppEvent::Event<int, int> event2_;
+  cppevent::Event<int> event1_;
+  cppevent::Event<int, int> event2_;
 };
 
-class AbstractConsumer: public CppEvent::Trackable
+class AbstractConsumer: public cppevent::Trackable
 {
 public:
   AbstractConsumer() {}

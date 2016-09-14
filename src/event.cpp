@@ -26,7 +26,7 @@
 
 #include <cppevent/event.hpp>
 
-namespace CppEvent {
+namespace cppevent {
 
 namespace details {
 
@@ -263,4 +263,4 @@ void Trackable::InsertBinding(int index, details::Binding *node) {
   node->trackable_object = this;
 }
 
-}  // namespace CppEvent
+}  // namespace cppevent

@@ -5,7 +5,7 @@
 #include <mutex>
 
 using namespace std;
-using CppEvent::Sender;
+using cppevent::Sender;
 
 static std::mutex m;
 

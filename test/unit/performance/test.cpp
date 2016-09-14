@@ -21,7 +21,7 @@ Test::~Test()
 TEST_F(Test, fire_many_times)
 {
   Observer consumer;
-  CppEvent::Event<> event;
+  cppevent::Event<> event;
 
   event.Connect(&consumer, &Observer::OnTest0);
 
@@ -36,7 +36,7 @@ TEST_F(Test, fire_many_times)
 TEST_F(Test, connect_many_events)
 {
   Observer consumer;
-  CppEvent::Event<> event;
+  cppevent::Event<> event;
 
   for(int i = 0; i < 1000000; i++)
   {
