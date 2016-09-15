@@ -40,7 +40,7 @@ TEST_F(Test, cppevent)
   Subject s;
   Observer c;
 
-  s.event1().Connect(&c, &Observer::OnTest1IntegerParam);
+  s.event1().connect(&c, &Observer::OnTest1IntegerParam);
 
   for(int i = 0; i < TEST_CYCLE_NUM; i++) {
     s.fire_event1(i);

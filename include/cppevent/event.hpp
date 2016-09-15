@@ -40,6 +40,7 @@ namespace cppevent {
 class Trackable;
 template<typename ... ParamTypes>
 class Event;
+class Sender;
 
 namespace details {
 
@@ -84,37 +85,6 @@ struct Token {
   Token *next;
   Binding *binding;
 };
-
-}// namespace details
-
-class Sender {
-
-  template<typename ... ParamTypes> friend
-  class Event;
-  template<typename ... ParamTypes> friend
-  class details::EventToken;
-  friend class Trackable;
-
- public:
-
-  ~Sender() {}
-
-  template<typename ... ParamTypes>
-  inline Event<ParamTypes...> *event() const {
-    return dynamic_cast<Event<ParamTypes...> *>(token_->trackable_object);
-  }
-
- private:
-
-  inline Sender(details::Token *token = nullptr, bool skip = false)
-      : token_(token), skip_(skip) {}
-
-  details::Token *token_;
-  bool skip_;
-
-};
-
-namespace details {
 
 template<typename ... ParamTypes>
 class InvokableToken : public Token {
@@ -215,7 +185,34 @@ inline const Event<ParamTypes...> *EventToken<ParamTypes...>::event() const {
   return event_;
 }
 
-}  // namespace details
+}// namespace details
+
+class Sender {
+
+  template<typename ... ParamTypes> friend
+  class Event;
+  template<typename ... ParamTypes> friend
+  class details::EventToken;
+  friend class Trackable;
+
+ public:
+
+  ~Sender() {}
+
+  template<typename ... ParamTypes>
+  inline Event<ParamTypes...> *event() const {
+    return dynamic_cast<Event<ParamTypes...> *>(token_->trackable_object);
+  }
+
+ private:
+
+  inline Sender(details::Token *token = nullptr, bool skip = false)
+      : token_(token), skip_(skip) {}
+
+  details::Token *token_;
+  bool skip_;
+
+};
 
 /**
  * @brief The basic class for observer
@@ -906,5 +903,105 @@ void Event<ParamTypes...>::DisconnectAll() {
     p = tmp;
   }
 }
+
+/**
+ * @brief A reference to expose event in an object
+ */
+template<typename ... ParamTypes>
+class EventRef {
+ public:
+
+  EventRef() = delete;
+
+  inline EventRef(Event<ParamTypes...> &event)
+      : event_(&event) {
+  }
+
+  inline EventRef(Event<ParamTypes...> *event)
+      : event_(event) {
+  }
+
+  inline EventRef(const EventRef &orig)
+      : event_(orig.event_) {
+  }
+
+  ~EventRef() {}
+
+  inline EventRef &operator=(const EventRef &orig) {
+    event_ = orig.event_;
+    return *this;
+  }
+
+  template<typename T>
+  inline void connect(T *obj, void (T::*method)(const Sender *, ParamTypes...), int index = -1) {
+    event_->Connect(obj, method, index);
+  }
+
+  inline void connect(const EventRef<ParamTypes...> &other, int index = -1) {
+    event_->Connect(*other.event_, index);
+  }
+
+  template<typename T>
+  inline void disconnect_all(T *obj, void (T::*method)(const Sender *, ParamTypes...)) {
+    event_->DisconnectAll(obj, method);
+  }
+
+  inline void disconnect_all(EventRef<ParamTypes...> &other) {
+    event_->DisconnectAll(*other.event_);
+  }
+
+  template<typename T>
+  inline void disconnect_once(T *obj, void (T::*method)(const Sender *, ParamTypes...), int start_pos = -1) {
+    event_->DisconnectOnce(obj, method, start_pos);
+  }
+
+  inline void disconnect_once(EventRef<ParamTypes...> &other, int start_pos = -1) {
+    event_->DisconnectOnce(*other.event_, start_pos);
+  }
+
+  inline void disconnect_all() {
+    event_->DisconnectAll();
+  }
+
+  template<typename T>
+  inline bool is_connected(T *obj, void (T::*method)(const Sender *, ParamTypes...)) const {
+    return event_->IsConnected(obj, method);
+  }
+
+  inline bool is_connected(const EventRef<ParamTypes...> &other) const {
+    return event_->IsConnected(*other.event_);
+  }
+
+  inline bool is_connected(const Trackable *obj) const {
+    return event_->IsConnected(obj);
+  }
+
+  template<typename T>
+  inline std::size_t count_connections(T *obj, void (T::*method)(const Sender *, ParamTypes...)) const {
+    return event_->CountConnections(obj, method);
+  }
+
+  inline std::size_t count_connections(const EventRef<ParamTypes...> &other) const {
+    return event_->CountConnections(*other.event_);
+  }
+
+  inline std::size_t count_connections() const {
+    return event_->CountConnections();
+  }
+
+  template<typename T>
+  inline std::size_t count_bindings(T *obj, void (T::*method)(const Sender *, ParamTypes...)) const {
+    return event_->CountBindings(obj, method);
+  }
+
+  inline std::size_t count_bindings() const {
+    return event_->CountBindings();
+  }
+
+ private:
+
+  Event<ParamTypes...> *event_;
+
+};
 
 } // namespace cppevent

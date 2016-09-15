@@ -32,17 +32,17 @@ class Subject: public Trackable
 
   void OnTest2IntegerParams(const Sender* sender, int n1, int n2);
 
-  inline cppevent::Event<>& event0 ()
+  inline cppevent::EventRef<> event0 ()
   {
     return event_0_;
   }
 
-  inline cppevent::Event<int>& event1 ()
+  inline cppevent::EventRef<int> event1 ()
   {
     return event_1_int_;
   }
 
-  inline cppevent::Event<int, int>& event2 ()
+  inline cppevent::EventRef<int, int> event2 ()
   {
     return event_2_int_;
   }
