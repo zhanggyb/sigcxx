@@ -204,7 +204,7 @@ TEST_F(Test, remove_connections_from_event)
 // Consumer c1;
 // Consumer c2;
 //
-// s.event().Connect(&c1, &Consumer::OnTestNothing);
+// s.event_base().Connect(&c1, &Consumer::OnTestNothing);
 //
 // c2 = c1;
 //

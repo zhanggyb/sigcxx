@@ -21,10 +21,10 @@ TEST_F(Test, connect_method_once)
   event1.Connect(obj1, &Consumer::OnVirtualTest);
 
   cppevent::Event<int> event2;
-  event2.Connect(obj2, &SubConsumer::OnVirtualTest); // this connect to the method in sub class
+  event2.Connect(obj2, &SubConsumer::OnVirtualTest); // this event_connect to the method in sub class
 
   cppevent::Event<int> event3;
-  event3.Connect(dynamic_cast<Consumer*>(obj2), &Consumer::OnVirtualTest); // this still connect to the method in sub class
+  event3.Connect(dynamic_cast<Consumer*>(obj2), &Consumer::OnVirtualTest); // this still event_connect to the method in sub class
 
   event1.Fire(1);
   event2.Fire(2);

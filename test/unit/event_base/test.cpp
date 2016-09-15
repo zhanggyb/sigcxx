@@ -191,7 +191,7 @@ TEST_F(Test, insert4)
 //  Consumer c1;
 //  Consumer c2;
 // 
-//  s.event().Connect(&c1, &Consumer::OnTestNothing);
+//  s.event_base().Connect(&c1, &Consumer::OnTestNothing);
 //
 //  c2 = c1;
 //  

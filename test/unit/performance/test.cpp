@@ -43,7 +43,7 @@ TEST_F(Test, connect_many_events)
     event.Connect(&consumer, &Observer::OnTest0);
   }
 
-  //event();
+  //event_base();
 
   ASSERT_TRUE(consumer.test0_count() == 0);
 }

@@ -47,38 +47,6 @@ TEST_F(Test, connect_method_4_times) {
 }
 
 /*
- *
- */
-TEST_F(Test, disconnect) {
-  Subject s;
-  Observer o;
-
-  s.event1().Connect(&o, &Observer::OnTest1IntegerParam);
-  s.event1().DisconnectAll(&o, &Observer::OnTest1IntegerParam);
-
-  ASSERT_TRUE((o.CountBindings() == 0) && (s.event1().CountConnections() == 0));
-}
-
-/*
- *
- */
-TEST_F(Test, disconnect_all) {
-  Subject s;
-  Observer o;
-
-  s.event1().Connect(&o, &Observer::OnTest1IntegerParam);
-  s.event1().Connect(&o, &Observer::OnTest1IntegerParam);
-  s.event1().Connect(&o, &Observer::OnTest1IntegerParam);
-  s.event1().Connect(&o, &Observer::OnTest1IntegerParam);
-
-  s.event1().DisconnectAll(&o, &Observer::OnTest1IntegerParam);
-
-  s.fire_event1(1);    // nothing should be output in stdout
-
-  ASSERT_TRUE(o.test1_count() == 0 && s.event1().CountConnections() == 0 && o.CountBindings() == 0);
-}
-
-/*
  * This testcase test the connectiong between events -- chain load
  */
 TEST_F(Test, connect_event_once) {
@@ -89,7 +57,7 @@ TEST_F(Test, connect_event_once) {
   s2.event1().Connect(&o, &Observer::OnTest1IntegerParam);
   s1.event1().Connect(s2.event1());
 
-  s1.fire_event1(1);  // cause chain event
+  s1.fire_event1(1);  // cause chain event_base
 
   ASSERT_TRUE((o.test1_count() == 1) && (s1.event1().CountConnections() == 1) && (s2.event1().CountBindings() == 1)
                   && (s2.event1().CountConnections() == 1) && (o.CountBindings() == 1));

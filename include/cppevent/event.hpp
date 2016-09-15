@@ -243,7 +243,7 @@ class Trackable {
   void UnbindAll(const Sender *sender);
 
   template<typename T, typename ... ParamTypes>
-  void UnbindAll(const Sender *sender, T *obj, void (T::*method)(const Sender*, ParamTypes...));
+  void UnbindAll(const Sender *sender, T *obj, void (T::*method)(const Sender *, ParamTypes...));
 
   void UnbindAll();
 
@@ -308,7 +308,7 @@ class Trackable {
 };
 
 template<typename T, typename ... ParamTypes>
-void Trackable::UnbindAll(const Sender *sender, T *obj, void (T::*method)(const Sender*, ParamTypes...)) {
+void Trackable::UnbindAll(const Sender *sender, T *obj, void (T::*method)(const Sender *, ParamTypes...)) {
   if (sender && (sender->token_->binding->trackable_object == this)) {
     details::DelegateToken<ParamTypes...> *delegate_token = nullptr;
 
@@ -316,7 +316,7 @@ void Trackable::UnbindAll(const Sender *sender, T *obj, void (T::*method)(const 
     details::Token *tmp = nullptr;
 
     p = sender->token_;
-    while(p) {
+    while (p) {
       tmp = p->previous;
       delegate_token = dynamic_cast<details::DelegateToken<ParamTypes...> *>(p);
       if (delegate_token &&
@@ -331,7 +331,7 @@ void Trackable::UnbindAll(const Sender *sender, T *obj, void (T::*method)(const 
     }
 
     p = sender->token_;
-    while(p) {
+    while (p) {
       tmp = p->next;
       delegate_token = dynamic_cast<details::DelegateToken<ParamTypes...> *>(p);
       if (delegate_token &&
@@ -352,14 +352,14 @@ void Trackable::UnbindAll(T *obj, void (T::*method)(const Sender *, ParamTypes..
 
   details::Binding *p = nullptr;
   details::Binding *tmp = nullptr;
-  details::DelegateToken<ParamTypes...> *token = nullptr;
+  details::DelegateToken<ParamTypes...> *delegate_token = nullptr;
 
   p = last_binding_;
   while (p) {
     tmp = p->previous;
-    token = dynamic_cast<details::DelegateToken<ParamTypes...> *>(p->token);
-    if (token && (token->delegate().template equal<T>(obj, method))) {
-      delete token;
+    delegate_token = dynamic_cast<details::DelegateToken<ParamTypes...> *>(p->token);
+    if (delegate_token && (delegate_token->delegate().template equal<T>(obj, method))) {
+      delete delegate_token;
     }
     p = tmp;
   }
@@ -369,11 +369,11 @@ void Trackable::UnbindAll(T *obj, void (T::*method)(const Sender *, ParamTypes..
 template<typename T, typename ... ParamTypes>
 size_t Trackable::CountBindings(T *obj, void (T::*method)(const Sender *, ParamTypes...)) const {
   std::size_t count = 0;
-  details::DelegateToken<ParamTypes...> *token = nullptr;
+  details::DelegateToken<ParamTypes...> *delegate_token = nullptr;
 
   for (details::Binding *p = first_binding_; p; p = p->next) {
-    token = dynamic_cast<details::DelegateToken<ParamTypes...> *>(p->token);
-    if (token && (token->delegate().template equal<T>(obj, method))) {
+    delegate_token = dynamic_cast<details::DelegateToken<ParamTypes...> *>(p->token);
+    if (delegate_token && (delegate_token->delegate().template equal<T>(obj, method))) {
       count++;
     }
   }
@@ -492,7 +492,7 @@ void Event<ParamTypes...>::Connect(T *obj, void (T::*method)(const Sender *, Par
   Delegate<void, const Sender *, ParamTypes...> d =
       Delegate<void, const Sender *, ParamTypes...>::template from_method<T>(obj, method);
   details::DelegateToken<ParamTypes...> *upstream = new details::DelegateToken<
-    ParamTypes...>(d);
+      ParamTypes...>(d);
 
   link(upstream, downstream);
   InsertToken(index, upstream);
@@ -513,7 +513,7 @@ void Event<ParamTypes...>::Connect(Event<ParamTypes...> &other, int index) {
 template<typename ... ParamTypes>
 template<typename T>
 void Event<ParamTypes...>::DisconnectAll(T *obj, void (T::*method)(const Sender *, ParamTypes...)) {
-  details::DelegateToken<ParamTypes...> *token = nullptr;
+  details::DelegateToken<ParamTypes...> *delegate_token = nullptr;
 
   details::Token *p = nullptr;
   details::Token *tmp = nullptr;
@@ -521,9 +521,9 @@ void Event<ParamTypes...>::DisconnectAll(T *obj, void (T::*method)(const Sender 
   p = last_token_;
   while (p) {
     tmp = p->previous;
-    token = dynamic_cast<details::DelegateToken<ParamTypes...> * > (p);
-    if (token && (token->delegate().template equal<T>(obj, method))) {
-      delete token;
+    delegate_token = dynamic_cast<details::DelegateToken<ParamTypes...> * > (p);
+    if (delegate_token && (delegate_token->delegate().template equal<T>(obj, method))) {
+      delete delegate_token;
     }
     p = tmp;
   }
@@ -531,7 +531,7 @@ void Event<ParamTypes...>::DisconnectAll(T *obj, void (T::*method)(const Sender 
 
 template<typename ... ParamTypes>
 void Event<ParamTypes...>::DisconnectAll(Event<ParamTypes...> &other) {
-  details::EventToken<ParamTypes...> *token = nullptr;
+  details::EventToken<ParamTypes...> *event_token = nullptr;
 
   details::Token *p = nullptr;
   details::Token *tmp = nullptr;
@@ -539,9 +539,9 @@ void Event<ParamTypes...>::DisconnectAll(Event<ParamTypes...> &other) {
   p = last_token_;
   while (p) {
     tmp = p->previous;
-    token = dynamic_cast<details::EventToken<ParamTypes...> * > (p);
-    if (token && (token->event() == (&other))) {
-      delete token;
+    event_token = dynamic_cast<details::EventToken<ParamTypes...> * > (p);
+    if (event_token && (event_token->event() == (&other))) {
+      delete event_token;
     }
     p = tmp;
   }
@@ -550,7 +550,7 @@ void Event<ParamTypes...>::DisconnectAll(Event<ParamTypes...> &other) {
 template<typename ... ParamTypes>
 template<typename T>
 void Event<ParamTypes...>::DisconnectOnce(T *obj, void (T::*method)(const Sender *, ParamTypes...), int start_pos) {
-  details::DelegateToken<ParamTypes...> *conn = nullptr;
+  details::DelegateToken<ParamTypes...> *delegate_token = nullptr;
   details::Token *start = nullptr;
 
   if (start_pos >= 0) {
@@ -563,9 +563,9 @@ void Event<ParamTypes...>::DisconnectOnce(T *obj, void (T::*method)(const Sender
 
     if (start) {
       for (details::Token *p = start; p; p = p->next) {
-        conn = dynamic_cast<details::DelegateToken<ParamTypes...> * > (p);
-        if (conn && (conn->delegate().template equal<T>(obj, method))) {
-          delete conn;
+        delegate_token = dynamic_cast<details::DelegateToken<ParamTypes...> * > (p);
+        if (delegate_token && (delegate_token->delegate().template equal<T>(obj, method))) {
+          delete delegate_token;
           break;
         }
       }
@@ -580,9 +580,9 @@ void Event<ParamTypes...>::DisconnectOnce(T *obj, void (T::*method)(const Sender
 
     if (start) {
       for (details::Token *p = last_token_; p; p = p->previous) {
-        conn = dynamic_cast<details::DelegateToken<ParamTypes...> * > (p);
-        if (conn && (conn->delegate().template equal<T>(obj, method))) {
-          delete conn;
+        delegate_token = dynamic_cast<details::DelegateToken<ParamTypes...> * > (p);
+        if (delegate_token && (delegate_token->delegate().template equal<T>(obj, method))) {
+          delete delegate_token;
           break;
         }
       }
@@ -593,7 +593,7 @@ void Event<ParamTypes...>::DisconnectOnce(T *obj, void (T::*method)(const Sender
 
 template<typename ... ParamTypes>
 void Event<ParamTypes...>::DisconnectOnce(Event<ParamTypes...> &other, int start_pos) {
-  details::EventToken<ParamTypes...> *conn = nullptr;
+  details::EventToken<ParamTypes...> *event_token = nullptr;
   details::Token *start = nullptr;
 
   if (start_pos >= 0) {
@@ -606,9 +606,9 @@ void Event<ParamTypes...>::DisconnectOnce(Event<ParamTypes...> &other, int start
 
     if (start) {
       for (details::Token *p = start; p; p = p->next) {
-        conn = dynamic_cast<details::EventToken<ParamTypes...> * > (p);
-        if (conn && (conn->event() == (&other))) {
-          delete conn;
+        event_token = dynamic_cast<details::EventToken<ParamTypes...> * > (p);
+        if (event_token && (event_token->event() == (&other))) {
+          delete event_token;
           break;
         }
       }
@@ -623,9 +623,9 @@ void Event<ParamTypes...>::DisconnectOnce(Event<ParamTypes...> &other, int start
 
     if (start) {
       for (details::Token *p = last_token_; p; p = p->previous) {
-        conn = dynamic_cast<details::EventToken<ParamTypes...> * > (p);
-        if (conn && (conn->event() == (&other))) {
-          delete conn;
+        event_token = dynamic_cast<details::EventToken<ParamTypes...> * > (p);
+        if (event_token && (event_token->event() == (&other))) {
+          delete event_token;
           break;
         }
       }
@@ -637,11 +637,11 @@ void Event<ParamTypes...>::DisconnectOnce(Event<ParamTypes...> &other, int start
 template<typename ... ParamTypes>
 template<typename T>
 bool Event<ParamTypes...>::IsConnected(T *obj, void (T::*method)(const Sender *, ParamTypes...)) const {
-  details::DelegateToken<ParamTypes...> *conn = nullptr;
+  details::DelegateToken<ParamTypes...> *delegate_token = nullptr;
 
   for (details::Token *p = first_token_; p; p = p->next) {
-    conn = dynamic_cast<details::DelegateToken<ParamTypes...> *>(p);
-    if (conn && (conn->delegate().template equal<T>(obj, method))) {
+    delegate_token = dynamic_cast<details::DelegateToken<ParamTypes...> *>(p);
+    if (delegate_token && (delegate_token->delegate().template equal<T>(obj, method))) {
       return true;
     }
   }
@@ -650,11 +650,11 @@ bool Event<ParamTypes...>::IsConnected(T *obj, void (T::*method)(const Sender *,
 
 template<typename ... ParamTypes>
 bool Event<ParamTypes...>::IsConnected(Event<ParamTypes...> &other) const {
-  details::EventToken<ParamTypes...> *conn = nullptr;
+  details::EventToken<ParamTypes...> *event_token = nullptr;
 
   for (details::Token *p = first_token_; p; p = p->next) {
-    conn = dynamic_cast<details::EventToken<ParamTypes...> * > (p);
-    if (conn && (conn->event() == (&other))) {
+    event_token = dynamic_cast<details::EventToken<ParamTypes...> * > (p);
+    if (event_token && (event_token->event() == (&other))) {
       return true;
     }
   }
@@ -665,11 +665,11 @@ template<typename ... ParamTypes>
 template<typename T>
 std::size_t Event<ParamTypes...>::CountConnections(T *obj, void (T::*method)(const Sender *, ParamTypes...)) const {
   std::size_t count = 0;
-  details::DelegateToken<ParamTypes...> *conn = nullptr;
+  details::DelegateToken<ParamTypes...> *delegate_token = nullptr;
 
   for (details::Token *p = first_token_; p; p = p->next) {
-    conn = dynamic_cast<details::DelegateToken<ParamTypes...> *>(p);
-    if (conn && (conn->delegate().template equal<T>(obj, method))) {
+    delegate_token = dynamic_cast<details::DelegateToken<ParamTypes...> *>(p);
+    if (delegate_token && (delegate_token->delegate().template equal<T>(obj, method))) {
       count++;
     }
   }
@@ -679,11 +679,11 @@ std::size_t Event<ParamTypes...>::CountConnections(T *obj, void (T::*method)(con
 template<typename ... ParamTypes>
 std::size_t Event<ParamTypes...>::CountConnections(Event<ParamTypes...> &other) const {
   std::size_t count = 0;
-  details::EventToken<ParamTypes...> *conn = nullptr;
+  details::EventToken<ParamTypes...> *event_token = nullptr;
 
   for (details::Token *p = first_token_; p; p = p->next) {
-    conn = dynamic_cast<details::EventToken<ParamTypes...> * > (p);
-    if (conn && (conn->event() == (&other))) {
+    event_token = dynamic_cast<details::EventToken<ParamTypes...> * > (p);
+    if (event_token && (event_token->event() == (&other))) {
       count++;
     }
   }
