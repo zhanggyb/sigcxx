@@ -245,7 +245,7 @@ class Trackable {
   void UnbindAll(const Sender *sender);
 
   template<typename T, typename ... ParamTypes>
-  void UnbindAll(const Sender *sender, T *obj, void (T::*method)(const Sender *, ParamTypes...));
+  void UnbindAll(const Sender *sender, void (T::*method)(const Sender *, ParamTypes...));
 
   void UnbindAll();
 
@@ -253,7 +253,7 @@ class Trackable {
    * @brief Disconnect all delegates to a method
    */
   template<typename T, typename ... ParamTypes>
-  void UnbindAll(T *obj, void (T::*method)(const Sender *, ParamTypes...));
+  void UnbindAll(void (T::*method)(const Sender *, ParamTypes...));
 
   template<typename T, typename ... ParamTypes>
   std::size_t CountBindings(T *obj, void (T::*method)(const Sender *, ParamTypes...)) const;
@@ -310,51 +310,51 @@ class Trackable {
 };
 
 template<typename T, typename ... ParamTypes>
-void Trackable::UnbindAll(const Sender *sender, T *obj, void (T::*method)(const Sender *, ParamTypes...)) {
-  if (sender && (sender->token_->binding->trackable_object == this)) {
-    details::DelegateToken<ParamTypes...> *delegate_token = nullptr;
+void Trackable::UnbindAll(const Sender *sender, void (T::*method)(const Sender *, ParamTypes...)) {
+  // (sender && sender->token_->binding->trackable_object == this) is always true
 
-    details::Token *p = nullptr;
-    details::Token *tmp = nullptr;
+  details::DelegateToken<ParamTypes...> *delegate_token = nullptr;
 
-    p = sender->token_;
-    while (p) {
-      tmp = p->previous;
-      if (p->binding->trackable_object == this) {
-        delegate_token = dynamic_cast<details::DelegateToken<ParamTypes...> *>(p);
-        if (delegate_token &&
-            (delegate_token->delegate().template equal<T>(obj, method))) {
-          if (p == sender->token_) {
-            const_cast<Sender *>(sender)->token_ = sender->token_->next;
-            const_cast<Sender *>(sender)->skip_ = true;
-          }
-          delete p;
+  details::Token *p = nullptr;
+  details::Token *tmp = nullptr;
+
+  p = sender->token_;
+  while (p) {
+    tmp = p->previous;
+    if (p->binding->trackable_object == this) {
+      delegate_token = dynamic_cast<details::DelegateToken<ParamTypes...> *>(p);
+      if (delegate_token &&
+          (delegate_token->delegate().template equal<T>((T *) this, method))) {
+        if (p == sender->token_) {
+          const_cast<Sender *>(sender)->token_ = sender->token_->next;
+          const_cast<Sender *>(sender)->skip_ = true;
         }
+        delete p;
       }
-      p = tmp;
     }
+    p = tmp;
+  }
 
-    p = sender->token_;
-    while (p) {
-      tmp = p->next;
-      if (p->binding->trackable_object == this) {
-        delegate_token = dynamic_cast<details::DelegateToken<ParamTypes...> *>(p);
-        if (delegate_token &&
-            (delegate_token->delegate().template equal<T>(obj, method))) {
-          if (p == sender->token_) {
-            const_cast<Sender *>(sender)->token_ = sender->token_->next;
-            const_cast<Sender *>(sender)->skip_ = true;
-          }
-          delete p;
+  p = sender->token_;
+  while (p) {
+    tmp = p->next;
+    if (p->binding->trackable_object == this) {
+      delegate_token = dynamic_cast<details::DelegateToken<ParamTypes...> *>(p);
+      if (delegate_token &&
+          (delegate_token->delegate().template equal<T>((T *) this, method))) {
+        if (p == sender->token_) {
+          const_cast<Sender *>(sender)->token_ = sender->token_->next;
+          const_cast<Sender *>(sender)->skip_ = true;
         }
+        delete p;
       }
-      p = tmp;
     }
+    p = tmp;
   }
 }
 
 template<typename T, typename ... ParamTypes>
-void Trackable::UnbindAll(T *obj, void (T::*method)(const Sender *, ParamTypes...)) {
+void Trackable::UnbindAll(void (T::*method)(const Sender *, ParamTypes...)) {
 
   details::Binding *p = nullptr;
   details::Binding *tmp = nullptr;
@@ -364,7 +364,7 @@ void Trackable::UnbindAll(T *obj, void (T::*method)(const Sender *, ParamTypes..
   while (p) {
     tmp = p->previous;
     delegate_token = dynamic_cast<details::DelegateToken<ParamTypes...> *>(p->token);
-    if (delegate_token && (delegate_token->delegate().template equal<T>(obj, method))) {
+    if (delegate_token && (delegate_token->delegate().template equal<T>((T *) this, method))) {
       delete delegate_token;
     }
     p = tmp;

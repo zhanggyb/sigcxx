@@ -28,7 +28,7 @@ public:
   QtSource() {}
   virtual ~QtSource() {}
 
-  void DoTest1 (int n)
+  inline void emit_signal(int n)
   {
     emit valueChanged(n);
   }

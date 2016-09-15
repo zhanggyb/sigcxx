@@ -46,7 +46,7 @@ TEST_F(Test, unbind_all2) {
   s1.event1().Connect(&o, &Observer::OnTest1IntegerParam);
   s2.event0().Connect(&o, &Observer::OnTest0);
 
-  o.UnbindAll(&o, &Observer::OnTest1IntegerParam);
+  o.UnbindAll(&Observer::OnTest1IntegerParam);
 
   ASSERT_TRUE((s1.event1().CountConnections() == 0) &&
       (s2.event0().CountConnections() == 1) &&
@@ -69,7 +69,7 @@ TEST_F(Test, unbind_all3) {
   s2.event0().Connect(&o, &Observer::OnTestUnbindAllAt5);
   s2.event0().Connect(&o, &Observer::OnTestUnbindAllAt5);
 
-  o.UnbindAll(&o, &Observer::OnTestUnbindAllAt5);
+  o.UnbindAll(&Observer::OnTestUnbindAllAt5);
 
   ASSERT_TRUE((o.CountBindings() == 4) &&
       (s1.event0().CountConnections() == 4) &&

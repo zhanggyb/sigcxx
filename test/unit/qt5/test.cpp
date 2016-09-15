@@ -27,7 +27,7 @@ TEST_F(Test, qt_signal_slot)
   QObject::connect(&s, &QtSource::valueChanged, &c, &QtConsumer::setValue);
 
   for(int i = 0; i < TEST_CYCLE_NUM; i++) {
-    s.DoTest1(i);
+    s.emit_signal(i);
   }
   ASSERT_TRUE(true);
 }

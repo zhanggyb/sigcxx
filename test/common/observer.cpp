@@ -45,6 +45,6 @@ void Observer::OnTestUnbindAllAt5(const Sender* sender) {
 void Observer::OnTestUnbindAllMethodAt5(const Sender* sender) {
   test0_count_++;
   if (test0_count_ >= 5) {
-    UnbindAll(sender, this, &Observer::OnTestUnbindAllMethodAt5);
+    UnbindAll(sender, &Observer::OnTestUnbindAllMethodAt5);
   }
 }

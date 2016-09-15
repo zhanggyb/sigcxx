@@ -71,7 +71,7 @@ class Consumer: public cppevent::Trackable
   {
     // RemoveAllInConnections(sender);
     // sender->event_base().DisconnectAll(this, &Consumer::OnTestDisconnectAll);
-    UnbindAll(this, &Consumer::OnTestDisconnectAll);
+    UnbindAll(&Consumer::OnTestDisconnectAll);
   }
 
 };
