@@ -223,6 +223,8 @@ inline const Event<ParamTypes...> *EventToken<ParamTypes...>::event() const {
 class Trackable {
   friend struct details::Binding;
   friend struct details::Token;
+  template<typename ... ParamTypes> friend
+  class Event;
 
  public:
 
@@ -318,14 +320,16 @@ void Trackable::UnbindAll(const Sender *sender, T *obj, void (T::*method)(const 
     p = sender->token_;
     while (p) {
       tmp = p->previous;
-      delegate_token = dynamic_cast<details::DelegateToken<ParamTypes...> *>(p);
-      if (delegate_token &&
-          (delegate_token->delegate().template equal<T>(obj, method))) {
-        if (p == sender->token_) {
-          const_cast<Sender *>(sender)->token_ = sender->token_->next;
-          const_cast<Sender *>(sender)->skip_ = true;
+      if (p->binding->trackable_object == this) {
+        delegate_token = dynamic_cast<details::DelegateToken<ParamTypes...> *>(p);
+        if (delegate_token &&
+            (delegate_token->delegate().template equal<T>(obj, method))) {
+          if (p == sender->token_) {
+            const_cast<Sender *>(sender)->token_ = sender->token_->next;
+            const_cast<Sender *>(sender)->skip_ = true;
+          }
+          delete p;
         }
-        delete p;
       }
       p = tmp;
     }
@@ -333,14 +337,16 @@ void Trackable::UnbindAll(const Sender *sender, T *obj, void (T::*method)(const 
     p = sender->token_;
     while (p) {
       tmp = p->next;
-      delegate_token = dynamic_cast<details::DelegateToken<ParamTypes...> *>(p);
-      if (delegate_token &&
-          (delegate_token->delegate().template equal<T>(obj, method))) {
-        if (p == sender->token_) {
-          const_cast<Sender *>(sender)->token_ = sender->token_->next;
-          const_cast<Sender *>(sender)->skip_ = true;
+      if (p->binding->trackable_object == this) {
+        delegate_token = dynamic_cast<details::DelegateToken<ParamTypes...> *>(p);
+        if (delegate_token &&
+            (delegate_token->delegate().template equal<T>(obj, method))) {
+          if (p == sender->token_) {
+            const_cast<Sender *>(sender)->token_ = sender->token_->next;
+            const_cast<Sender *>(sender)->skip_ = true;
+          }
+          delete p;
         }
-        delete p;
       }
       p = tmp;
     }
@@ -431,12 +437,14 @@ class Event : public Trackable {
   template<typename T>
   bool IsConnected(T *obj, void (T::*method)(const Sender *, ParamTypes...)) const;
 
-  bool IsConnected(Event<ParamTypes...> &other) const;
+  bool IsConnected(const Event<ParamTypes...> &other) const;
+
+  bool IsConnected(const Trackable *obj) const;
 
   template<typename T>
   std::size_t CountConnections(T *obj, void (T::*method)(const Sender *, ParamTypes...)) const;
 
-  std::size_t CountConnections(Event<ParamTypes...> &other) const;
+  std::size_t CountConnections(const Event<ParamTypes...> &other) const;
 
   std::size_t CountConnections() const;
 
@@ -521,9 +529,11 @@ void Event<ParamTypes...>::DisconnectAll(T *obj, void (T::*method)(const Sender 
   p = last_token_;
   while (p) {
     tmp = p->previous;
-    delegate_token = dynamic_cast<details::DelegateToken<ParamTypes...> * > (p);
-    if (delegate_token && (delegate_token->delegate().template equal<T>(obj, method))) {
-      delete delegate_token;
+    if (p->binding->trackable_object == obj) {
+      delegate_token = dynamic_cast<details::DelegateToken<ParamTypes...> * > (p);
+      if (delegate_token && (delegate_token->delegate().template equal<T>(obj, method))) {
+        delete delegate_token;
+      }
     }
     p = tmp;
   }
@@ -539,9 +549,11 @@ void Event<ParamTypes...>::DisconnectAll(Event<ParamTypes...> &other) {
   p = last_token_;
   while (p) {
     tmp = p->previous;
-    event_token = dynamic_cast<details::EventToken<ParamTypes...> * > (p);
-    if (event_token && (event_token->event() == (&other))) {
-      delete event_token;
+    if (p->binding->trackable_object == (&other)) {
+      event_token = dynamic_cast<details::EventToken<ParamTypes...> * > (p);
+      if (event_token && (event_token->event() == (&other))) {
+        delete event_token;
+      }
     }
     p = tmp;
   }
@@ -563,10 +575,12 @@ void Event<ParamTypes...>::DisconnectOnce(T *obj, void (T::*method)(const Sender
 
     if (start) {
       for (details::Token *p = start; p; p = p->next) {
-        delegate_token = dynamic_cast<details::DelegateToken<ParamTypes...> * > (p);
-        if (delegate_token && (delegate_token->delegate().template equal<T>(obj, method))) {
-          delete delegate_token;
-          break;
+        if (p->binding->trackable_object == obj) {
+          delegate_token = dynamic_cast<details::DelegateToken<ParamTypes...> * > (p);
+          if (delegate_token && (delegate_token->delegate().template equal<T>(obj, method))) {
+            delete delegate_token;
+            break;
+          }
         }
       }
     }
@@ -580,10 +594,12 @@ void Event<ParamTypes...>::DisconnectOnce(T *obj, void (T::*method)(const Sender
 
     if (start) {
       for (details::Token *p = last_token_; p; p = p->previous) {
-        delegate_token = dynamic_cast<details::DelegateToken<ParamTypes...> * > (p);
-        if (delegate_token && (delegate_token->delegate().template equal<T>(obj, method))) {
-          delete delegate_token;
-          break;
+        if (p->binding->trackable_object == obj) {
+          delegate_token = dynamic_cast<details::DelegateToken<ParamTypes...> * > (p);
+          if (delegate_token && (delegate_token->delegate().template equal<T>(obj, method))) {
+            delete delegate_token;
+            break;
+          }
         }
       }
     }
@@ -606,10 +622,12 @@ void Event<ParamTypes...>::DisconnectOnce(Event<ParamTypes...> &other, int start
 
     if (start) {
       for (details::Token *p = start; p; p = p->next) {
-        event_token = dynamic_cast<details::EventToken<ParamTypes...> * > (p);
-        if (event_token && (event_token->event() == (&other))) {
-          delete event_token;
-          break;
+        if (p->binding->trackable_object == (&other)) {
+          event_token = dynamic_cast<details::EventToken<ParamTypes...> * > (p);
+          if (event_token && (event_token->event() == (&other))) {
+            delete event_token;
+            break;
+          }
         }
       }
     }
@@ -623,10 +641,12 @@ void Event<ParamTypes...>::DisconnectOnce(Event<ParamTypes...> &other, int start
 
     if (start) {
       for (details::Token *p = last_token_; p; p = p->previous) {
-        event_token = dynamic_cast<details::EventToken<ParamTypes...> * > (p);
-        if (event_token && (event_token->event() == (&other))) {
-          delete event_token;
-          break;
+        if (p->binding->trackable_object == (&other)) {
+          event_token = dynamic_cast<details::EventToken<ParamTypes...> * > (p);
+          if (event_token && (event_token->event() == (&other))) {
+            delete event_token;
+            break;
+          }
         }
       }
     }
@@ -640,24 +660,45 @@ bool Event<ParamTypes...>::IsConnected(T *obj, void (T::*method)(const Sender *,
   details::DelegateToken<ParamTypes...> *delegate_token = nullptr;
 
   for (details::Token *p = first_token_; p; p = p->next) {
-    delegate_token = dynamic_cast<details::DelegateToken<ParamTypes...> *>(p);
-    if (delegate_token && (delegate_token->delegate().template equal<T>(obj, method))) {
-      return true;
+    if (p->binding->trackable_object == obj) {
+      delegate_token = dynamic_cast<details::DelegateToken<ParamTypes...> *>(p);
+      if (delegate_token && (delegate_token->delegate().template equal<T>(obj, method))) {
+        return true;
+      }
     }
   }
   return false;
 }
 
 template<typename ... ParamTypes>
-bool Event<ParamTypes...>::IsConnected(Event<ParamTypes...> &other) const {
+bool Event<ParamTypes...>::IsConnected(const Event<ParamTypes...> &other) const {
   details::EventToken<ParamTypes...> *event_token = nullptr;
 
   for (details::Token *p = first_token_; p; p = p->next) {
-    event_token = dynamic_cast<details::EventToken<ParamTypes...> * > (p);
-    if (event_token && (event_token->event() == (&other))) {
-      return true;
+    if (p->binding->trackable_object == (&other)) {
+      event_token = dynamic_cast<details::EventToken<ParamTypes...> * > (p);
+      if (event_token && (event_token->event() == (&other))) {
+        return true;
+      }
     }
   }
+  return false;
+}
+
+template<typename ... ParamTypes>
+bool Event<ParamTypes...>::IsConnected(const Trackable *obj) const {
+  details::Token *token = first_token();
+  details::Binding *binding = obj->first_binding();
+
+  while (token && binding) {
+
+    if (token->binding->trackable_object == obj) return true;
+    if (binding->token->trackable_object == this) return true;
+
+    token = token->next;
+    binding = binding->next;
+  }
+
   return false;
 }
 
@@ -668,23 +709,27 @@ std::size_t Event<ParamTypes...>::CountConnections(T *obj, void (T::*method)(con
   details::DelegateToken<ParamTypes...> *delegate_token = nullptr;
 
   for (details::Token *p = first_token_; p; p = p->next) {
-    delegate_token = dynamic_cast<details::DelegateToken<ParamTypes...> *>(p);
-    if (delegate_token && (delegate_token->delegate().template equal<T>(obj, method))) {
-      count++;
+    if (p->binding->trackable_object == obj) {
+      delegate_token = dynamic_cast<details::DelegateToken<ParamTypes...> *>(p);
+      if (delegate_token && (delegate_token->delegate().template equal<T>(obj, method))) {
+        count++;
+      }
     }
   }
   return count;
 }
 
 template<typename ... ParamTypes>
-std::size_t Event<ParamTypes...>::CountConnections(Event<ParamTypes...> &other) const {
+std::size_t Event<ParamTypes...>::CountConnections(const Event<ParamTypes...> &other) const {
   std::size_t count = 0;
   details::EventToken<ParamTypes...> *event_token = nullptr;
 
   for (details::Token *p = first_token_; p; p = p->next) {
-    event_token = dynamic_cast<details::EventToken<ParamTypes...> * > (p);
-    if (event_token && (event_token->event() == (&other))) {
-      count++;
+    if (p->binding->trackable_object == (&other)) {
+      event_token = dynamic_cast<details::EventToken<ParamTypes...> * > (p);
+      if (event_token && (event_token->event() == (&other))) {
+        count++;
+      }
     }
   }
   return count;
