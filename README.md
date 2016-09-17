@@ -1,9 +1,12 @@
 sigcxx
 ======
 
+(almost done, updating wiki and documentation)
+
 ## Overview
 
-[sigcxx](https://github.com/zhanggyb/sigcxx) is a C++11 signal/slot implementation, inspired by:
+[sigcxx](https://github.com/zhanggyb/sigcxx) is a lightweight fast C++11
+signal/slot framework, inspired by:
 
 - [Member Function Pointers and the Fastest Possible C++ Delegates](http://www.codeproject.com/Articles/7150/Member-Function-Pointers-and-the-Fastest-Possible)
 by Don Clugston
@@ -14,13 +17,14 @@ by Don Clugston
 ## Features
 
 - Based on fast C++ delegates
-- Powered by C++11 variadic template
+- Powered by variadic template in C++11
 - Multicast
 - Slot can be virtual and pure virtual
 - Signal chaining
 - Automatic disconnecting
+- etc.
 
-## Usage
+## Installation
 
 Just drag the header files in `include/` and source files in `src/` to your
 project. Or use CMake to build and install a library:
@@ -33,15 +37,20 @@ $ make
 $ sudo make install
 ```
 
-This will finally install 2 header files into `/usr/local/include/sigcxx`, and
-a `libsigcxx.a` into `/usr/local/lib`.
+This will finally install 2 header files into `/usr/local/include/sigcxx`, and a
+`libsigcxx.a` into `/usr/local/lib`.
 
-## Example
+## Usage
 
-`sigcxx` provides a simple and fast way to communicate between objects. This
-is the basic function in GUI frameworks such as Qt, Gtkmm etc. Here's a simple
-example to show how to use `sigcxx` to connect notification events as
-illustrated below.
+Let's use an example to show how to use `sigcxx`. Assume that you are trying to
+develop a new GUI application and need a signal/slot framework for communication
+between GUI objects. This is a typical scenario in which a signal/slot
+(event/delegate) works as a basic function. For example, when a button is
+clicked, or the value of a slider bar is changed, you want to emit a signal to
+notify another object to react and do something (update the framebuffer, change
+the text displayed, etc.). In general, a button may have more than one `clicked`
+signal, there may be 'toggled', 'hovered' signals. Such situation can be
+illustrated as below:
 
 <div  align="center">
 <img src="doc/graphics/example.png" width = "400" alt="Example" align=center />
