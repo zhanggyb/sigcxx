@@ -521,11 +521,9 @@ template<typename ... ParamTypes>
 template<typename T>
 void Signal<ParamTypes...>::DisconnectAll(T *obj, void (T::*method)(const Sender *, ParamTypes...)) {
   details::DelegateToken<ParamTypes...> *delegate_token = nullptr;
-
-  details::Token *p = nullptr;
+  details::Token *p = last_token_;
   details::Token *tmp = nullptr;
 
-  p = last_token_;
   while (p) {
     tmp = p->previous;
     if (p->binding->trackable_object == obj) {
@@ -541,11 +539,9 @@ void Signal<ParamTypes...>::DisconnectAll(T *obj, void (T::*method)(const Sender
 template<typename ... ParamTypes>
 void Signal<ParamTypes...>::DisconnectAll(Signal<ParamTypes...> &other) {
   details::SignalToken<ParamTypes...> *event_token = nullptr;
-
-  details::Token *p = nullptr;
+  details::Token *p = last_token_;
   details::Token *tmp = nullptr;
 
-  p = last_token_;
   while (p) {
     tmp = p->previous;
     if (p->binding->trackable_object == (&other)) {
