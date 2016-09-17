@@ -80,11 +80,11 @@ public:
 
     // ...
 
-    inline sigcxx::EventRef<> notify1 () {
+    inline sigcxx::SignalRef<> notify1 () {
        return notify1_;
     }
 
-    inline sigcxx::EventRef<const Foo*> notify2 () {
+    inline sigcxx::SignalRef<const Foo*> notify2 () {
        return notify2_;
     }
 
