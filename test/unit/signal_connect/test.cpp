@@ -51,16 +51,16 @@ TEST_F(Test, connect_method_4_times) {
  */
 TEST_F(Test, connect_event_once) {
   Subject s1;
-  Subject s2;
+  sigcxx::Signal<int> s2;
   Observer o;
 
-  s2.event1().connect(&o, &Observer::OnTest1IntegerParam);
-  s1.event1().connect(s2.event1());
+  s2.Connect(&o, &Observer::OnTest1IntegerParam);
+  s1.event1().connect(s2);
 
   s1.fire_event1(1);  // cause chain signal_base
 
-  ASSERT_TRUE((o.test1_count() == 1) && (s1.event1().count_connections() == 1) && (s2.event1().count_bindings() == 1)
-                  && (s2.event1().count_connections() == 1) && (o.CountBindings() == 1));
+  ASSERT_TRUE((o.test1_count() == 1) && (s1.event1().count_connections() == 1) && (s2.CountBindings() == 1)
+                  && (s2.CountConnections() == 1) && (o.CountBindings() == 1));
 }
 
 /*
@@ -95,11 +95,11 @@ TEST_F(Test, selfconsumer) {
 
 TEST_F(Test, event_chaining) {
   Subject s1;
-  Subject s2;
+  sigcxx::Signal<int> s2;
   Observer c;
 
-  s1.event1().connect(s2.event1());
-  s2.event1().connect(&c, &Observer::OnTest1IntegerParam);
+  s1.event1().connect(s2);
+  s2.Connect(&c, &Observer::OnTest1IntegerParam);
 
   s1.fire_event1(1);
 
@@ -152,15 +152,15 @@ TEST_F(Test, delete_more_when_called) {
 
 TEST_F(Test, count_event_connections) {
   Subject s1;
-  Subject s2;
+  sigcxx::Signal<> s2;
   Observer c;
 
-  s1.event0().connect(s2.event0());
+  s1.event0().connect(s2);
   s1.event0().connect(&c, &Observer::OnTest0);
-  s1.event0().connect(s2.event0());
+  s1.event0().connect(s2);
 
   ASSERT_TRUE(
-      (s1.event0().count_connections(s2.event0()) == 2) &&
+      (s1.event0().count_connections(s2) == 2) &&
           (s1.event0().count_connections(&c, &Observer::OnTest0) == 1)
   );
 }

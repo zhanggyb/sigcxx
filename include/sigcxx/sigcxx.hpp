@@ -49,9 +49,13 @@ template<typename ... ParamTypes>
 class SignalToken;
 
 /**
- * @brief The event binding
+ * @brief A simple structure to build a list point to signal sources
  */
 struct Binding {
+
+  /**
+   * @brief Constructor
+   */
   inline Binding()
       : trackable_object(nullptr),
         previous(nullptr),
@@ -59,6 +63,9 @@ struct Binding {
         token(nullptr) {
   }
 
+  /**
+   * @brief Destructor
+   */
   ~Binding();
 
   Trackable *trackable_object;
@@ -68,9 +75,13 @@ struct Binding {
 };
 
 /**
- * @brief The event source
+ * @brief A simple structure to build a list point to objects which consume the signals
  */
 struct Token {
+
+  /**
+   * @brief Constructor
+   */
   inline Token()
       : trackable_object(nullptr),
         previous(nullptr),
@@ -78,6 +89,9 @@ struct Token {
         binding(nullptr) {
   }
 
+  /**
+   * @brief Destructor
+   */
   virtual ~Token();
 
   Trackable *trackable_object;
@@ -935,8 +949,8 @@ class SignalRef {
     event_->Connect(obj, method, index);
   }
 
-  inline void connect(const SignalRef<ParamTypes...> &other, int index = -1) {
-    event_->Connect(*other.event_, index);
+  inline void connect(Signal<ParamTypes...> &signal, int index = -1) {
+    event_->Connect(signal, index);
   }
 
   template<typename T>
@@ -944,8 +958,8 @@ class SignalRef {
     event_->DisconnectAll(obj, method);
   }
 
-  inline void disconnect_all(SignalRef<ParamTypes...> &other) {
-    event_->DisconnectAll(*other.event_);
+  inline void disconnect_all(Signal<ParamTypes...> &signal) {
+    event_->DisconnectAll(signal);
   }
 
   template<typename T>
@@ -953,8 +967,8 @@ class SignalRef {
     event_->DisconnectOnce(obj, method, start_pos);
   }
 
-  inline void disconnect_once(SignalRef<ParamTypes...> &other, int start_pos = -1) {
-    event_->DisconnectOnce(*other.event_, start_pos);
+  inline void disconnect_once(Signal<ParamTypes...> &signal, int start_pos = -1) {
+    event_->DisconnectOnce(signal, start_pos);
   }
 
   inline void disconnect_all() {
@@ -966,8 +980,8 @@ class SignalRef {
     return event_->IsConnected(obj, method);
   }
 
-  inline bool is_connected(const SignalRef<ParamTypes...> &other) const {
-    return event_->IsConnected(*other.event_);
+  inline bool is_connected(const Signal<ParamTypes...> &signal) const {
+    return event_->IsConnected(signal);
   }
 
   inline bool is_connected(const Trackable *obj) const {
@@ -979,8 +993,8 @@ class SignalRef {
     return event_->CountConnections(obj, method);
   }
 
-  inline std::size_t count_connections(const SignalRef<ParamTypes...> &other) const {
-    return event_->CountConnections(*other.event_);
+  inline std::size_t count_connections(const Signal<ParamTypes...> &signal) const {
+    return event_->CountConnections(signal);
   }
 
   inline std::size_t count_connections() const {

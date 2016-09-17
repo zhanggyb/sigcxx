@@ -28,12 +28,14 @@
 
 namespace sigcxx {
 
+/// @cond IGNORE
 // generic classes to calculate method pointer:
 class GenericBase1 {};
 class GenericBase2 {};
 class GenericMultiInherit : GenericBase1, GenericBase2 {};
 
 typedef void (GenericMultiInherit::*GenericMethodPointer)();
+/// @endcond
 
 /**
  * @brief Delegate with variadic template

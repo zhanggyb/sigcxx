@@ -48,11 +48,11 @@ TEST_F(Test, is_connected1) {
  */
 TEST_F(Test, is_connected2) {
   Subject s1;
-  Subject s2;
+  sigcxx::Signal<int> s2;
 
-  s1.event1().connect(s2.event1());
+  s1.event1().connect(s2);
 
-  ASSERT_TRUE(s1.event1().is_connected(s2.event1()));
+  ASSERT_TRUE(s1.event1().is_connected(s2));
 }
 
 /*
