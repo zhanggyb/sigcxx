@@ -15,21 +15,21 @@ Test::~Test()
 
 }
 
-struct VBinding: public cppevent::details::Binding
+struct VBinding: public sigcxx::details::Binding
 {
 public:
   VBinding(int value = 0)
-  : cppevent::details::Binding(), v(value)
+  : sigcxx::details::Binding(), v(value)
   {}
 
   int v;
 };
 
-class Trackable: public cppevent::Trackable
+class Trackable: public sigcxx::Trackable
 {
 public:
   Trackable ()
-  : cppevent::Trackable()
+  : sigcxx::Trackable()
   { }
 
   virtual ~Trackable()
@@ -53,7 +53,7 @@ public:
   void print () const
   {
     VBinding* v = 0;
-    for (cppevent::details::Binding* p = first_binding(); p; p = p->next) {
+    for (sigcxx::details::Binding* p = first_binding(); p; p = p->next) {
       v = static_cast<VBinding*>(p);
       cout << v->v << endl;
     }
@@ -70,20 +70,20 @@ class Source
 
   void DoTest (int n)
   {
-    event_.Fire(n);
+    event_.Emit(n);
   }
 
-  inline cppevent::Event<int>& event ()
+  inline sigcxx::Signal<int>& event ()
   {
     return event_;
   }
 
  private:
 
-  cppevent::Event<int> event_;
+  sigcxx::Signal<int> event_;
 };
 
-class Consumer: public cppevent::Trackable
+class Consumer: public sigcxx::Trackable
 {
  public:
 
@@ -92,7 +92,7 @@ class Consumer: public cppevent::Trackable
 
   virtual ~Consumer () { }
 
-  void OnTestNothing (const cppevent::Sender* sender, int)
+  void OnTestNothing (const sigcxx::Sender* sender, int)
   {
     // do nothing...
   }
@@ -204,7 +204,7 @@ TEST_F(Test, remove_connections_from_event)
 // Consumer c1;
 // Consumer c2;
 //
-// s.event_base().Connect(&c1, &Consumer::OnTestNothing);
+// s.signal_base().Connect(&c1, &Consumer::OnTestNothing);
 //
 // c2 = c1;
 //

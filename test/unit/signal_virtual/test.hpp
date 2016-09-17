@@ -4,9 +4,9 @@
 
 #include <gtest/gtest.h>
 
-#include <cppevent/event.hpp>
+#include <sigcxx/sigcxx.hpp>
 
-using cppevent::Sender;
+using sigcxx::Sender;
 
 class Test: public testing::Test
 {
@@ -29,31 +29,31 @@ class Source
 
   void DoTest1 (int n)
   {
-    event1_.Fire(n);
+    event1_.Emit(n);
   }
 
   void DoTest2 (int n1, int n2)
   {
-    event2_.Fire(n1, n2);
+    event2_.Emit(n1, n2);
   }
 
-  inline cppevent::Event<int>& event1 ()
+  inline sigcxx::Signal<int>& event1 ()
   {
     return event1_;
   }
 
-  inline cppevent::Event<int, int>& event2 ()
+  inline sigcxx::Signal<int, int>& event2 ()
   {
     return event2_;
   }
 
  private:
 
-  cppevent::Event<int> event1_;
-  cppevent::Event<int, int> event2_;
+  sigcxx::Signal<int> event1_;
+  sigcxx::Signal<int, int> event2_;
 };
 
-class AbstractConsumer: public cppevent::Trackable
+class AbstractConsumer: public sigcxx::Trackable
 {
 public:
   AbstractConsumer() {}
@@ -75,13 +75,13 @@ class Consumer: public AbstractConsumer
   void OnTest1 (const Sender* sender, int n)
   {
 	  test1_count_++;
-	  std::cout << "Event received in OnTest1, n " << n << ", " << test1_count_ << " times." << std::endl;
+	  std::cout << "Signal received in OnTest1, n " << n << ", " << test1_count_ << " times." << std::endl;
   }
 
   void OnTest2 (const Sender* sender, int n1, int n2)
   {
 	  test2_count_++;
-    std::cout << "Event received in OnTest2, n1: " << n1 << " n2: " << n2 << ", " << test2_count_ << " times."
+    std::cout << "Signal received in OnTest2, n1: " << n1 << " n2: " << n2 << ", " << test2_count_ << " times."
               << std::endl;
   }
 

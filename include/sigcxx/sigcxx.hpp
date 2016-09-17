@@ -34,19 +34,19 @@
 
 #include "delegate.hpp"
 
-namespace cppevent {
+namespace sigcxx {
 
 // forward declaration
 class Trackable;
 template<typename ... ParamTypes>
-class Event;
+class Signal;
 class Sender;
 
 namespace details {
 
 struct Token;
 template<typename ... ParamTypes>
-class EventToken;
+class SignalToken;
 
 /**
  * @brief The event binding
@@ -148,40 +148,40 @@ void DelegateToken<ParamTypes...>::Invoke(const Sender *sender, ParamTypes... Ar
 }
 
 template<typename ... ParamTypes>
-class EventToken : public InvokableToken<ParamTypes...> {
+class SignalToken : public InvokableToken<ParamTypes...> {
  public:
 
-  EventToken() = delete;
+  SignalToken() = delete;
 
-  inline EventToken(Event<ParamTypes...> &event);
+  inline SignalToken(Signal<ParamTypes...> &event);
 
-  virtual ~EventToken();
+  virtual ~SignalToken();
 
   virtual void Invoke(const Sender *sender, ParamTypes... Args) override;
 
-  inline const Event<ParamTypes...> *event() const;
+  inline const Signal<ParamTypes...> *event() const;
 
  private:
 
-  Event<ParamTypes...> *event_;
+  Signal<ParamTypes...> *event_;
 };
 
 template<typename ... ParamTypes>
-inline EventToken<ParamTypes...>::EventToken(Event<ParamTypes...> &event)
+inline SignalToken<ParamTypes...>::SignalToken(Signal<ParamTypes...> &event)
     : InvokableToken<ParamTypes...>(), event_(&event) {
 }
 
 template<typename ... ParamTypes>
-EventToken<ParamTypes...>::~EventToken() {
+SignalToken<ParamTypes...>::~SignalToken() {
 }
 
 template<typename ... ParamTypes>
-void EventToken<ParamTypes...>::Invoke(const Sender *sender, ParamTypes... Args) {
-  event_->Fire(Args...);
+void SignalToken<ParamTypes...>::Invoke(const Sender *sender, ParamTypes... Args) {
+  event_->Emit(Args...);
 }
 
 template<typename ... ParamTypes>
-inline const Event<ParamTypes...> *EventToken<ParamTypes...>::event() const {
+inline const Signal<ParamTypes...> *SignalToken<ParamTypes...>::event() const {
   return event_;
 }
 
@@ -190,9 +190,9 @@ inline const Event<ParamTypes...> *EventToken<ParamTypes...>::event() const {
 class Sender {
 
   template<typename ... ParamTypes> friend
-  class Event;
+  class Signal;
   template<typename ... ParamTypes> friend
-  class details::EventToken;
+  class details::SignalToken;
   friend class Trackable;
 
  public:
@@ -200,14 +200,16 @@ class Sender {
   ~Sender() {}
 
   template<typename ... ParamTypes>
-  inline Event<ParamTypes...> *event() const {
-    return dynamic_cast<Event<ParamTypes...> *>(token_->trackable_object);
+  inline Signal<ParamTypes...> *event() const {
+    return dynamic_cast<Signal<ParamTypes...> *>(token_->trackable_object);
   }
 
- private:
+ protected:
 
   inline Sender(details::Token *token = nullptr, bool skip = false)
       : token_(token), skip_(skip) {}
+
+ private:
 
   details::Token *token_;
   bool skip_;
@@ -221,7 +223,7 @@ class Trackable {
   friend struct details::Binding;
   friend struct details::Token;
   template<typename ... ParamTypes> friend
-  class Event;
+  class Signal;
 
  public:
 
@@ -383,21 +385,21 @@ size_t Trackable::CountBindings(T *obj, void (T::*method)(const Sender *, ParamT
   return count;
 }
 
-// Event declaration:
+// Signal declaration:
 
 template<typename ... ParamTypes>
-class Event : public Trackable {
+class Signal : public Trackable {
   friend class Trackable;
 
  public:
 
-  inline Event();
+  inline Signal();
 
-  virtual ~Event();
+  virtual ~Signal();
 
-  Event(const Event &orig) = delete;
+  Signal(const Signal &orig) = delete;
 
-  Event &operator=(const Event &orig) = delete;
+  Signal &operator=(const Signal &orig) = delete;
 
   /**
    * @brief Connect this event to a method in a observer
@@ -405,7 +407,7 @@ class Event : public Trackable {
   template<typename T>
   void Connect(T *obj, void (T::*method)(const Sender *, ParamTypes...), int index = -1);
 
-  void Connect(Event<ParamTypes...> &other, int index = -1);
+  void Connect(Signal<ParamTypes...> &other, int index = -1);
 
   /**
    * @brief Disconnect all delegates to a method
@@ -416,7 +418,7 @@ class Event : public Trackable {
   /**
    * @brief Disconnect all events
    */
-  void DisconnectAll(Event<ParamTypes...> &other);
+  void DisconnectAll(Signal<ParamTypes...> &other);
 
   /**
    * @brief Disconnect the last delegate to a method
@@ -427,25 +429,25 @@ class Event : public Trackable {
   /**
    * @brief Disconnect the last event
    */
-  void DisconnectOnce(Event<ParamTypes...> &other, int start_pos = -1);
+  void DisconnectOnce(Signal<ParamTypes...> &other, int start_pos = -1);
 
   void DisconnectAll();
 
   template<typename T>
   bool IsConnected(T *obj, void (T::*method)(const Sender *, ParamTypes...)) const;
 
-  bool IsConnected(const Event<ParamTypes...> &other) const;
+  bool IsConnected(const Signal<ParamTypes...> &other) const;
 
   bool IsConnected(const Trackable *obj) const;
 
   template<typename T>
   std::size_t CountConnections(T *obj, void (T::*method)(const Sender *, ParamTypes...)) const;
 
-  std::size_t CountConnections(const Event<ParamTypes...> &other) const;
+  std::size_t CountConnections(const Signal<ParamTypes...> &other) const;
 
   std::size_t CountConnections() const;
 
-  void Fire(ParamTypes ... Args);
+  void Emit(ParamTypes ... Args);
 
   inline void operator()(ParamTypes ... Args);
 
@@ -476,23 +478,23 @@ class Event : public Trackable {
   details::Token *last_token_;
 };
 
-// Event implementation:
+// Signal implementation:
 
 template<typename ... ParamTypes>
-inline Event<ParamTypes...>::Event()
+inline Signal<ParamTypes...>::Signal()
     : Trackable(),
       first_token_(nullptr),
       last_token_(nullptr) {
 }
 
 template<typename ... ParamTypes>
-Event<ParamTypes...>::~Event() {
+Signal<ParamTypes...>::~Signal() {
   DisconnectAll();
 }
 
 template<typename ... ParamTypes>
 template<typename T>
-void Event<ParamTypes...>::Connect(T *obj, void (T::*method)(const Sender *, ParamTypes...), int index) {
+void Signal<ParamTypes...>::Connect(T *obj, void (T::*method)(const Sender *, ParamTypes...), int index) {
   details::Binding *downstream = new details::Binding;
   Delegate<void, const Sender *, ParamTypes...> d =
       Delegate<void, const Sender *, ParamTypes...>::template from_method<T>(obj, method);
@@ -505,8 +507,8 @@ void Event<ParamTypes...>::Connect(T *obj, void (T::*method)(const Sender *, Par
 }
 
 template<typename ... ParamTypes>
-void Event<ParamTypes...>::Connect(Event<ParamTypes...> &other, int index) {
-  details::EventToken<ParamTypes...> *upstream = new details::EventToken<ParamTypes...>(
+void Signal<ParamTypes...>::Connect(Signal<ParamTypes...> &other, int index) {
+  details::SignalToken<ParamTypes...> *upstream = new details::SignalToken<ParamTypes...>(
       other);
   details::Binding *downstream = new details::Binding;
 
@@ -517,7 +519,7 @@ void Event<ParamTypes...>::Connect(Event<ParamTypes...> &other, int index) {
 
 template<typename ... ParamTypes>
 template<typename T>
-void Event<ParamTypes...>::DisconnectAll(T *obj, void (T::*method)(const Sender *, ParamTypes...)) {
+void Signal<ParamTypes...>::DisconnectAll(T *obj, void (T::*method)(const Sender *, ParamTypes...)) {
   details::DelegateToken<ParamTypes...> *delegate_token = nullptr;
 
   details::Token *p = nullptr;
@@ -537,8 +539,8 @@ void Event<ParamTypes...>::DisconnectAll(T *obj, void (T::*method)(const Sender 
 }
 
 template<typename ... ParamTypes>
-void Event<ParamTypes...>::DisconnectAll(Event<ParamTypes...> &other) {
-  details::EventToken<ParamTypes...> *event_token = nullptr;
+void Signal<ParamTypes...>::DisconnectAll(Signal<ParamTypes...> &other) {
+  details::SignalToken<ParamTypes...> *event_token = nullptr;
 
   details::Token *p = nullptr;
   details::Token *tmp = nullptr;
@@ -547,7 +549,7 @@ void Event<ParamTypes...>::DisconnectAll(Event<ParamTypes...> &other) {
   while (p) {
     tmp = p->previous;
     if (p->binding->trackable_object == (&other)) {
-      event_token = dynamic_cast<details::EventToken<ParamTypes...> * > (p);
+      event_token = dynamic_cast<details::SignalToken<ParamTypes...> * > (p);
       if (event_token && (event_token->event() == (&other))) {
         delete event_token;
       }
@@ -558,7 +560,7 @@ void Event<ParamTypes...>::DisconnectAll(Event<ParamTypes...> &other) {
 
 template<typename ... ParamTypes>
 template<typename T>
-void Event<ParamTypes...>::DisconnectOnce(T *obj, void (T::*method)(const Sender *, ParamTypes...), int start_pos) {
+void Signal<ParamTypes...>::DisconnectOnce(T *obj, void (T::*method)(const Sender *, ParamTypes...), int start_pos) {
   details::DelegateToken<ParamTypes...> *delegate_token = nullptr;
   details::Token *start = nullptr;
 
@@ -605,8 +607,8 @@ void Event<ParamTypes...>::DisconnectOnce(T *obj, void (T::*method)(const Sender
 }
 
 template<typename ... ParamTypes>
-void Event<ParamTypes...>::DisconnectOnce(Event<ParamTypes...> &other, int start_pos) {
-  details::EventToken<ParamTypes...> *event_token = nullptr;
+void Signal<ParamTypes...>::DisconnectOnce(Signal<ParamTypes...> &other, int start_pos) {
+  details::SignalToken<ParamTypes...> *event_token = nullptr;
   details::Token *start = nullptr;
 
   if (start_pos >= 0) {
@@ -620,7 +622,7 @@ void Event<ParamTypes...>::DisconnectOnce(Event<ParamTypes...> &other, int start
     if (start) {
       for (details::Token *p = start; p; p = p->next) {
         if (p->binding->trackable_object == (&other)) {
-          event_token = dynamic_cast<details::EventToken<ParamTypes...> * > (p);
+          event_token = dynamic_cast<details::SignalToken<ParamTypes...> * > (p);
           if (event_token && (event_token->event() == (&other))) {
             delete event_token;
             break;
@@ -639,7 +641,7 @@ void Event<ParamTypes...>::DisconnectOnce(Event<ParamTypes...> &other, int start
     if (start) {
       for (details::Token *p = last_token_; p; p = p->previous) {
         if (p->binding->trackable_object == (&other)) {
-          event_token = dynamic_cast<details::EventToken<ParamTypes...> * > (p);
+          event_token = dynamic_cast<details::SignalToken<ParamTypes...> * > (p);
           if (event_token && (event_token->event() == (&other))) {
             delete event_token;
             break;
@@ -653,7 +655,7 @@ void Event<ParamTypes...>::DisconnectOnce(Event<ParamTypes...> &other, int start
 
 template<typename ... ParamTypes>
 template<typename T>
-bool Event<ParamTypes...>::IsConnected(T *obj, void (T::*method)(const Sender *, ParamTypes...)) const {
+bool Signal<ParamTypes...>::IsConnected(T *obj, void (T::*method)(const Sender *, ParamTypes...)) const {
   details::DelegateToken<ParamTypes...> *delegate_token = nullptr;
 
   for (details::Token *p = first_token_; p; p = p->next) {
@@ -668,12 +670,12 @@ bool Event<ParamTypes...>::IsConnected(T *obj, void (T::*method)(const Sender *,
 }
 
 template<typename ... ParamTypes>
-bool Event<ParamTypes...>::IsConnected(const Event<ParamTypes...> &other) const {
-  details::EventToken<ParamTypes...> *event_token = nullptr;
+bool Signal<ParamTypes...>::IsConnected(const Signal<ParamTypes...> &other) const {
+  details::SignalToken<ParamTypes...> *event_token = nullptr;
 
   for (details::Token *p = first_token_; p; p = p->next) {
     if (p->binding->trackable_object == (&other)) {
-      event_token = dynamic_cast<details::EventToken<ParamTypes...> * > (p);
+      event_token = dynamic_cast<details::SignalToken<ParamTypes...> * > (p);
       if (event_token && (event_token->event() == (&other))) {
         return true;
       }
@@ -683,7 +685,7 @@ bool Event<ParamTypes...>::IsConnected(const Event<ParamTypes...> &other) const 
 }
 
 template<typename ... ParamTypes>
-bool Event<ParamTypes...>::IsConnected(const Trackable *obj) const {
+bool Signal<ParamTypes...>::IsConnected(const Trackable *obj) const {
   details::Token *token = first_token();
   details::Binding *binding = obj->first_binding();
 
@@ -701,7 +703,7 @@ bool Event<ParamTypes...>::IsConnected(const Trackable *obj) const {
 
 template<typename ... ParamTypes>
 template<typename T>
-std::size_t Event<ParamTypes...>::CountConnections(T *obj, void (T::*method)(const Sender *, ParamTypes...)) const {
+std::size_t Signal<ParamTypes...>::CountConnections(T *obj, void (T::*method)(const Sender *, ParamTypes...)) const {
   std::size_t count = 0;
   details::DelegateToken<ParamTypes...> *delegate_token = nullptr;
 
@@ -717,13 +719,13 @@ std::size_t Event<ParamTypes...>::CountConnections(T *obj, void (T::*method)(con
 }
 
 template<typename ... ParamTypes>
-std::size_t Event<ParamTypes...>::CountConnections(const Event<ParamTypes...> &other) const {
+std::size_t Signal<ParamTypes...>::CountConnections(const Signal<ParamTypes...> &other) const {
   std::size_t count = 0;
-  details::EventToken<ParamTypes...> *event_token = nullptr;
+  details::SignalToken<ParamTypes...> *event_token = nullptr;
 
   for (details::Token *p = first_token_; p; p = p->next) {
     if (p->binding->trackable_object == (&other)) {
-      event_token = dynamic_cast<details::EventToken<ParamTypes...> * > (p);
+      event_token = dynamic_cast<details::SignalToken<ParamTypes...> * > (p);
       if (event_token && (event_token->event() == (&other))) {
         count++;
       }
@@ -733,7 +735,7 @@ std::size_t Event<ParamTypes...>::CountConnections(const Event<ParamTypes...> &o
 }
 
 template<typename ... ParamTypes>
-std::size_t Event<ParamTypes...>::CountConnections() const {
+std::size_t Signal<ParamTypes...>::CountConnections() const {
   std::size_t count = 0;
   for (details::Token *p = first_token_; p; p = p->next) {
     count++;
@@ -742,7 +744,7 @@ std::size_t Event<ParamTypes...>::CountConnections() const {
 }
 
 template<typename ... ParamTypes>
-void Event<ParamTypes...>::Fire(ParamTypes ... Args) {
+void Signal<ParamTypes...>::Emit(ParamTypes ... Args) {
   Sender sender(first_token());
 
   while (sender.token_) {
@@ -757,18 +759,18 @@ void Event<ParamTypes...>::Fire(ParamTypes ... Args) {
 }
 
 template<typename ... ParamTypes>
-inline void Event<ParamTypes...>::operator()(ParamTypes ... Args) {
-  Fire(Args...);
+inline void Signal<ParamTypes...>::operator()(ParamTypes ... Args) {
+  Emit(Args...);
 }
 
 template<typename ... ParamTypes>
-void Event<ParamTypes...>::AuditDestroyingToken(details::Token *token) {
+void Signal<ParamTypes...>::AuditDestroyingToken(details::Token *token) {
   if (token == first_token_) first_token_ = token->next;
   if (token == last_token_) last_token_ = token->previous;
 }
 
 template<typename ... ParamTypes>
-void Event<ParamTypes...>::PushBackToken(details::Token *token) {
+void Signal<ParamTypes...>::PushBackToken(details::Token *token) {
 #ifdef DEBUG
   assert(token->trackable_object == nullptr);
 #endif
@@ -789,7 +791,7 @@ void Event<ParamTypes...>::PushBackToken(details::Token *token) {
 }
 
 template<typename ... ParamTypes>
-void Event<ParamTypes...>::PushFrontToken(details::Token *token) {
+void Signal<ParamTypes...>::PushFrontToken(details::Token *token) {
 #ifdef DEBUG
   assert(token->trackable_object == nullptr);
 #endif
@@ -811,7 +813,7 @@ void Event<ParamTypes...>::PushFrontToken(details::Token *token) {
 }
 
 template<typename ... ParamTypes>
-void Event<ParamTypes...>::InsertToken(int index, details::Token *token) {
+void Signal<ParamTypes...>::InsertToken(int index, details::Token *token) {
 #ifdef DEBUG
   assert(token->trackable_object == nullptr);
 #endif
@@ -893,7 +895,7 @@ void Event<ParamTypes...>::InsertToken(int index, details::Token *token) {
 }
 
 template<typename ... ParamTypes>
-void Event<ParamTypes...>::DisconnectAll() {
+void Signal<ParamTypes...>::DisconnectAll() {
   details::Token *tmp = nullptr;
   details::Token *p = first_token_;
 
@@ -908,26 +910,26 @@ void Event<ParamTypes...>::DisconnectAll() {
  * @brief A reference to expose event in an object
  */
 template<typename ... ParamTypes>
-class EventRef {
+class SignalRef {
  public:
 
-  EventRef() = delete;
+  SignalRef() = delete;
 
-  inline EventRef(Event<ParamTypes...> &event)
+  inline SignalRef(Signal<ParamTypes...> &event)
       : event_(&event) {
   }
 
-  inline EventRef(Event<ParamTypes...> *event)
+  inline SignalRef(Signal<ParamTypes...> *event)
       : event_(event) {
   }
 
-  inline EventRef(const EventRef &orig)
+  inline SignalRef(const SignalRef &orig)
       : event_(orig.event_) {
   }
 
-  ~EventRef() {}
+  ~SignalRef() {}
 
-  inline EventRef &operator=(const EventRef &orig) {
+  inline SignalRef &operator=(const SignalRef &orig) {
     event_ = orig.event_;
     return *this;
   }
@@ -937,7 +939,7 @@ class EventRef {
     event_->Connect(obj, method, index);
   }
 
-  inline void connect(const EventRef<ParamTypes...> &other, int index = -1) {
+  inline void connect(const SignalRef<ParamTypes...> &other, int index = -1) {
     event_->Connect(*other.event_, index);
   }
 
@@ -946,7 +948,7 @@ class EventRef {
     event_->DisconnectAll(obj, method);
   }
 
-  inline void disconnect_all(EventRef<ParamTypes...> &other) {
+  inline void disconnect_all(SignalRef<ParamTypes...> &other) {
     event_->DisconnectAll(*other.event_);
   }
 
@@ -955,7 +957,7 @@ class EventRef {
     event_->DisconnectOnce(obj, method, start_pos);
   }
 
-  inline void disconnect_once(EventRef<ParamTypes...> &other, int start_pos = -1) {
+  inline void disconnect_once(SignalRef<ParamTypes...> &other, int start_pos = -1) {
     event_->DisconnectOnce(*other.event_, start_pos);
   }
 
@@ -968,7 +970,7 @@ class EventRef {
     return event_->IsConnected(obj, method);
   }
 
-  inline bool is_connected(const EventRef<ParamTypes...> &other) const {
+  inline bool is_connected(const SignalRef<ParamTypes...> &other) const {
     return event_->IsConnected(*other.event_);
   }
 
@@ -981,7 +983,7 @@ class EventRef {
     return event_->CountConnections(obj, method);
   }
 
-  inline std::size_t count_connections(const EventRef<ParamTypes...> &other) const {
+  inline std::size_t count_connections(const SignalRef<ParamTypes...> &other) const {
     return event_->CountConnections(*other.event_);
   }
 
@@ -1000,8 +1002,8 @@ class EventRef {
 
  private:
 
-  Event<ParamTypes...> *event_;
+  Signal<ParamTypes...> *event_;
 
 };
 
-} // namespace cppevent
+} // namespace sigcxx

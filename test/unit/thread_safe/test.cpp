@@ -5,20 +5,20 @@
 #include <mutex>
 
 using namespace std;
-using cppevent::Sender;
+using sigcxx::Sender;
 
 static std::mutex m;
 
 void Source::DoTest1(int n)
 {
   lock_guard<mutex> lock(m);
-  event1_.Fire(n);
+  event1_.Emit(n);
 }
 
 void Source::DoTest2 (int n1, int n2)
 {
   lock_guard<mutex> lock(m);
-  event2_.Fire(n1, n2);
+  event2_.Emit(n1, n2);
 }
 
 void Consumer::DisconnectAll()

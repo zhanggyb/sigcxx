@@ -4,9 +4,9 @@
 
 #include <gtest/gtest.h>
 
-#include <cppevent/event.hpp>
+#include <sigcxx/sigcxx.hpp>
 
-using cppevent::Sender;
+using sigcxx::Sender;
 
 class Test: public testing::Test
 {

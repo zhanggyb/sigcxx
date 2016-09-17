@@ -9,5 +9,5 @@ if(Boost_FOUND)
   message(STATUS "boost lib dir: ${Boost_LIBRARY_DIRS}")
 endif()
 
-add_executable(testPerformance ${sources} ${headers})
-target_link_libraries(testPerformance cppevent gtest common ${LIBS})
+add_executable(test_compare_boost_signal2 ${sources} ${headers})
+target_link_libraries(test_compare_boost_signal2 sigcxx gtest common ${LIBS})

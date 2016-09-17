@@ -7,7 +7,7 @@
 #include <observer.hpp>
 
 using namespace std;
-using cppevent::Sender;
+using sigcxx::Sender;
 
 Test::Test()
     : testing::Test() {
@@ -57,7 +57,7 @@ TEST_F(Test, connect_event_once) {
   s2.event1().connect(&o, &Observer::OnTest1IntegerParam);
   s1.event1().connect(s2.event1());
 
-  s1.fire_event1(1);  // cause chain event_base
+  s1.fire_event1(1);  // cause chain signal_base
 
   ASSERT_TRUE((o.test1_count() == 1) && (s1.event1().count_connections() == 1) && (s2.event1().count_bindings() == 1)
                   && (s2.event1().count_connections() == 1) && (o.CountBindings() == 1));

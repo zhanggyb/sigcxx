@@ -3,7 +3,7 @@
 
 cmake_minimum_required(VERSION 2.8.11)
 
-project(libcppevent)
+project(sigcxx)
 
 # The project version number.
 set(VERSION_MAJOR   1   CACHE STRING "Project major version number.")
@@ -54,4 +54,4 @@ if(BUILD_UNIT_TEST)
   add_subdirectory(test)
 endif()
 
-install(DIRECTORY "${PROJECT_SOURCE_DIR}/include/cppevent" DESTINATION include)
+install(DIRECTORY "${PROJECT_SOURCE_DIR}/include/sigcxx" DESTINATION include)

@@ -4,7 +4,7 @@
 
 #include <gtest/gtest.h>
 
-#include <cppevent/event.hpp>
+#include <sigcxx/sigcxx.hpp>
 
 class Test : public testing::Test {
  public:

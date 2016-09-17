@@ -7,7 +7,7 @@
 #include <iostream>
 
 using namespace std;
-using cppevent::Sender;
+using sigcxx::Sender;
 
 Test::Test()
     : testing::Test()
@@ -28,20 +28,20 @@ class Source
 
   void DoTest (int n = 0)
   {
-    event_.Fire(n);
+    event_.Emit(n);
   }
 
-  inline cppevent::Event<int>& event ()
+  inline sigcxx::Signal<int>& event ()
   {
     return event_;
   }
 
  private:
 
-  cppevent::Event<int> event_;
+  sigcxx::Signal<int> event_;
 };
 
-class Consumer: public cppevent::Trackable
+class Consumer: public sigcxx::Trackable
 {
  public:
 
@@ -58,19 +58,19 @@ class Consumer: public cppevent::Trackable
   void OnTestDisconnectFirst (const Sender* sender, int n)
   {
     UnbindOnce(sender);
-    // sender->event_base().DisconnectOnce(this, &Consumer::OnTestDisconnectFirst, 0);
+    // sender->signal_base().DisconnectOnce(this, &Consumer::OnTestDisconnectFirst, 0);
   }
 
   void OnTestDisconnectLast (const Sender* sender, int n)
   {
     UnbindOnce(sender);
-    // sender->event_base().DisconnectOnce(this, &Consumer::OnTestDisconnectLast, -1);
+    // sender->signal_base().DisconnectOnce(this, &Consumer::OnTestDisconnectLast, -1);
   }
 
   void OnTestDisconnectAll (const Sender* sender, int n)
   {
     // RemoveAllInConnections(sender);
-    // sender->event_base().DisconnectAll(this, &Consumer::OnTestDisconnectAll);
+    // sender->signal_base().DisconnectAll(this, &Consumer::OnTestDisconnectAll);
     UnbindAll(&Consumer::OnTestDisconnectAll);
   }
 

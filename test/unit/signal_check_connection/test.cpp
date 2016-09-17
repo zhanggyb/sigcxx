@@ -7,7 +7,7 @@
 #include <observer.hpp>
 
 using namespace std;
-using cppevent::Sender;
+using sigcxx::Sender;
 
 Test::Test()
     : testing::Test() {

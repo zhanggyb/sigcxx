@@ -24,9 +24,9 @@
  * SOFTWARE.
  */
 
-#include <cppevent/event.hpp>
+#include <sigcxx/sigcxx.hpp>
 
-namespace cppevent {
+namespace sigcxx {
 
 namespace details {
 
@@ -261,4 +261,4 @@ void Trackable::InsertBinding(int index, details::Binding *node) {
   node->trackable_object = this;
 }
 
-}  // namespace cppevent
+}  // namespace sigcxx

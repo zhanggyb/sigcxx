@@ -4,8 +4,6 @@
 
 #include <gtest/gtest.h>
 
-#include <cppevent/event.hpp>
-
 class Test: public testing::Test
 {
  public:

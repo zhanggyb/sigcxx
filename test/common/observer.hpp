@@ -1,9 +1,9 @@
 #pragma once
 
-#include <cppevent/event.hpp>
+#include <sigcxx/sigcxx.hpp>
 
-using cppevent::Trackable;
-using cppevent::Sender;
+using sigcxx::Trackable;
+using sigcxx::Sender;
 
 class Observer: public Trackable
 {

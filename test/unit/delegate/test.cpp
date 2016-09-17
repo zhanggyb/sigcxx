@@ -2,7 +2,7 @@
 
 #include "test.hpp"
 
-using namespace cppevent;
+using namespace sigcxx;
 
 Test::Test()
     : testing::Test()

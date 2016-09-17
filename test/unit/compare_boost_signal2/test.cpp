@@ -21,7 +21,7 @@ Test::~Test()
 TEST_F(Test, fire_many_times)
 {
   Observer consumer;
-  cppevent::Event<> event;
+  sigcxx::Signal<> event;
 
   event.Connect(&consumer, &Observer::OnTest0);
 
@@ -36,14 +36,14 @@ TEST_F(Test, fire_many_times)
 TEST_F(Test, connect_many_events)
 {
   Observer consumer;
-  cppevent::Event<> event;
+  sigcxx::Signal<> event;
 
   for(int i = 0; i < 1000000; i++)
   {
     event.Connect(&consumer, &Observer::OnTest0);
   }
 
-  //event_base();
+  //signal_base();
 
   ASSERT_TRUE(consumer.test0_count() == 0);
 }

@@ -2,4 +2,4 @@ file(GLOB sources "*.cpp")
 file(GLOB headers "*.hpp")
 
 add_executable(test_trackable_base ${sources} ${headers})
-target_link_libraries(test_trackable_base cppevent gtest)
+target_link_libraries(test_trackable_base sigcxx gtest)

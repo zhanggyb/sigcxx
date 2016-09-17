@@ -2,6 +2,7 @@
 
 #include "test.hpp"
 #include <iostream>
+#include <sigcxx/sigcxx.hpp>
 
 using namespace std;
 
@@ -15,21 +16,21 @@ Test::~Test()
 
 }
 
-struct VToken: public cppevent::details::InvokableToken<>
+struct VToken: public sigcxx::details::InvokableToken<>
 {
  public:
   VToken(int value = 0)
-      : cppevent::details::InvokableToken<>(), v(value)
+      : sigcxx::details::InvokableToken<>(), v(value)
   {}
   
   int v;
 };
 
-class Event: public cppevent::Event<>
+class Event: public sigcxx::Signal<>
 {
  public:
   Event ()
-      : cppevent::Event<>()
+      : sigcxx::Signal<>()
   { }
   
   virtual ~Event()
@@ -53,7 +54,7 @@ class Event: public cppevent::Event<>
   void print () const
   {
     VToken* v = 0;
-    for (cppevent::details::Token* p = first_token(); p; p = p->next) {
+    for (sigcxx::details::Token* p = first_token(); p; p = p->next) {
       v = static_cast<VToken*>(p);
       cout << v->v << endl;
     }
@@ -70,20 +71,20 @@ class Source
 
   void DoTest ()
   {
-    event_.Fire(this);
+    event_.Emit(this);
   }
 
-  inline cppevent::Event<Source*>& event ()
+  inline sigcxx::Signal<Source*>& event ()
   {
     return event_;
   }
 
  private:
 
-  cppevent::Event<Source*> event_;
+  sigcxx::Signal<Source*> event_;
 };
 
-class Consumer: public cppevent::Trackable
+class Consumer: public sigcxx::Trackable
 {
  public:
 
@@ -191,7 +192,7 @@ TEST_F(Test, insert4)
 //  Consumer c1;
 //  Consumer c2;
 // 
-//  s.event_base().Connect(&c1, &Consumer::OnTestNothing);
+//  s.signal_base().Connect(&c1, &Consumer::OnTestNothing);
 //
 //  c2 = c1;
 //  
