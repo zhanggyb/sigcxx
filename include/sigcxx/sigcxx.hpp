@@ -24,7 +24,8 @@
  * SOFTWARE.
  */
 
-#pragma once
+#ifndef SIGCXX_SIGCXX_HPP_
+#define SIGCXX_SIGCXX_HPP_
 
 #ifdef DEBUG
 #include <cassert>
@@ -1017,3 +1018,5 @@ class SignalRef {
 };
 
 } // namespace sigcxx
+
+#endif  // SIGCXX_SIGCXX_HPP_

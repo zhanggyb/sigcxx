@@ -1,4 +1,4 @@
-# CMake file for libCppEvent project
+# CMake file for sigcxx project
 #
 
 file(GLOB Header_Files "${PROJECT_SOURCE_DIR}/include/sigcxx/*.hpp")

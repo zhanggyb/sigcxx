@@ -24,7 +24,8 @@
  * SOFTWARE.
  */
 
-#pragma once
+#ifndef SIGCXX_DELEGATE_HPP_
+#define SIGCXX_DELEGATE_HPP_
 
 namespace sigcxx {
 
@@ -236,3 +237,5 @@ inline bool operator>(const Delegate<ReturnType, ParamTypes...> &src,
 }
 
 } // namespace sigcxx
+
+#endif  // SIGCXX_DELEGATE_HPP_

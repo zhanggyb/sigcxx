@@ -29,7 +29,7 @@ system ensures the type-correctness of callback arguments.
 
 This project is another C++ signal/slot implementation, it requires
 and takes advantage of C++11 standard, provides a simple and fast way
-by minimal but comprehensible code.
+by minimal and comprehensible code.
 
 ## Features
 
