@@ -25,9 +25,9 @@ class TestClassBase {
   virtual ~TestClassBase() {
   }
 
-  void TestPrivateMethod () {
+  void TestPrivateMethod() {
     // delegate to private method only within class method
-    sigcxx::Delegate<void> dp = sigcxx::Delegate<void>::from_method(this, &TestClassBase::MethodInPrivate);
+    sigcxx::Delegate<void()> dp = sigcxx::Delegate<void()>::from_method(this, &TestClassBase::MethodInPrivate);
   }
 
   int MethodWithReturn(int n) {
@@ -52,7 +52,7 @@ class TestClassBase {
   }
 
  private:
-  void MethodInPrivate () {
+  void MethodInPrivate() {
     std::cout << "Cannot build delegate outside" << std::endl;
   }
 };
