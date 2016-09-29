@@ -930,15 +930,11 @@ class SignalRef {
       : event_(&event) {
   }
 
-  inline SignalRef(Signal<ParamTypes...> *event)
-      : event_(event) {
-  }
-
   inline SignalRef(const SignalRef &orig)
       : event_(orig.event_) {
   }
 
-  ~SignalRef() {}
+  inline ~SignalRef() {}
 
   inline SignalRef &operator=(const SignalRef &orig) {
     event_ = orig.event_;

@@ -5,20 +5,17 @@
 using namespace sigcxx;
 
 Test::Test()
-    : testing::Test()
-{
+    : testing::Test() {
 }
 
-Test::~Test()
-{
-  
+Test::~Test() {
+
 }
 
 /*
  *
  */
-TEST_F(Test, delegate1)
-{
+TEST_F(Test, delegate1) {
   TestClassBase obj1;
 
   Delegate<void, int> d = Delegate<void, int>::from_method(&obj1, &TestClassBase::ConstMethod1);
@@ -30,13 +27,19 @@ TEST_F(Test, delegate1)
   }
 
   d(1);
-  
+
+  // And test delegate to private method:
+
+  // uncomment this line should not work:
+  //  Delegate<void> dp = Delegate<void>::from_method(&obj1, &TestClassBase::MethodInPrivate);
+
+  // can only create delegate to private method in class methods, just what we want.
+  obj1.TestPrivateMethod();
+
   ASSERT_TRUE(!result);
 }
 
-
-TEST_F(Test, delegate2)
-{
+TEST_F(Test, delegate2) {
   TestClassBase obj1;
   Delegate<void, int> d1 = Delegate<void, int>::from_method(&obj1, &TestClassBase::ConstMethod1);
   Delegate<void, int> d2 = Delegate<void, int>::from_method(&obj1, &TestClassBase::Method1);
@@ -56,16 +59,15 @@ TEST_F(Test, delegate2)
   if (d1 > d2) {
     std::cout << " great then " << std::endl;
   }
-  
+
   d1(1);
-  ASSERT_TRUE(true);  
+  ASSERT_TRUE(true);
 }
 
 /*
  *
  */
-TEST_F(Test, delegate3)
-{
+TEST_F(Test, delegate3) {
   TestClassBase obj1;
 
   Delegate<int, int> d = Delegate<int, int>::from_method(&obj1, &TestClassBase::MethodWithReturn);
@@ -76,30 +78,28 @@ TEST_F(Test, delegate3)
 /*
  *
  */
-TEST_F(Test, delegate4)
-{
+TEST_F(Test, delegate4) {
   TestClassBase obj1;
-  
+
   Delegate<int, int> d;
   ASSERT_FALSE(d);
-  
+
   d = Delegate<int, int>::from_method(&obj1, &TestClassBase::MethodWithReturn);
-  
+
   ASSERT_TRUE(d(1) == 1);
 }
 
 /*
  *
  */
-TEST_F(Test, delegate5)
-{
+TEST_F(Test, delegate5) {
   TestClassBase obj1;
-  
+
   Delegate<void, int> d1(&obj1, &TestClassBase::ConstMethod1);
   Delegate<void, int> d2(&obj1, &TestClassBase::Method1);
-  
+
   d2 = d1;
-  
+
   d2(1);  // check the stdout print
 
   ASSERT_TRUE(d1 && d2);

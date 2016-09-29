@@ -27,6 +27,8 @@
 #ifndef SIGCXX_DELEGATE_HPP_
 #define SIGCXX_DELEGATE_HPP_
 
+#include <cstring>
+
 namespace sigcxx {
 
 /// @cond IGNORE
@@ -235,6 +237,41 @@ inline bool operator>(const Delegate<ReturnType, ParamTypes...> &src,
                 sizeof(typename Delegate<ReturnType, ParamTypes...>::PointerData)
   ) > 0;
 }
+
+/**
+ * @brief A reference to expose delegate in an object
+ */
+template<typename ReturnType, typename ... ParamTypes>
+class DelegateRef {
+ public:
+
+  DelegateRef() = delete;
+
+  inline DelegateRef(Delegate<ReturnType, ParamTypes...> &delegate)
+      : delegate_(&delegate) {}
+
+  inline DelegateRef(const DelegateRef &orig)
+      : delegate_(orig.delegate_) {}
+
+  inline ~DelegateRef() {}
+
+  inline DelegateRef &operator=(const DelegateRef &orig) {
+    delegate_ = orig.delegate_;
+    return *this;
+  }
+
+  template<typename T>
+  inline void set(T *obj, ReturnType (T::*method)(ParamTypes...)) {
+    *delegate_ = Delegate<ReturnType, ParamTypes...>::template from_method<T>(obj, method);
+  }
+
+  inline void reset() {
+    delegate_->reset();
+  }
+
+ private:
+  Delegate<ReturnType, ParamTypes...> *delegate_;
+};
 
 } // namespace sigcxx
 
