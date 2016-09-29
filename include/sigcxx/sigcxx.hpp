@@ -132,24 +132,24 @@ class DelegateToken : public InvokableToken<ParamTypes...> {
 
   DelegateToken() = delete;
 
-  inline DelegateToken(const Delegate<void, const Sender *, ParamTypes...> &d);
+  inline DelegateToken(const Delegate<void(const Sender *, ParamTypes...)> &d);
 
   virtual ~DelegateToken();
 
   virtual void Invoke(const Sender *sender, ParamTypes... Args) override;
 
-  const Delegate<void, const Sender *, ParamTypes...> &delegate() const {
+  const Delegate<void(const Sender *, ParamTypes...)> &delegate() const {
     return delegate_;
   }
 
  private:
 
-  Delegate<void, const Sender *, ParamTypes...> delegate_;
+  Delegate<void(const Sender *, ParamTypes...)> delegate_;
 
 };
 
 template<typename ... ParamTypes>
-inline DelegateToken<ParamTypes...>::DelegateToken(const Delegate<void, const Sender *, ParamTypes...> &d)
+inline DelegateToken<ParamTypes...>::DelegateToken(const Delegate<void(const Sender *, ParamTypes...)> &d)
     : InvokableToken<ParamTypes...>(), delegate_(d) {
 }
 
@@ -511,8 +511,8 @@ template<typename ... ParamTypes>
 template<typename T>
 void Signal<ParamTypes...>::Connect(T *obj, void (T::*method)(const Sender *, ParamTypes...), int index) {
   details::Binding *downstream = new details::Binding;
-  Delegate<void, const Sender *, ParamTypes...> d =
-      Delegate<void, const Sender *, ParamTypes...>::template from_method<T>(obj, method);
+  Delegate<void(const Sender *, ParamTypes...)> d =
+      Delegate<void(const Sender *, ParamTypes...)>::template from_method<T>(obj, method);
   details::DelegateToken<ParamTypes...> *upstream = new details::DelegateToken<
       ParamTypes...>(d);
 

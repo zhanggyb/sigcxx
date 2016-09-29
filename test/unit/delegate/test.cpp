@@ -2,6 +2,8 @@
 
 #include "test.hpp"
 
+#include <typeinfo>
+
 using namespace sigcxx;
 
 Test::Test()
@@ -12,13 +14,21 @@ Test::~Test() {
 
 }
 
+TEST_F(Test, rtti) {
+  TestClassBase obj;
+
+  ASSERT_TRUE(typeid(&obj) == typeid(TestClassBase*));
+}
+
 /*
  *
  */
 TEST_F(Test, delegate1) {
   TestClassBase obj1;
 
-  Delegate<void, int> d = Delegate<void, int>::from_method(&obj1, &TestClassBase::ConstMethod1);
+  Delegate<void(int)> d3;
+
+  Delegate<void(int)> d = Delegate<void(int)>::from_method(&obj1, &TestClassBase::ConstMethod1);
 
   bool result = d.equal(&obj1, &TestClassBase::Method1);
 
@@ -41,8 +51,8 @@ TEST_F(Test, delegate1) {
 
 TEST_F(Test, delegate2) {
   TestClassBase obj1;
-  Delegate<void, int> d1 = Delegate<void, int>::from_method(&obj1, &TestClassBase::ConstMethod1);
-  Delegate<void, int> d2 = Delegate<void, int>::from_method(&obj1, &TestClassBase::Method1);
+  Delegate<void(int)> d1 = Delegate<void(int)>::from_method(&obj1, &TestClassBase::ConstMethod1);
+  Delegate<void(int)> d2 = Delegate<void(int)>::from_method(&obj1, &TestClassBase::Method1);
 
   if (d1 == d2) {
     std::cout << "2 delegates equal" << std::endl;
@@ -70,7 +80,7 @@ TEST_F(Test, delegate2) {
 TEST_F(Test, delegate3) {
   TestClassBase obj1;
 
-  Delegate<int, int> d = Delegate<int, int>::from_method(&obj1, &TestClassBase::MethodWithReturn);
+  Delegate<int(int)> d = Delegate<int(int)>::from_method(&obj1, &TestClassBase::MethodWithReturn);
 
   ASSERT_TRUE(d(1) == 1);
 }
@@ -81,10 +91,10 @@ TEST_F(Test, delegate3) {
 TEST_F(Test, delegate4) {
   TestClassBase obj1;
 
-  Delegate<int, int> d;
+  Delegate<int(int)> d;
   ASSERT_FALSE(d);
 
-  d = Delegate<int, int>::from_method(&obj1, &TestClassBase::MethodWithReturn);
+  d = Delegate<int(int)>::from_method(&obj1, &TestClassBase::MethodWithReturn);
 
   ASSERT_TRUE(d(1) == 1);
 }
@@ -95,8 +105,8 @@ TEST_F(Test, delegate4) {
 TEST_F(Test, delegate5) {
   TestClassBase obj1;
 
-  Delegate<void, int> d1(&obj1, &TestClassBase::ConstMethod1);
-  Delegate<void, int> d2(&obj1, &TestClassBase::Method1);
+  Delegate<void(int)> d1(&obj1, &TestClassBase::ConstMethod1);
+  Delegate<void(int)> d2(&obj1, &TestClassBase::Method1);
 
   d2 = d1;
 
