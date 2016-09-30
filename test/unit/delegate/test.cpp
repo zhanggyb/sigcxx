@@ -17,7 +17,7 @@ Test::~Test() {
 TEST_F(Test, rtti) {
   TestClassBase obj;
 
-  ASSERT_TRUE(typeid(&obj) == typeid(TestClassBase*));
+  ASSERT_TRUE(typeid(&obj) == typeid(TestClassBase *));
 }
 
 /*
@@ -113,4 +113,29 @@ TEST_F(Test, delegate5) {
   d2(1);  // check the stdout print
 
   ASSERT_TRUE(d1 && d2);
+}
+
+TEST_F(Test, delegate_ref_1) {
+  TestClassBase obj1;
+
+  Delegate<void(int)> d1(&obj1, &TestClassBase::Method1);
+  Delegate<void(int)> d2(&obj1, &TestClassBase::ConstMethod1);
+
+  DelegateRef<void(int)> r1(d1);
+  DelegateRef<void(int)> r2(d2);
+
+  r1.set(&obj1, &TestClassBase::Method1);
+  r2.set(&obj1, &TestClassBase::ConstMethod1);
+
+  ASSERT_TRUE(r1 && r2);
+
+  bool result1 = r1.is_delegated_to(&obj1, &TestClassBase::Method1);
+  bool result2 = r2.is_delegated_to(&obj1, &TestClassBase::ConstMethod1);
+
+  ASSERT_TRUE(result1 && result2);
+
+  r1.reset();
+  r2.reset();
+
+  ASSERT_TRUE((!r1) && (!r2));
 }

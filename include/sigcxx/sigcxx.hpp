@@ -219,12 +219,10 @@ class Sender {
     return dynamic_cast<Signal<ParamTypes...> *>(token_->trackable_object);
   }
 
- protected:
+ private:
 
   inline Sender(details::Token *token = nullptr, bool skip = false)
       : token_(token), skip_(skip) {}
-
- private:
 
   details::Token *token_;
   bool skip_;

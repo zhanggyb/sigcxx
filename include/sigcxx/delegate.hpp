@@ -265,8 +265,27 @@ class DelegateRef<ReturnType(ParamTypes...)> {
     *delegate_ = Delegate<ReturnType(ParamTypes...)>::template from_method<T>(obj, method);
   }
 
+  template<typename T>
+  inline void set(T *obj, ReturnType (T::*method)(ParamTypes...) const) {
+    *delegate_ = Delegate<ReturnType(ParamTypes...)>::template from_method<T>(obj, method);
+  }
+
   inline void reset() {
     delegate_->reset();
+  }
+
+  template<typename T>
+  inline bool is_delegated_to(T *obj, ReturnType (T::*method)(ParamTypes...)) {
+    return delegate_->equal(obj, method);
+  }
+
+  template<typename T>
+  inline bool is_delegated_to(T *obj, ReturnType (T::*method)(ParamTypes...) const) {
+    return delegate_->equal(obj, method);
+  }
+
+  inline operator bool() const {
+    return (*delegate_);
   }
 
  private:
