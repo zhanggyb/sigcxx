@@ -2,10 +2,7 @@
 
 #include <sigcxx/sigcxx.hpp>
 
-using sigcxx::Trackable;
-using sigcxx::Sender;
-
-class Observer: public Trackable
+class Observer: public sigcxx::Trackable
 {
  public:
 
@@ -13,19 +10,19 @@ class Observer: public Trackable
 
   virtual ~Observer();
 
-  void OnTest0 (const Sender* sender);
+  void OnTest0 (sigcxx::SLOT slot);
 
-  void OnTest1IntegerParam(const Sender* sender, int n);
+  void OnTest1IntegerParam(sigcxx::SLOT slot, int n);
 
-  void OnTest2IntegerParams(const Sender* sender, int n1, int n2);
+  void OnTest2IntegerParams(sigcxx::SLOT slot, int n1, int n2);
 
-  void OnTestDestroy (const Sender* sender);
+  void OnTestDestroy (sigcxx::SLOT slot);
 
-  void OnTestUnbindOnceAt5 (const Sender* sender);
+  void OnTestUnbindOnceAt5 (sigcxx::SLOT slot);
 
-  void OnTestUnbindAllAt5 (const Sender* sender);
+  void OnTestUnbindAllAt5 (sigcxx::SLOT slot);
 
-  void OnTestUnbindAllMethodAt5 (const Sender* sender);
+  void OnTestUnbindAllMethodAt5 (sigcxx::SLOT slot);
 
   inline size_t test0_count () const
   {

@@ -14,19 +14,19 @@ TEST_F(Test, connect_method_once) {
   Consumer *obj1 = new Consumer;
   SubConsumer *obj2 = new SubConsumer;
 
-  sigcxx::Signal<int> event1;
-  event1.Connect(obj1, &Consumer::OnVirtualTest);
+  sigcxx::Signal<int> signal1;
+  signal1.Connect(obj1, &Consumer::OnVirtualTest);
 
-  sigcxx::Signal<int> event2;
-  event2.Connect(obj2, &SubConsumer::OnVirtualTest); // this signal_connect to the method in sub class
+  sigcxx::Signal<int> signal2;
+  signal2.Connect(obj2, &SubConsumer::OnVirtualTest); // this signal_connect to the method in sub class
 
-  sigcxx::Signal<int> event3;
-  event3.Connect(dynamic_cast<Consumer *>(obj2),
+  sigcxx::Signal<int> signal3;
+  signal3.Connect(dynamic_cast<Consumer *>(obj2),
                  &Consumer::OnVirtualTest); // this still signal_connect to the method in sub class
 
-  event1.Emit(1);
-  event2.Emit(2);
-  event3.Emit(3);
+  signal1.Emit(1);
+  signal2.Emit(2);
+  signal3.Emit(3);
 
   bool result = (obj1->virtualtest_count() == 1) && (obj2->virtualtest_count() == 2);
 
@@ -37,12 +37,12 @@ TEST_F(Test, connect_method_once) {
 }
 
 TEST_F(Test, connect_to_pure_virtual_function) {
-  sigcxx::Signal<int> event1;
+  sigcxx::Signal<int> signal1;
   AbstractConsumer *obj1 = new Consumer;
 
-  event1.Connect(obj1, &AbstractConsumer::OnVirtualTest);
+  signal1.Connect(obj1, &AbstractConsumer::OnVirtualTest);
 
-  event1.Emit(1);
+  signal1.Emit(1);
 
   size_t result = dynamic_cast<Consumer *>(obj1)->virtualtest_count();
 

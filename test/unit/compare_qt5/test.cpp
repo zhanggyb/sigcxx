@@ -40,10 +40,10 @@ TEST_F(Test, cppevent)
   Subject s;
   Observer c;
 
-  s.event1().connect(&c, &Observer::OnTest1IntegerParam);
+  s.signal1().connect(&c, &Observer::OnTest1IntegerParam);
 
   for(int i = 0; i < TEST_CYCLE_NUM; i++) {
-    s.fire_event1(i);
+    s.emit_signal1(i);
   }
   ASSERT_TRUE(true);
 }

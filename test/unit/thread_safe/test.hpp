@@ -6,7 +6,7 @@
 
 #include <sigcxx/sigcxx.hpp>
 
-using sigcxx::Sender;
+using sigcxx::Slot;
 
 class Test: public testing::Test
 {
@@ -59,13 +59,13 @@ class Consumer: public sigcxx::Trackable
 
   void DisconnectAll ();
 
-  void OnTest1 (const Sender* sender, int n)
+  void OnTest1 (const Slot* sender, int n)
   {
     test1_count_++;
     //std::cout << "Signal received in OnTest1, n " << n << ", " << test1_count_ << " times." << std::endl;
   }
 
-  void OnTest2 (const Sender* sender, int n1, int n2)
+  void OnTest2 (const Slot* sender, int n1, int n2)
   {
     test2_count_++;
     //std::cout << "Signal received in OnTest2, n1: " << n1 << " n2: " << n2 << ", " << test2_count_ << " times."

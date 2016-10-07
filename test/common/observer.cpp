@@ -2,8 +2,11 @@
 
 #include <iostream>
 
+using sigcxx::Trackable;
+using sigcxx::SLOT;
+
 Observer::Observer()
-: Trackable(), test0_count_(0), test1_count_(0), test2_count_(0) {
+    : Trackable(), test0_count_(0), test1_count_(0), test2_count_(0) {
 
 }
 
@@ -11,40 +14,40 @@ Observer::~Observer() {
 
 }
 
-void Observer::OnTest0(const Sender *sender) {
+void Observer::OnTest0(SLOT /* slot */) {
   test0_count_++;
 }
 
-void Observer::OnTest1IntegerParam(const Sender *sender, int n) {
+void Observer::OnTest1IntegerParam(SLOT /* slot */, int n) {
   test1_count_++;
 }
 
-void Observer::OnTest2IntegerParams(const Sender *sender, int n1, int n2) {
+void Observer::OnTest2IntegerParams(SLOT /* slot */, int n1, int n2) {
   test2_count_++;
 }
 
-void Observer::OnTestDestroy(const Sender *sender) {
-  UnbindOnce(sender); // call this before delete self
+void Observer::OnTestDestroy(SLOT slot) {
+  UnbindOnce(slot); // call this before delete self
   delete this;
 }
 
-void Observer::OnTestUnbindOnceAt5(const Sender* sender) {
+void Observer::OnTestUnbindOnceAt5(SLOT slot) {
   test0_count_++;
   if (test0_count_ >= 5) {
-    UnbindOnce(sender);
+    UnbindOnce(slot);
   }
 }
 
-void Observer::OnTestUnbindAllAt5(const Sender* sender) {
+void Observer::OnTestUnbindAllAt5(SLOT slot) {
   test0_count_++;
   if (test0_count_ >= 5) {
-    UnbindAll(sender);
+    UnbindAll(slot);
   }
 }
 
-void Observer::OnTestUnbindAllMethodAt5(const Sender* sender) {
+void Observer::OnTestUnbindAllMethodAt5(SLOT slot) {
   test0_count_++;
   if (test0_count_ >= 5) {
-    UnbindAll(sender, &Observer::OnTestUnbindAllMethodAt5);
+    UnbindAll(slot, &Observer::OnTestUnbindAllMethodAt5);
   }
 }

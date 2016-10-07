@@ -2,10 +2,7 @@
 
 #include <sigcxx/sigcxx.hpp>
 
-using sigcxx::Trackable;
-using sigcxx::Sender;
-
-class Subject: public Trackable
+class Subject: public sigcxx::Trackable
 {
  public:
 
@@ -13,38 +10,38 @@ class Subject: public Trackable
 
   virtual ~Subject();
 
-  inline void fire_event0()
+  inline void emit_signal0()
   {
-    event_0_.Emit();
+    signal_0_.Emit();
   }
 
-  inline void fire_event1(int n)
+  inline void emit_signal1(int n)
   {
-    event_1_int_.Emit(n);
+    signal_1_int_.Emit(n);
   }
 
-  inline void fire_event2(int n1, int n2)
+  inline void emit_signal2(int n1, int n2)
   {
-    event_2_int_.Emit(n1, n2);
+    signal_2_int_.Emit(n1, n2);
   }
 
-  void OnTest1IntegerParam(const Sender* sender, int n);
+  void OnTest1IntegerParam(sigcxx::SLOT slot, int n);
 
-  void OnTest2IntegerParams(const Sender* sender, int n1, int n2);
+  void OnTest2IntegerParams(sigcxx::SLOT slot, int n1, int n2);
 
-  inline sigcxx::SignalRef<> event0 ()
+  inline sigcxx::SignalRef<> signal0()
   {
-    return event_0_;
+    return signal_0_;
   }
 
-  inline sigcxx::SignalRef<int> event1 ()
+  inline sigcxx::SignalRef<int> signal1()
   {
-    return event_1_int_;
+    return signal_1_int_;
   }
 
-  inline sigcxx::SignalRef<int, int> event2 ()
+  inline sigcxx::SignalRef<int, int> signal2()
   {
-    return event_2_int_;
+    return signal_2_int_;
   }
 
   inline size_t test1_count () const
@@ -59,9 +56,9 @@ class Subject: public Trackable
 
  private:
 
-  sigcxx::Signal<> event_0_;
-  sigcxx::Signal<int> event_1_int_;
-  sigcxx::Signal<int, int> event_2_int_;
+  sigcxx::Signal<> signal_0_;
+  sigcxx::Signal<int> signal_1_int_;
+  sigcxx::Signal<int, int> signal_2_int_;
   size_t test1_count_;
   size_t test2_count_;
 

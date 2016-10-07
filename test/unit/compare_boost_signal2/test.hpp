@@ -6,7 +6,7 @@
 
 #include <sigcxx/sigcxx.hpp>
 
-using sigcxx::Sender;
+using sigcxx::Slot;
 
 class Test: public testing::Test
 {

@@ -7,7 +7,7 @@
 #include <sigcxx/sigcxx.hpp>
 #include <QtCore>
 
-using sigcxx::Sender;
+using sigcxx::Slot;
 
 class Test: public testing::Test
 {

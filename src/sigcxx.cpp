@@ -79,40 +79,40 @@ Trackable::~Trackable() {
   UnbindAll();
 }
 
-void Trackable::UnbindOnce(const Sender *sender) {
+void Trackable::UnbindOnce(SLOT slot) {
   // (sender && sender->token_->binding->trackable_object == this) is always true
-  details::Token *tmp = sender->token_;
-  const_cast<Sender *>(sender)->token_ = sender->token_->next;
+  details::Token *tmp = slot->token_;
+  const_cast<Slot *>(slot)->token_ = slot->token_->next;
   delete tmp;
-  const_cast<Sender *>(sender)->skip_ = true;
+  const_cast<Slot *>(slot)->skip_ = true;
 }
 
-void Trackable::UnbindAll(const Sender *sender) {
+void Trackable::UnbindAll(SLOT slot) {
   // (sender && sender->token_->binding->trackable_object == this) is always true
 
   details::Token *tmp = nullptr;
   details::Token *p = nullptr;
 
-  p = sender->token_;
+  p = slot->token_;
   while (p) {
     tmp = p->previous;
     if (p->binding->trackable_object == this) {
-      if (p == sender->token_) {
-        const_cast<Sender *>(sender)->token_ = sender->token_->next;
-        const_cast<Sender *>(sender)->skip_ = true;
+      if (p == slot->token_) {
+        const_cast<Slot *>(slot)->token_ = slot->token_->next;
+        const_cast<Slot *>(slot)->skip_ = true;
       }
       delete p;
     }
     p = tmp;
   }
 
-  p = sender->token_;
+  p = slot->token_;
   while (p) {
     tmp = p->next;
     if (p->binding->trackable_object == this) {
-      if (p == sender->token_) {
-        const_cast<Sender *>(sender)->token_ = sender->token_->next;
-        const_cast<Sender *>(sender)->skip_ = true;
+      if (p == slot->token_) {
+        const_cast<Slot *>(slot)->token_ = slot->token_->next;
+        const_cast<Slot *>(slot)->skip_ = true;
       }
       delete p;
     }

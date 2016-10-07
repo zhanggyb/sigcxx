@@ -7,7 +7,7 @@
 #include <iostream>
 
 using namespace std;
-using sigcxx::Sender;
+using sigcxx::SLOT;
 
 Test::Test()
     : testing::Test()
@@ -50,24 +50,24 @@ class Consumer: public sigcxx::Trackable
 
   virtual ~Consumer () { }
 
-  void OnTestNothing (const Sender* sender, int n)
+  void OnTestNothing (SLOT /* slot */, int /* n */)
   {
     // do nothing...
   }
 
-  void OnTestDisconnectFirst (const Sender* sender, int n)
+  void OnTestDisconnectFirst (SLOT slot, int n)
   {
-    UnbindOnce(sender);
+    UnbindOnce(slot);
     // sender->signal_base().DisconnectOnce(this, &Consumer::OnTestDisconnectFirst, 0);
   }
 
-  void OnTestDisconnectLast (const Sender* sender, int n)
+  void OnTestDisconnectLast (SLOT slot, int n)
   {
-    UnbindOnce(sender);
+    UnbindOnce(slot);
     // sender->signal_base().DisconnectOnce(this, &Consumer::OnTestDisconnectLast, -1);
   }
 
-  void OnTestDisconnectAll (const Sender* sender, int n)
+  void OnTestDisconnectAll (SLOT slot, int n)
   {
     // RemoveAllInConnections(sender);
     // sender->signal_base().DisconnectAll(this, &Consumer::OnTestDisconnectAll);

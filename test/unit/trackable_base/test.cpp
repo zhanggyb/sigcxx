@@ -92,7 +92,7 @@ class Consumer: public sigcxx::Trackable
 
   virtual ~Consumer () { }
 
-  void OnTestNothing (const sigcxx::Sender* sender, int)
+  void OnTestNothing (const sigcxx::Slot* sender, int)
   {
     // do nothing...
   }
