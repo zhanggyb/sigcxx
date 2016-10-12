@@ -16,11 +16,11 @@ Test::~Test()
 
 }
 
-struct VToken: public sigcxx::details::InvokableToken<>
+struct VToken: public sigcxx::details::CallableToken<>
 {
  public:
   VToken(int value = 0)
-      : sigcxx::details::InvokableToken<>(), v(value)
+      : sigcxx::details::CallableToken<>(), v(value)
   {}
   
   int v;

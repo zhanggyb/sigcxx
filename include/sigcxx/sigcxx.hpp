@@ -104,32 +104,32 @@ struct Token {
 };
 
 template<typename ... ParamTypes>
-class InvokableToken : public Token {
+class CallableToken : public Token {
  public:
 
-  inline InvokableToken();
+  inline CallableToken();
 
-  virtual ~InvokableToken();
+  virtual ~CallableToken();
 
   virtual void Invoke(SLOT slot, ParamTypes ... Args);
 };
 
 template<typename ... ParamTypes>
-inline InvokableToken<ParamTypes...>::InvokableToken()
+inline CallableToken<ParamTypes...>::CallableToken()
     : Token() {
 }
 
 template<typename ... ParamTypes>
-InvokableToken<ParamTypes...>::~InvokableToken() {
+CallableToken<ParamTypes...>::~CallableToken() {
 }
 
 template<typename ... ParamTypes>
-void InvokableToken<ParamTypes...>::Invoke(SLOT slot, ParamTypes ... Args) {
+void CallableToken<ParamTypes...>::Invoke(SLOT slot, ParamTypes ... Args) {
   // Override this in sub class
 }
 
 template<typename ... ParamTypes>
-class DelegateToken : public InvokableToken<ParamTypes...> {
+class DelegateToken : public CallableToken<ParamTypes...> {
  public:
 
   DelegateToken() = delete;
@@ -152,7 +152,7 @@ class DelegateToken : public InvokableToken<ParamTypes...> {
 
 template<typename ... ParamTypes>
 inline DelegateToken<ParamTypes...>::DelegateToken(const Delegate<void(SLOT, ParamTypes...)> &d)
-    : InvokableToken<ParamTypes...>(), delegate_(d) {
+    : CallableToken<ParamTypes...>(), delegate_(d) {
 }
 
 template<typename ... ParamTypes>
@@ -165,7 +165,7 @@ void DelegateToken<ParamTypes...>::Invoke(SLOT slot, ParamTypes... Args) {
 }
 
 template<typename ... ParamTypes>
-class SignalToken : public InvokableToken<ParamTypes...> {
+class SignalToken : public CallableToken<ParamTypes...> {
  public:
 
   SignalToken() = delete;
@@ -185,7 +185,7 @@ class SignalToken : public InvokableToken<ParamTypes...> {
 
 template<typename ... ParamTypes>
 inline SignalToken<ParamTypes...>::SignalToken(Signal<ParamTypes...> &other)
-    : InvokableToken<ParamTypes...>(), signal_(&other) {
+    : CallableToken<ParamTypes...>(), signal_(&other) {
 }
 
 template<typename ... ParamTypes>
@@ -756,7 +756,7 @@ void Signal<ParamTypes...>::Emit(ParamTypes ... Args) {
   Slot slot(first_token());
 
   while (slot.token_) {
-    static_cast<details::InvokableToken<ParamTypes...> * > (slot.token_)->Invoke(&slot, Args...);
+    static_cast<details::CallableToken<ParamTypes...> * > (slot.token_)->Invoke(&slot, Args...);
 
     if (slot.skip_) {
       slot.skip_ = false;
