@@ -8,6 +8,8 @@
 #include <boost/signals2.hpp>
 #endif
 
+#define TEST_CYCLE_NUM 10000000
+
 Test::Test()
     : testing::Test()
 {
@@ -25,12 +27,12 @@ TEST_F(Test, fire_many_times)
 
   event.Connect(&consumer, &Observer::OnTest0);
 
-  for(int i = 0; i < 1000000; i++)
+  for(int i = 0; i < TEST_CYCLE_NUM; i++)
   {
     event();
   }
 
-  ASSERT_TRUE(consumer.test0_count() == 1000000);
+  ASSERT_TRUE(consumer.test0_count() == TEST_CYCLE_NUM);
 }
 
 TEST_F(Test, connect_many_events)
@@ -38,7 +40,7 @@ TEST_F(Test, connect_many_events)
   Observer consumer;
   sigcxx::Signal<> event;
 
-  for(int i = 0; i < 1000000; i++)
+  for(int i = 0; i < TEST_CYCLE_NUM; i++)
   {
     event.Connect(&consumer, &Observer::OnTest0);
   }
@@ -76,7 +78,7 @@ TEST_F(Test, boost_signals2_fire_many_times)
   sig.connect(c);
 
   // Call all of the slots
-  for(int i = 0; i < 1000000; i++)
+  for(int i = 0; i < TEST_CYCLE_NUM; i++)
   {
     sig();
   }
@@ -92,7 +94,7 @@ TEST_F(Test, boost_signals2_connect_many_times)
   // Connect a slot
   Simple c;
 
-  for(int i = 0; i < 1000000; i++)
+  for(int i = 0; i < TEST_CYCLE_NUM; i++)
   {
     sig.connect(c);
   }

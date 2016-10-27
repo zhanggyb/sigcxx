@@ -75,8 +75,15 @@ Token::~Token() {
 
 }  // namespace details
 
+std::recursive_mutex Trackable::kGlobalRecursiveMutex;
+
 Trackable::~Trackable() {
-  UnbindAll();
+  if (first_binding_ == nullptr) {
+#ifdef DEBUG
+    assert(last_binding_ == nullptr);
+#endif
+    UnbindAll();
+  }
 }
 
 void Trackable::UnbindOnce(SLOT slot) {
@@ -88,7 +95,7 @@ void Trackable::UnbindOnce(SLOT slot) {
 }
 
 void Trackable::UnbindAll(SLOT slot) {
-  // (sender && sender->token_->binding->trackable_object == this) is always true
+  // (slot && slot->token_->binding->trackable_object == this) is always true
 
   details::Token *tmp = nullptr;
   details::Token *p = nullptr;
@@ -120,21 +127,32 @@ void Trackable::UnbindAll(SLOT slot) {
   }
 }
 
-void Trackable::UnbindAll() {
+void Trackable::UnbindAll(std::recursive_mutex &mutex) {
   details::Binding *tmp = nullptr;
-  details::Binding *p = first_binding_;
-
-  while (p) {
-    tmp = p->next;
-    delete p;
-    p = tmp;
+  try {
+    std::lock_guard<std::recursive_mutex> lock(mutex);
+    details::Binding *p = first_binding_;
+    while (p) {
+      tmp = p->next;
+      delete p;
+      p = tmp;
+    }
+  }
+  catch (const std::logic_error &) {
+    std::cerr << "Error! Failed to lock global recursive mutex!" << std::endl;
   }
 }
 
-std::size_t Trackable::CountBindings() const {
+std::size_t Trackable::CountBindings(std::recursive_mutex &mutex) const {
   std::size_t count = 0;
-  for (details::Binding *p = first_binding_; p; p = p->next) {
-    count++;
+  try {
+    std::lock_guard<std::recursive_mutex> lock(mutex);
+    for (details::Binding *p = first_binding_; p; p = p->next) {
+      count++;
+    }
+  }
+  catch (const std::logic_error &) {
+    std::cerr << "Error! Failed to lock global recursive mutex!" << std::endl;
   }
   return count;
 }

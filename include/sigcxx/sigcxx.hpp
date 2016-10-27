@@ -31,7 +31,9 @@
 #include <cassert>
 #endif
 
+#include <mutex>
 #include <cstddef>
+#include <iostream>
 
 #include "delegate.hpp"
 
@@ -105,23 +107,18 @@ struct Token {
 
 template<typename ... ParamTypes>
 class CallableToken : public Token {
+
+  CallableToken(const CallableToken &orig) = delete;
+  CallableToken &operator=(const CallableToken &other) = delete;
+
  public:
 
-  inline CallableToken();
+  inline CallableToken() : Token() {}
 
-  virtual ~CallableToken();
+  virtual ~CallableToken() {}
 
   virtual void Invoke(SLOT slot, ParamTypes ... Args);
 };
-
-template<typename ... ParamTypes>
-inline CallableToken<ParamTypes...>::CallableToken()
-    : Token() {
-}
-
-template<typename ... ParamTypes>
-CallableToken<ParamTypes...>::~CallableToken() {
-}
 
 template<typename ... ParamTypes>
 void CallableToken<ParamTypes...>::Invoke(SLOT slot, ParamTypes ... Args) {
@@ -130,9 +127,12 @@ void CallableToken<ParamTypes...>::Invoke(SLOT slot, ParamTypes ... Args) {
 
 template<typename ... ParamTypes>
 class DelegateToken : public CallableToken<ParamTypes...> {
- public:
 
   DelegateToken() = delete;
+  DelegateToken(const DelegateToken &orig) = delete;
+  DelegateToken &operator=(const DelegateToken &other) = delete;
+
+ public:
 
   inline DelegateToken(const Delegate<void(SLOT, ParamTypes...)> &d);
 
@@ -166,11 +166,14 @@ void DelegateToken<ParamTypes...>::Invoke(SLOT slot, ParamTypes... Args) {
 
 template<typename ... ParamTypes>
 class SignalToken : public CallableToken<ParamTypes...> {
- public:
 
   SignalToken() = delete;
+  SignalToken(const SignalToken &orig) = delete;
+  SignalToken &operator=(const SignalToken &other) = delete;
 
-  inline SignalToken(Signal<ParamTypes...> &other);
+ public:
+
+  inline SignalToken(Signal<ParamTypes...> &signal);
 
   virtual ~SignalToken();
 
@@ -184,8 +187,8 @@ class SignalToken : public CallableToken<ParamTypes...> {
 };
 
 template<typename ... ParamTypes>
-inline SignalToken<ParamTypes...>::SignalToken(Signal<ParamTypes...> &other)
-    : CallableToken<ParamTypes...>(), signal_(&other) {
+inline SignalToken<ParamTypes...>::SignalToken(Signal<ParamTypes...> &signal)
+    : CallableToken<ParamTypes...>(), signal_(&signal) {
 }
 
 template<typename ... ParamTypes>
@@ -235,10 +238,13 @@ class Slot {
  * @brief The basic class for observer
  */
 class Trackable {
+
   friend struct details::Binding;
   friend struct details::Token;
   template<typename ... ParamTypes> friend
   class Signal;
+  template<typename ... ParamTypes> friend
+  class SignalRef;
 
  public:
 
@@ -261,18 +267,20 @@ class Trackable {
   template<typename T, typename ... ParamTypes>
   void UnbindAll(SLOT slot, void (T::*method)(SLOT, ParamTypes...));
 
-  void UnbindAll();
+  void UnbindAll(std::recursive_mutex &mutex = kGlobalRecursiveMutex);
 
   /**
    * @brief Disconnect all delegates to a method
    */
   template<typename T, typename ... ParamTypes>
-  void UnbindAll(void (T::*method)(SLOT, ParamTypes...));
+  void UnbindAll(void (T::*method)(SLOT, ParamTypes...), std::recursive_mutex &mutex = kGlobalRecursiveMutex);
 
   template<typename T, typename ... ParamTypes>
-  std::size_t CountBindings(T *obj, void (T::*method)(SLOT, ParamTypes...)) const;
+  std::size_t CountBindings(T *obj,
+                            void (T::*method)(SLOT, ParamTypes...),
+                            std::recursive_mutex &mutex = kGlobalRecursiveMutex) const;
 
-  std::size_t CountBindings() const;
+  std::size_t CountBindings(std::recursive_mutex &mutex = kGlobalRecursiveMutex) const;
 
  protected:
 
@@ -294,19 +302,19 @@ class Trackable {
   }
 
   static inline void push_front(Trackable *trackable,
-                                details::Binding *conn) {
-    trackable->PushBackBinding(conn);
+                                details::Binding *binding) {
+    trackable->PushBackBinding(binding);
   }
 
   static inline void push_back(Trackable *trackable,
-                               details::Binding *conn) {
-    trackable->PushBackBinding(conn);
+                               details::Binding *binding) {
+    trackable->PushBackBinding(binding);
   }
 
   static inline void insert(Trackable *trackable,
-                            details::Binding *conn,
+                            details::Binding *binding,
                             int index = 0) {
-    trackable->InsertBinding(index, conn);
+    trackable->InsertBinding(index, binding);
   }
 
   inline details::Binding *first_binding() const {
@@ -319,6 +327,8 @@ class Trackable {
 
  private:
 
+  static std::recursive_mutex kGlobalRecursiveMutex;
+
   details::Binding *first_binding_;
   details::Binding *last_binding_;
 };
@@ -328,7 +338,6 @@ void Trackable::UnbindAll(SLOT slot, void (T::*method)(SLOT, ParamTypes...)) {
   // (slot && slot->token_->binding->trackable_object == this) is always true
 
   details::DelegateToken<ParamTypes...> *delegate_token = nullptr;
-
   details::Token *p = nullptr;
   details::Token *tmp = nullptr;
 
@@ -368,35 +377,47 @@ void Trackable::UnbindAll(SLOT slot, void (T::*method)(SLOT, ParamTypes...)) {
 }
 
 template<typename T, typename ... ParamTypes>
-void Trackable::UnbindAll(void (T::*method)(SLOT, ParamTypes...)) {
+void Trackable::UnbindAll(void (T::*method)(SLOT, ParamTypes...), std::recursive_mutex &mutex) {
 
   details::Binding *p = nullptr;
   details::Binding *tmp = nullptr;
   details::DelegateToken<ParamTypes...> *delegate_token = nullptr;
 
-  p = last_binding_;
-  while (p) {
-    tmp = p->previous;
-    delegate_token = dynamic_cast<details::DelegateToken<ParamTypes...> *>(p->token);
-    if (delegate_token && (delegate_token->delegate().template equal<T>((T *) this, method))) {
-      delete delegate_token;
+  try {
+    std::lock_guard<std::recursive_mutex> lock(mutex);
+    p = last_binding_;
+    while (p) {
+      tmp = p->previous;
+      delegate_token = dynamic_cast<details::DelegateToken<ParamTypes...> *>(p->token);
+      if (delegate_token && (delegate_token->delegate().template equal<T>((T *) this, method))) {
+        delete delegate_token;
+      }
+      p = tmp;
     }
-    p = tmp;
   }
-
+  catch (const std::logic_error &) {
+    std::cerr << "Error! Failed to lock global recursive mutex!" << std::endl;
+  }
 }
 
 template<typename T, typename ... ParamTypes>
-size_t Trackable::CountBindings(T *obj, void (T::*method)(SLOT, ParamTypes...)) const {
+size_t Trackable::CountBindings(T *obj, void (T::*method)(SLOT, ParamTypes...), std::recursive_mutex &mutex) const {
   std::size_t count = 0;
   details::DelegateToken<ParamTypes...> *delegate_token = nullptr;
 
-  for (details::Binding *p = first_binding_; p; p = p->next) {
-    delegate_token = dynamic_cast<details::DelegateToken<ParamTypes...> *>(p->token);
-    if (delegate_token && (delegate_token->delegate().template equal<T>(obj, method))) {
-      count++;
+  try {
+    std::lock_guard<std::recursive_mutex> lock(mutex);
+    for (details::Binding *p = first_binding_; p; p = p->next) {
+      delegate_token = dynamic_cast<details::DelegateToken<ParamTypes...> *>(p->token);
+      if (delegate_token && (delegate_token->delegate().template equal<T>(obj, method))) {
+        count++;
+      }
     }
   }
+  catch (const std::logic_error &) {
+    std::cerr << "Error! Failed to lock global recursive mutex!" << std::endl;
+  }
+
   return count;
 }
 
@@ -404,7 +425,11 @@ size_t Trackable::CountBindings(T *obj, void (T::*method)(SLOT, ParamTypes...)) 
 
 template<typename ... ParamTypes>
 class Signal : public Trackable {
+
   friend class Trackable;
+
+  Signal(const Signal &orig) = delete;
+  Signal &operator=(const Signal &orig) = delete;
 
  public:
 
@@ -412,59 +437,70 @@ class Signal : public Trackable {
 
   virtual ~Signal();
 
-  Signal(const Signal &orig) = delete;
-
-  Signal &operator=(const Signal &orig) = delete;
-
   /**
    * @brief Connect this signal to a slot method in a observer
    */
   template<typename T>
-  void Connect(T *obj, void (T::*method)(SLOT, ParamTypes...), int index = -1);
+  void Connect(T *obj,
+               void (T::*method)(SLOT, ParamTypes...),
+               int index = -1,
+               std::recursive_mutex &mutex = kGlobalRecursiveMutex);
 
-  void Connect(Signal<ParamTypes...> &other, int index = -1);
+  void Connect(Signal<ParamTypes...> &other, int index = -1, std::recursive_mutex &mutex = kGlobalRecursiveMutex);
 
   /**
    * @brief Disconnect all delegates to a method
    */
   template<typename T>
-  void DisconnectAll(T *obj, void (T::*method)(SLOT, ParamTypes...));
+  void DisconnectAll(T *obj,
+                     void (T::*method)(SLOT, ParamTypes...),
+                     std::recursive_mutex &mutex = kGlobalRecursiveMutex);
 
   /**
    * @brief Disconnect all signals
    */
-  void DisconnectAll(Signal<ParamTypes...> &other);
+  void DisconnectAll(Signal<ParamTypes...> &other, std::recursive_mutex &mutex = kGlobalRecursiveMutex);
 
   /**
    * @brief Disconnect the last delegate to a method
    */
   template<typename T>
-  void DisconnectOnce(T *obj, void (T::*method)(SLOT, ParamTypes...), int start_pos = -1);
+  void DisconnectOnce(T *obj,
+                      void (T::*method)(SLOT, ParamTypes...),
+                      int start_pos = -1,
+                      std::recursive_mutex &mutex = kGlobalRecursiveMutex);
 
   /**
    * @brief Disconnect the last signal
    */
-  void DisconnectOnce(Signal<ParamTypes...> &other, int start_pos = -1);
+  void DisconnectOnce(Signal<ParamTypes...> &other,
+                      int start_pos = -1,
+                      std::recursive_mutex &mutex = kGlobalRecursiveMutex);
 
-  void DisconnectAll();
-
-  template<typename T>
-  bool IsConnected(T *obj, void (T::*method)(SLOT, ParamTypes...)) const;
-
-  bool IsConnected(const Signal<ParamTypes...> &other) const;
-
-  bool IsConnected(const Trackable *obj) const;
+  void DisconnectAll(std::recursive_mutex &mutex = kGlobalRecursiveMutex);
 
   template<typename T>
-  std::size_t CountConnections(T *obj, void (T::*method)(SLOT, ParamTypes...)) const;
+  bool IsConnected(T *obj,
+                   void (T::*method)(SLOT, ParamTypes...),
+                   std::recursive_mutex &mutex = kGlobalRecursiveMutex) const;
 
-  std::size_t CountConnections(const Signal<ParamTypes...> &other) const;
+  bool IsConnected(const Signal<ParamTypes...> &other, std::recursive_mutex &mutex = kGlobalRecursiveMutex) const;
 
-  std::size_t CountConnections() const;
+  bool IsConnected(const Trackable *obj, std::recursive_mutex &mutex = kGlobalRecursiveMutex) const;
 
-  void Emit(ParamTypes ... Args);
+  template<typename T>
+  std::size_t CountConnections(T *obj,
+                               void (T::*method)(SLOT, ParamTypes...),
+                               std::recursive_mutex &mutex = kGlobalRecursiveMutex) const;
 
-  inline void operator()(ParamTypes ... Args);
+  std::size_t CountConnections(const Signal<ParamTypes...> &other,
+                               std::recursive_mutex &mutex = kGlobalRecursiveMutex) const;
+
+  std::size_t CountConnections(std::recursive_mutex &mutex = kGlobalRecursiveMutex) const;
+
+  void Emit(ParamTypes ... Args, std::recursive_mutex &mutex = kGlobalRecursiveMutex);
+
+  inline void operator()(ParamTypes ... Args, std::recursive_mutex &mutex = kGlobalRecursiveMutex);
 
  protected:
 
@@ -506,269 +542,354 @@ Signal<ParamTypes...>::~Signal() {
 
 template<typename ... ParamTypes>
 template<typename T>
-void Signal<ParamTypes...>::Connect(T *obj, void (T::*method)(SLOT, ParamTypes...), int index) {
-  details::Binding *downstream = new details::Binding;
-  Delegate<void(SLOT, ParamTypes...)> d =
-      Delegate<void(SLOT, ParamTypes...)>::template from_method<T>(obj, method);
-  details::DelegateToken<ParamTypes...> *upstream = new details::DelegateToken<
-      ParamTypes...>(d);
+void Signal<ParamTypes...>::Connect(T *obj,
+                                    void (T::*method)(SLOT, ParamTypes...),
+                                    int index,
+                                    std::recursive_mutex &mutex) {
+  try {
+    std::lock_guard<std::recursive_mutex> lock(mutex);
+    details::Binding *binding = new details::Binding;
+    Delegate<void(SLOT, ParamTypes...)> d =
+        Delegate<void(SLOT, ParamTypes...)>::template from_method<T>(obj, method);
+    details::DelegateToken<ParamTypes...> *token = new details::DelegateToken<
+        ParamTypes...>(d);
 
-  link(upstream, downstream);
-  InsertToken(index, upstream);
-  push_back(obj, downstream);  // always push back binding, don't care about the position in observer
+    link(token, binding);
+    InsertToken(index, token);
+    push_back(obj, binding);  // always push back binding, don't care about the position in observer
+  }
+  catch (const std::logic_error &) {
+    std::cerr << "Error! Failed to lock global recursive mutex!" << std::endl;
+  }
 }
 
 template<typename ... ParamTypes>
-void Signal<ParamTypes...>::Connect(Signal<ParamTypes...> &other, int index) {
-  details::SignalToken<ParamTypes...> *upstream = new details::SignalToken<ParamTypes...>(
-      other);
-  details::Binding *downstream = new details::Binding;
+void Signal<ParamTypes...>::Connect(Signal<ParamTypes...> &other, int index, std::recursive_mutex &mutex) {
+  try {
+    std::lock_guard<std::recursive_mutex> lock(mutex);
+    details::SignalToken<ParamTypes...> *token = new details::SignalToken<ParamTypes...>(
+        other);
+    details::Binding *binding = new details::Binding;
 
-  link(upstream, downstream);
-  InsertToken(index, upstream);
-  push_back(&other, downstream);  // always push back binding, don't care about the position in observer
+    link(token, binding);
+    InsertToken(index, token);
+    push_back(&other, binding);  // always push back binding, don't care about the position in observer
+  }
+  catch (const std::logic_error &) {
+    std::cerr << "Error! Failed to lock global recursive mutex!" << std::endl;
+  }
 }
 
 template<typename ... ParamTypes>
 template<typename T>
-void Signal<ParamTypes...>::DisconnectAll(T *obj, void (T::*method)(SLOT, ParamTypes...)) {
+void Signal<ParamTypes...>::DisconnectAll(T *obj, void (T::*method)(SLOT, ParamTypes...), std::recursive_mutex &mutex) {
   details::DelegateToken<ParamTypes...> *delegate_token = nullptr;
-  details::Token *p = last_token_;
   details::Token *tmp = nullptr;
 
-  while (p) {
-    tmp = p->previous;
-    if (p->binding->trackable_object == obj) {
-      delegate_token = dynamic_cast<details::DelegateToken<ParamTypes...> * > (p);
-      if (delegate_token && (delegate_token->delegate().template equal<T>(obj, method))) {
-        delete delegate_token;
+  try {
+    std::lock_guard<std::recursive_mutex> lock(mutex);
+    details::Token *p = last_token_;
+    while (p) {
+      tmp = p->previous;
+      if (p->binding->trackable_object == obj) {
+        delegate_token = dynamic_cast<details::DelegateToken<ParamTypes...> * > (p);
+        if (delegate_token && (delegate_token->delegate().template equal<T>(obj, method))) {
+          delete delegate_token;
+        }
       }
+      p = tmp;
     }
-    p = tmp;
+  }
+  catch (const std::logic_error &) {
+    std::cerr << "Error! Failed to lock global recursive mutex!" << std::endl;
   }
 }
 
 template<typename ... ParamTypes>
-void Signal<ParamTypes...>::DisconnectAll(Signal<ParamTypes...> &other) {
+void Signal<ParamTypes...>::DisconnectAll(Signal<ParamTypes...> &other, std::recursive_mutex &mutex) {
   details::SignalToken<ParamTypes...> *signal_token = nullptr;
-  details::Token *p = last_token_;
   details::Token *tmp = nullptr;
 
-  while (p) {
-    tmp = p->previous;
-    if (p->binding->trackable_object == (&other)) {
-      signal_token = dynamic_cast<details::SignalToken<ParamTypes...> * > (p);
-      if (signal_token && (signal_token->signal() == (&other))) {
-        delete signal_token;
+  try {
+    std::lock_guard<std::recursive_mutex> lock(mutex);
+    details::Token *p = last_token_;
+    while (p) {
+      tmp = p->previous;
+      if (p->binding->trackable_object == (&other)) {
+        signal_token = dynamic_cast<details::SignalToken<ParamTypes...> * > (p);
+        if (signal_token && (signal_token->signal() == (&other))) {
+          delete signal_token;
+        }
       }
+      p = tmp;
     }
-    p = tmp;
+  }
+  catch (const std::logic_error &) {
+    std::cerr << "Error! Failed to lock global recursive mutex!" << std::endl;
   }
 }
 
 template<typename ... ParamTypes>
 template<typename T>
-void Signal<ParamTypes...>::DisconnectOnce(T *obj, void (T::*method)(SLOT, ParamTypes...), int start_pos) {
+void Signal<ParamTypes...>::DisconnectOnce(T *obj,
+                                           void (T::*method)(SLOT, ParamTypes...),
+                                           int start_pos,
+                                           std::recursive_mutex &mutex) {
   details::DelegateToken<ParamTypes...> *delegate_token = nullptr;
   details::Token *start = nullptr;
 
-  if (start_pos >= 0) {
-    start = first_token_;
+  try {
+    std::lock_guard<std::recursive_mutex> lock(mutex);
+    if (start_pos >= 0) {
+      start = first_token_;
 
-    while (start && (start_pos > 0)) {
-      start = start->next;
-      start_pos--;
-    }
+      while (start && (start_pos > 0)) {
+        start = start->next;
+        start_pos--;
+      }
 
-    if (start) {
-      for (details::Token *p = start; p; p = p->next) {
-        if (p->binding->trackable_object == obj) {
-          delegate_token = dynamic_cast<details::DelegateToken<ParamTypes...> * > (p);
-          if (delegate_token && (delegate_token->delegate().template equal<T>(obj, method))) {
-            delete delegate_token;
-            break;
+      if (start) {
+        for (details::Token *p = start; p; p = p->next) {
+          if (p->binding->trackable_object == obj) {
+            delegate_token = dynamic_cast<details::DelegateToken<ParamTypes...> * > (p);
+            if (delegate_token && (delegate_token->delegate().template equal<T>(obj, method))) {
+              delete delegate_token;
+              break;
+            }
           }
         }
       }
-    }
-  } else {
-    start = last_token_;
-
-    while (start && (start_pos < -1)) {
-      start = start->previous;
-      start_pos++;
-    }
-
-    if (start) {
-      for (details::Token *p = last_token_; p; p = p->previous) {
-        if (p->binding->trackable_object == obj) {
-          delegate_token = dynamic_cast<details::DelegateToken<ParamTypes...> * > (p);
-          if (delegate_token && (delegate_token->delegate().template equal<T>(obj, method))) {
-            delete delegate_token;
-            break;
-          }
-        }
-      }
-    }
-
-  }
-}
-
-template<typename ... ParamTypes>
-void Signal<ParamTypes...>::DisconnectOnce(Signal<ParamTypes...> &other, int start_pos) {
-  details::SignalToken<ParamTypes...> *signal_token = nullptr;
-  details::Token *start = nullptr;
-
-  if (start_pos >= 0) {
-    start = first_token_;
-
-    while (start && (start_pos > 0)) {
-      start = start->next;
-      start_pos--;
-    }
-
-    if (start) {
-      for (details::Token *p = start; p; p = p->next) {
-        if (p->binding->trackable_object == (&other)) {
-          signal_token = dynamic_cast<details::SignalToken<ParamTypes...> * > (p);
-          if (signal_token && (signal_token->signal() == (&other))) {
-            delete signal_token;
-            break;
-          }
-        }
-      }
-    }
-  } else {
-    start = last_token_;
-
-    while (start && (start_pos < -1)) {
-      start = start->previous;
-      start_pos++;
-    }
-
-    if (start) {
-      for (details::Token *p = last_token_; p; p = p->previous) {
-        if (p->binding->trackable_object == (&other)) {
-          signal_token = dynamic_cast<details::SignalToken<ParamTypes...> * > (p);
-          if (signal_token && (signal_token->signal() == (&other))) {
-            delete signal_token;
-            break;
-          }
-        }
-      }
-    }
-
-  }
-}
-
-template<typename ... ParamTypes>
-template<typename T>
-bool Signal<ParamTypes...>::IsConnected(T *obj, void (T::*method)(SLOT, ParamTypes...)) const {
-  details::DelegateToken<ParamTypes...> *delegate_token = nullptr;
-
-  for (details::Token *p = first_token_; p; p = p->next) {
-    if (p->binding->trackable_object == obj) {
-      delegate_token = dynamic_cast<details::DelegateToken<ParamTypes...> *>(p);
-      if (delegate_token && (delegate_token->delegate().template equal<T>(obj, method))) {
-        return true;
-      }
-    }
-  }
-  return false;
-}
-
-template<typename ... ParamTypes>
-bool Signal<ParamTypes...>::IsConnected(const Signal<ParamTypes...> &other) const {
-  details::SignalToken<ParamTypes...> *signal_token = nullptr;
-
-  for (details::Token *p = first_token_; p; p = p->next) {
-    if (p->binding->trackable_object == (&other)) {
-      signal_token = dynamic_cast<details::SignalToken<ParamTypes...> * > (p);
-      if (signal_token && (signal_token->signal() == (&other))) {
-        return true;
-      }
-    }
-  }
-  return false;
-}
-
-template<typename ... ParamTypes>
-bool Signal<ParamTypes...>::IsConnected(const Trackable *obj) const {
-  details::Token *token = first_token();
-  details::Binding *binding = obj->first_binding();
-
-  while (token && binding) {
-
-    if (token->binding->trackable_object == obj) return true;
-    if (binding->token->trackable_object == this) return true;
-
-    token = token->next;
-    binding = binding->next;
-  }
-
-  return false;
-}
-
-template<typename ... ParamTypes>
-template<typename T>
-std::size_t Signal<ParamTypes...>::CountConnections(T *obj, void (T::*method)(SLOT, ParamTypes...)) const {
-  std::size_t count = 0;
-  details::DelegateToken<ParamTypes...> *delegate_token = nullptr;
-
-  for (details::Token *p = first_token_; p; p = p->next) {
-    if (p->binding->trackable_object == obj) {
-      delegate_token = dynamic_cast<details::DelegateToken<ParamTypes...> *>(p);
-      if (delegate_token && (delegate_token->delegate().template equal<T>(obj, method))) {
-        count++;
-      }
-    }
-  }
-  return count;
-}
-
-template<typename ... ParamTypes>
-std::size_t Signal<ParamTypes...>::CountConnections(const Signal<ParamTypes...> &other) const {
-  std::size_t count = 0;
-  details::SignalToken<ParamTypes...> *signal_token = nullptr;
-
-  for (details::Token *p = first_token_; p; p = p->next) {
-    if (p->binding->trackable_object == (&other)) {
-      signal_token = dynamic_cast<details::SignalToken<ParamTypes...> * > (p);
-      if (signal_token && (signal_token->signal() == (&other))) {
-        count++;
-      }
-    }
-  }
-  return count;
-}
-
-template<typename ... ParamTypes>
-std::size_t Signal<ParamTypes...>::CountConnections() const {
-  std::size_t count = 0;
-  for (details::Token *p = first_token_; p; p = p->next) {
-    count++;
-  }
-  return count;
-}
-
-template<typename ... ParamTypes>
-void Signal<ParamTypes...>::Emit(ParamTypes ... Args) {
-  Slot slot(first_token());
-
-  while (slot.token_) {
-    static_cast<details::CallableToken<ParamTypes...> * > (slot.token_)->Invoke(&slot, Args...);
-
-    if (slot.skip_) {
-      slot.skip_ = false;
     } else {
-      slot.token_ = slot.token_->next;
+      start = last_token_;
+
+      while (start && (start_pos < -1)) {
+        start = start->previous;
+        start_pos++;
+      }
+
+      if (start) {
+        for (details::Token *p = last_token_; p; p = p->previous) {
+          if (p->binding->trackable_object == obj) {
+            delegate_token = dynamic_cast<details::DelegateToken<ParamTypes...> * > (p);
+            if (delegate_token && (delegate_token->delegate().template equal<T>(obj, method))) {
+              delete delegate_token;
+              break;
+            }
+          }
+        }
+      }
+
     }
+  }
+  catch (const std::logic_error &) {
+    std::cerr << "Error! Failed to lock global recursive mutex!" << std::endl;
   }
 }
 
 template<typename ... ParamTypes>
-inline void Signal<ParamTypes...>::operator()(ParamTypes ... Args) {
-  Emit(Args...);
+void Signal<ParamTypes...>::DisconnectOnce(Signal<ParamTypes...> &other, int start_pos, std::recursive_mutex &mutex) {
+  details::SignalToken<ParamTypes...> *signal_token = nullptr;
+  details::Token *start = nullptr;
+
+  try {
+    std::lock_guard<std::recursive_mutex> lock(mutex);
+    if (start_pos >= 0) {
+      start = first_token_;
+
+      while (start && (start_pos > 0)) {
+        start = start->next;
+        start_pos--;
+      }
+
+      if (start) {
+        for (details::Token *p = start; p; p = p->next) {
+          if (p->binding->trackable_object == (&other)) {
+            signal_token = dynamic_cast<details::SignalToken<ParamTypes...> * > (p);
+            if (signal_token && (signal_token->signal() == (&other))) {
+              delete signal_token;
+              break;
+            }
+          }
+        }
+      }
+    } else {
+      start = last_token_;
+
+      while (start && (start_pos < -1)) {
+        start = start->previous;
+        start_pos++;
+      }
+
+      if (start) {
+        for (details::Token *p = last_token_; p; p = p->previous) {
+          if (p->binding->trackable_object == (&other)) {
+            signal_token = dynamic_cast<details::SignalToken<ParamTypes...> * > (p);
+            if (signal_token && (signal_token->signal() == (&other))) {
+              delete signal_token;
+              break;
+            }
+          }
+        }
+      }
+
+    }
+  }
+  catch (const std::logic_error &) {
+    std::cerr << "Error! Failed to lock global recursive mutex!" << std::endl;
+  }
+}
+
+template<typename ... ParamTypes>
+template<typename T>
+bool Signal<ParamTypes...>::IsConnected(T *obj,
+                                        void (T::*method)(SLOT, ParamTypes...),
+                                        std::recursive_mutex &mutex) const {
+  details::DelegateToken<ParamTypes...> *delegate_token = nullptr;
+
+  try {
+    std::lock_guard<std::recursive_mutex> lock(mutex);
+    for (details::Token *p = first_token_; p; p = p->next) {
+      if (p->binding->trackable_object == obj) {
+        delegate_token = dynamic_cast<details::DelegateToken<ParamTypes...> *>(p);
+        if (delegate_token && (delegate_token->delegate().template equal<T>(obj, method))) {
+          return true;
+        }
+      }
+    }
+  }
+  catch (const std::logic_error &) {
+    std::cerr << "Error! Failed to lock global recursive mutex!" << std::endl;
+  }
+  return false;
+}
+
+template<typename ... ParamTypes>
+bool Signal<ParamTypes...>::IsConnected(const Signal<ParamTypes...> &other, std::recursive_mutex &mutex) const {
+  details::SignalToken<ParamTypes...> *signal_token = nullptr;
+
+  try {
+    std::lock_guard<std::recursive_mutex> lock(mutex);
+    for (details::Token *p = first_token_; p; p = p->next) {
+      if (p->binding->trackable_object == (&other)) {
+        signal_token = dynamic_cast<details::SignalToken<ParamTypes...> * > (p);
+        if (signal_token && (signal_token->signal() == (&other))) {
+          return true;
+        }
+      }
+    }
+  }
+  catch (const std::logic_error &) {
+    std::cerr << "Error! Failed to lock global recursive mutex!" << std::endl;
+  }
+  return false;
+}
+
+template<typename ... ParamTypes>
+bool Signal<ParamTypes...>::IsConnected(const Trackable *obj, std::recursive_mutex &mutex) const {
+  try {
+    std::lock_guard<std::recursive_mutex> lock(mutex);
+    details::Token *token = first_token();
+    details::Binding *binding = obj->first_binding();
+    while (token && binding) {
+      if (token->binding->trackable_object == obj) return true;
+      if (binding->token->trackable_object == this) return true;
+
+      token = token->next;
+      binding = binding->next;
+    }
+  }
+  catch (const std::logic_error &) {
+    std::cerr << "Error! Failed to lock global recursive mutex!" << std::endl;
+  }
+  return false;
+}
+
+template<typename ... ParamTypes>
+template<typename T>
+std::size_t Signal<ParamTypes...>::CountConnections(T *obj,
+                                                    void (T::*method)(SLOT, ParamTypes...),
+                                                    std::recursive_mutex &mutex) const {
+  std::size_t count = 0;
+  details::DelegateToken<ParamTypes...> *delegate_token = nullptr;
+
+  try {
+    std::lock_guard<std::recursive_mutex> lock(mutex);
+    for (details::Token *p = first_token_; p; p = p->next) {
+      if (p->binding->trackable_object == obj) {
+        delegate_token = dynamic_cast<details::DelegateToken<ParamTypes...> *>(p);
+        if (delegate_token && (delegate_token->delegate().template equal<T>(obj, method))) {
+          count++;
+        }
+      }
+    }
+  }
+  catch (const std::logic_error &) {
+    std::cerr << "Error! Failed to lock global recursive mutex!" << std::endl;
+  }
+  return count;
+}
+
+template<typename ... ParamTypes>
+std::size_t Signal<ParamTypes...>::CountConnections(const Signal<ParamTypes...> &other,
+                                                    std::recursive_mutex &mutex) const {
+  std::size_t count = 0;
+  details::SignalToken<ParamTypes...> *signal_token = nullptr;
+
+  try {
+    std::lock_guard<std::recursive_mutex> lock(mutex);
+    for (details::Token *p = first_token_; p; p = p->next) {
+      if (p->binding->trackable_object == (&other)) {
+        signal_token = dynamic_cast<details::SignalToken<ParamTypes...> * > (p);
+        if (signal_token && (signal_token->signal() == (&other))) {
+          count++;
+        }
+      }
+    }
+  }
+  catch (const std::logic_error &) {
+    std::cerr << "Error! Failed to lock global recursive mutex!" << std::endl;
+  }
+  return count;
+}
+
+template<typename ... ParamTypes>
+std::size_t Signal<ParamTypes...>::CountConnections(std::recursive_mutex &mutex) const {
+  std::size_t count = 0;
+  try {
+    std::lock_guard<std::recursive_mutex> lock(mutex);
+    for (details::Token *p = first_token_; p; p = p->next) {
+      count++;
+    }
+  }
+  catch (const std::logic_error &) {
+    std::cerr << "Error! Failed to lock global recursive mutex!" << std::endl;
+  }
+  return count;
+}
+
+template<typename ... ParamTypes>
+void Signal<ParamTypes...>::Emit(ParamTypes ... Args, std::recursive_mutex &mutex) {
+  try {
+    std::lock_guard<std::recursive_mutex> lock(mutex);
+    Slot slot(first_token());
+    while (slot.token_) {
+      static_cast<details::CallableToken<ParamTypes...> * > (slot.token_)->Invoke(&slot, Args...);
+
+      if (slot.skip_) {
+        slot.skip_ = false;
+      } else {
+        slot.token_ = slot.token_->next;
+      }
+    }
+  }
+  catch (const std::logic_error &) {
+    std::cerr << "Error! Failed to lock global recursive mutex!" << std::endl;
+  }
+}
+
+template<typename ... ParamTypes>
+inline void Signal<ParamTypes...>::operator()(ParamTypes ... Args, std::recursive_mutex &mutex) {
+  Emit(Args..., mutex);
 }
 
 template<typename ... ParamTypes>
@@ -903,14 +1024,20 @@ void Signal<ParamTypes...>::InsertToken(int index, details::Token *token) {
 }
 
 template<typename ... ParamTypes>
-void Signal<ParamTypes...>::DisconnectAll() {
+void Signal<ParamTypes...>::DisconnectAll(std::recursive_mutex &mutex) {
   details::Token *tmp = nullptr;
-  details::Token *p = first_token_;
 
-  while (p) {
-    tmp = p->next;
-    delete p;
-    p = tmp;
+  try {
+    std::lock_guard<std::recursive_mutex> lock(mutex);
+    details::Token *p = first_token_;
+    while (p) {
+      tmp = p->next;
+      delete p;
+      p = tmp;
+    }
+  }
+  catch (const std::logic_error &) {
+    std::cerr << "Error! Failed to lock global recursive mutex!" << std::endl;
   }
 }
 
@@ -919,9 +1046,10 @@ void Signal<ParamTypes...>::DisconnectAll() {
  */
 template<typename ... ParamTypes>
 class SignalRef {
- public:
 
   SignalRef() = delete;
+
+ public:
 
   inline SignalRef(Signal<ParamTypes...> &other)
       : signal_(&other) {
@@ -939,69 +1067,90 @@ class SignalRef {
   }
 
   template<typename T>
-  inline void connect(T *obj, void (T::*method)(SLOT, ParamTypes...), int index = -1) {
-    signal_->Connect(obj, method, index);
+  inline void connect(T *obj,
+                      void (T::*method)(SLOT, ParamTypes...),
+                      int index = -1,
+                      std::recursive_mutex &mutex = Trackable::kGlobalRecursiveMutex) {
+    signal_->Connect(obj, method, index, mutex);
   }
 
-  inline void connect(Signal<ParamTypes...> &signal, int index = -1) {
-    signal_->Connect(signal, index);
-  }
-
-  template<typename T>
-  inline void disconnect_all(T *obj, void (T::*method)(SLOT, ParamTypes...)) {
-    signal_->DisconnectAll(obj, method);
-  }
-
-  inline void disconnect_all(Signal<ParamTypes...> &signal) {
-    signal_->DisconnectAll(signal);
+  inline void connect(Signal<ParamTypes...> &signal,
+                      int index = -1,
+                      std::recursive_mutex &mutex = Trackable::kGlobalRecursiveMutex) {
+    signal_->Connect(signal, index, mutex);
   }
 
   template<typename T>
-  inline void disconnect_once(T *obj, void (T::*method)(SLOT, ParamTypes...), int start_pos = -1) {
-    signal_->DisconnectOnce(obj, method, start_pos);
+  inline void disconnect_all(T *obj,
+                             void (T::*method)(SLOT, ParamTypes...),
+                             std::recursive_mutex &mutex = Trackable::kGlobalRecursiveMutex) {
+    signal_->DisconnectAll(obj, method, mutex);
   }
 
-  inline void disconnect_once(Signal<ParamTypes...> &signal, int start_pos = -1) {
-    signal_->DisconnectOnce(signal, start_pos);
-  }
-
-  inline void disconnect_all() {
-    signal_->DisconnectAll();
-  }
-
-  template<typename T>
-  inline bool is_connected(T *obj, void (T::*method)(SLOT, ParamTypes...)) const {
-    return signal_->IsConnected(obj, method);
-  }
-
-  inline bool is_connected(const Signal<ParamTypes...> &signal) const {
-    return signal_->IsConnected(signal);
-  }
-
-  inline bool is_connected(const Trackable *obj) const {
-    return signal_->IsConnected(obj);
+  inline void disconnect_all(Signal<ParamTypes...> &signal,
+                             std::recursive_mutex &mutex = Trackable::kGlobalRecursiveMutex) {
+    signal_->DisconnectAll(signal, mutex);
   }
 
   template<typename T>
-  inline std::size_t count_connections(T *obj, void (T::*method)(SLOT, ParamTypes...)) const {
-    return signal_->CountConnections(obj, method);
+  inline void disconnect_once(T *obj,
+                              void (T::*method)(SLOT, ParamTypes...),
+                              int start_pos = -1,
+                              std::recursive_mutex &mutex = Trackable::kGlobalRecursiveMutex) {
+    signal_->DisconnectOnce(obj, method, start_pos, mutex);
   }
 
-  inline std::size_t count_connections(const Signal<ParamTypes...> &signal) const {
-    return signal_->CountConnections(signal);
+  inline void disconnect_once(Signal<ParamTypes...> &signal,
+                              int start_pos = -1,
+                              std::recursive_mutex &mutex = Trackable::kGlobalRecursiveMutex) {
+    signal_->DisconnectOnce(signal, start_pos, mutex);
   }
 
-  inline std::size_t count_connections() const {
-    return signal_->CountConnections();
+  inline void disconnect_all(std::recursive_mutex &mutex = Trackable::kGlobalRecursiveMutex) {
+    signal_->DisconnectAll(mutex);
   }
 
   template<typename T>
-  inline std::size_t count_bindings(T *obj, void (T::*method)(SLOT, ParamTypes...)) const {
-    return signal_->CountBindings(obj, method);
+  inline bool is_connected(T *obj,
+                           void (T::*method)(SLOT, ParamTypes...),
+                           std::recursive_mutex &mutex = Trackable::kGlobalRecursiveMutex) const {
+    return signal_->IsConnected(obj, method, mutex);
   }
 
-  inline std::size_t count_bindings() const {
-    return signal_->CountBindings();
+  inline bool is_connected(const Signal<ParamTypes...> &signal,
+                           std::recursive_mutex &mutex = Trackable::kGlobalRecursiveMutex) const {
+    return signal_->IsConnected(signal, mutex);
+  }
+
+  inline bool is_connected(const Trackable *obj, std::recursive_mutex &mutex = Trackable::kGlobalRecursiveMutex) const {
+    return signal_->IsConnected(obj, mutex);
+  }
+
+  template<typename T>
+  inline std::size_t count_connections(T *obj,
+                                       void (T::*method)(SLOT, ParamTypes...),
+                                       std::recursive_mutex &mutex = Trackable::kGlobalRecursiveMutex) const {
+    return signal_->CountConnections(obj, method, mutex);
+  }
+
+  inline std::size_t count_connections(const Signal<ParamTypes...> &signal,
+                                       std::recursive_mutex &mutex = Trackable::kGlobalRecursiveMutex) const {
+    return signal_->CountConnections(signal, mutex);
+  }
+
+  inline std::size_t count_connections(std::recursive_mutex &mutex = Trackable::kGlobalRecursiveMutex) const {
+    return signal_->CountConnections(mutex);
+  }
+
+  template<typename T>
+  inline std::size_t count_bindings(T *obj,
+                                    void (T::*method)(SLOT, ParamTypes...),
+                                    std::recursive_mutex &mutex = Trackable::kGlobalRecursiveMutex) const {
+    return signal_->CountBindings(obj, method, mutex);
+  }
+
+  inline std::size_t count_bindings(std::recursive_mutex &mutex = Trackable::kGlobalRecursiveMutex) const {
+    return signal_->CountBindings(mutex);
   }
 
  private:

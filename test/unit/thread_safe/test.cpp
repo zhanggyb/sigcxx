@@ -11,19 +11,16 @@ static std::mutex m;
 
 void Source::DoTest1(int n)
 {
-  lock_guard<mutex> lock(m);
   event1_.Emit(n);
 }
 
 void Source::DoTest2 (int n1, int n2)
 {
-  lock_guard<mutex> lock(m);
   event2_.Emit(n1, n2);
 }
 
 void Consumer::DisconnectAll()
 {
-  lock_guard<mutex> lock(m);
     UnbindAll();
 }
 
@@ -42,19 +39,13 @@ Consumer c;
 
 void thread1 () {
 
-  std::unique_lock<std::mutex> lock(m, std::defer_lock);
-
   for(int i = 0; i < 100; i++) {
 
-    lock.lock();
     s.event1().Connect(&c, static_cast<void (Consumer::*)(SLOT, int)>(&Consumer::OnTest1));
-    lock.unlock();
 
     s.DoTest1(1);
 
-    lock.lock();
     s.event1().DisconnectAll(&c, static_cast<void (Consumer::*)(SLOT, int)>(&Consumer::OnTest1));
-    lock.unlock();
 
     //std::this_thread::sleep_for(std::chrono::milliseconds(100));
   }
@@ -62,18 +53,12 @@ void thread1 () {
 
 void thread2 () {
 
-  std::unique_lock<std::mutex> lock(m, std::defer_lock);
-
   for(int i = 0; i < 100; i++) {
-    lock.lock();
     s.event1().Connect(&c, static_cast<void (Consumer::*)(SLOT, int)>(&Consumer::OnTest1));
-    lock.unlock();
 
     s.DoTest1(1);
 
-    lock.lock();
     s.event1().DisconnectAll(&c, static_cast<void (Consumer::*)(SLOT, int)>(&Consumer::OnTest1));
-    lock.unlock();
     //std::this_thread::sleep_for(std::chrono::milliseconds(100));
   }
 }
@@ -81,40 +66,28 @@ void thread2 () {
 void thread3 () {
   Consumer* lc = 0;
 
-  std::unique_lock<std::mutex> lock(m, std::defer_lock);
-
   for(int i = 0; i < 500; i++) {
     lc = new Consumer();
 
-    lock.lock();
     s.event1().Connect(lc, static_cast<void (Consumer::*)(SLOT, int)>(&Consumer::OnTest1));
-    lock.unlock();
 
     s.DoTest1(3);
 
-    lock.lock();
     delete lc;
-    lock.unlock();
   }
 }
 
 void thread4 () {
   Source* ls = 0;
 
-  std::unique_lock<std::mutex> lock(m, std::defer_lock);
-
   for(int i = 0; i < 500; i++) {
     ls = new Source();
 
-    lock.lock();
     ls->event1().Connect(&c, static_cast<void (Consumer::*)(SLOT, int)>(&Consumer::OnTest1));
-    lock.unlock();
 
     ls->DoTest1(3);
 
-    lock.lock();
     delete ls;
-    lock.unlock();
 
   }
 }
