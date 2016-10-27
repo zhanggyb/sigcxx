@@ -105,23 +105,18 @@ struct Token {
 
 template<typename ... ParamTypes>
 class CallableToken : public Token {
+
+  CallableToken(const CallableToken &orig) = delete;
+  CallableToken &operator=(const CallableToken &other) = delete;
+
  public:
 
-  inline CallableToken();
+  inline CallableToken() : Token() {}
 
-  virtual ~CallableToken();
+  virtual ~CallableToken() {}
 
   virtual void Invoke(SLOT slot, ParamTypes ... Args);
 };
-
-template<typename ... ParamTypes>
-inline CallableToken<ParamTypes...>::CallableToken()
-    : Token() {
-}
-
-template<typename ... ParamTypes>
-CallableToken<ParamTypes...>::~CallableToken() {
-}
 
 template<typename ... ParamTypes>
 void CallableToken<ParamTypes...>::Invoke(SLOT slot, ParamTypes ... Args) {
@@ -130,9 +125,12 @@ void CallableToken<ParamTypes...>::Invoke(SLOT slot, ParamTypes ... Args) {
 
 template<typename ... ParamTypes>
 class DelegateToken : public CallableToken<ParamTypes...> {
- public:
 
   DelegateToken() = delete;
+  DelegateToken(const DelegateToken &orig) = delete;
+  DelegateToken &operator=(const DelegateToken &other) = delete;
+
+ public:
 
   inline DelegateToken(const Delegate<void(SLOT, ParamTypes...)> &d);
 
@@ -166,11 +164,14 @@ void DelegateToken<ParamTypes...>::Invoke(SLOT slot, ParamTypes... Args) {
 
 template<typename ... ParamTypes>
 class SignalToken : public CallableToken<ParamTypes...> {
- public:
 
   SignalToken() = delete;
+  SignalToken(const SignalToken &orig) = delete;
+  SignalToken &operator=(const SignalToken &other) = delete;
 
-  inline SignalToken(Signal<ParamTypes...> &other);
+ public:
+
+  inline SignalToken(Signal<ParamTypes...> &signal);
 
   virtual ~SignalToken();
 
@@ -184,8 +185,8 @@ class SignalToken : public CallableToken<ParamTypes...> {
 };
 
 template<typename ... ParamTypes>
-inline SignalToken<ParamTypes...>::SignalToken(Signal<ParamTypes...> &other)
-    : CallableToken<ParamTypes...>(), signal_(&other) {
+inline SignalToken<ParamTypes...>::SignalToken(Signal<ParamTypes...> &signal)
+    : CallableToken<ParamTypes...>(), signal_(&signal) {
 }
 
 template<typename ... ParamTypes>
@@ -235,6 +236,7 @@ class Slot {
  * @brief The basic class for observer
  */
 class Trackable {
+
   friend struct details::Binding;
   friend struct details::Token;
   template<typename ... ParamTypes> friend
@@ -294,19 +296,19 @@ class Trackable {
   }
 
   static inline void push_front(Trackable *trackable,
-                                details::Binding *conn) {
-    trackable->PushBackBinding(conn);
+                                details::Binding *binding) {
+    trackable->PushBackBinding(binding);
   }
 
   static inline void push_back(Trackable *trackable,
-                               details::Binding *conn) {
-    trackable->PushBackBinding(conn);
+                               details::Binding *binding) {
+    trackable->PushBackBinding(binding);
   }
 
   static inline void insert(Trackable *trackable,
-                            details::Binding *conn,
+                            details::Binding *binding,
                             int index = 0) {
-    trackable->InsertBinding(index, conn);
+    trackable->InsertBinding(index, binding);
   }
 
   inline details::Binding *first_binding() const {
@@ -328,7 +330,6 @@ void Trackable::UnbindAll(SLOT slot, void (T::*method)(SLOT, ParamTypes...)) {
   // (slot && slot->token_->binding->trackable_object == this) is always true
 
   details::DelegateToken<ParamTypes...> *delegate_token = nullptr;
-
   details::Token *p = nullptr;
   details::Token *tmp = nullptr;
 
@@ -404,17 +405,17 @@ size_t Trackable::CountBindings(T *obj, void (T::*method)(SLOT, ParamTypes...)) 
 
 template<typename ... ParamTypes>
 class Signal : public Trackable {
+
   friend class Trackable;
+
+  Signal(const Signal &orig) = delete;
+  Signal &operator=(const Signal &orig) = delete;
 
  public:
 
   inline Signal();
 
   virtual ~Signal();
-
-  Signal(const Signal &orig) = delete;
-
-  Signal &operator=(const Signal &orig) = delete;
 
   /**
    * @brief Connect this signal to a slot method in a observer
@@ -510,23 +511,23 @@ void Signal<ParamTypes...>::Connect(T *obj, void (T::*method)(SLOT, ParamTypes..
   details::Binding *downstream = new details::Binding;
   Delegate<void(SLOT, ParamTypes...)> d =
       Delegate<void(SLOT, ParamTypes...)>::template from_method<T>(obj, method);
-  details::DelegateToken<ParamTypes...> *upstream = new details::DelegateToken<
+  details::DelegateToken<ParamTypes...> *token = new details::DelegateToken<
       ParamTypes...>(d);
 
-  link(upstream, downstream);
-  InsertToken(index, upstream);
+  link(token, downstream);
+  InsertToken(index, token);
   push_back(obj, downstream);  // always push back binding, don't care about the position in observer
 }
 
 template<typename ... ParamTypes>
 void Signal<ParamTypes...>::Connect(Signal<ParamTypes...> &other, int index) {
-  details::SignalToken<ParamTypes...> *upstream = new details::SignalToken<ParamTypes...>(
+  details::SignalToken<ParamTypes...> *token = new details::SignalToken<ParamTypes...>(
       other);
-  details::Binding *downstream = new details::Binding;
+  details::Binding *binding = new details::Binding;
 
-  link(upstream, downstream);
-  InsertToken(index, upstream);
-  push_back(&other, downstream);  // always push back binding, don't care about the position in observer
+  link(token, binding);
+  InsertToken(index, token);
+  push_back(&other, binding);  // always push back binding, don't care about the position in observer
 }
 
 template<typename ... ParamTypes>
@@ -919,9 +920,10 @@ void Signal<ParamTypes...>::DisconnectAll() {
  */
 template<typename ... ParamTypes>
 class SignalRef {
- public:
 
   SignalRef() = delete;
+
+ public:
 
   inline SignalRef(Signal<ParamTypes...> &other)
       : signal_(&other) {
