@@ -91,7 +91,7 @@ public:
 };
 ```
 
-The slot method must have the first argument of `sigcxx::SLOT slot`, the
+The slot method must have the last argument of `sigcxx::SLOT slot`, the
 following is the arguments received from a corresponding signal. You can define
 arbitray number of arguments.
 
@@ -102,7 +102,7 @@ public:
   // ...
 
   void onUpdate1 (sigcxx::SLOT slot);
-  void onUpdate2 (sigcxx::SLOT slot, const Foo* param);
+  void onUpdate2 (const Foo* param, sigcxx::SLOT slot = nullptr);
 };
 ```
 

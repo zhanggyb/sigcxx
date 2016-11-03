@@ -60,7 +60,7 @@ class Consumer : public sigcxx::Trackable {
   void OnTestDisconnectAll(int n, SLOT slot) {
     // RemoveAllInConnections(sender);
     // sender->signal_base().DisconnectAll(this, &Consumer::OnTestDisconnectAll);
-//    UnbindAll(&Consumer::OnTestDisconnectAll, slot);
+    UnbindAll(&Consumer::OnTestDisconnectAll, slot);
   }
 
 };
