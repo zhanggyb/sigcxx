@@ -115,11 +115,11 @@ class CallableToken : public Token {
 
   virtual ~CallableToken() {}
 
-  virtual void Invoke(SLOT slot, ParamTypes ... Args);
+  virtual void Invoke(ParamTypes ... Args, SLOT slot);
 };
 
 template<typename ... ParamTypes>
-void CallableToken<ParamTypes...>::Invoke(SLOT slot, ParamTypes ... Args) {
+void CallableToken<ParamTypes...>::Invoke(ParamTypes ... Args, SLOT slot) {
   // Override this in sub class
 }
 
@@ -132,24 +132,24 @@ class DelegateToken : public CallableToken<ParamTypes...> {
 
  public:
 
-  inline DelegateToken(const Delegate<void(SLOT, ParamTypes...)> &d);
+  inline DelegateToken(const Delegate<void(ParamTypes..., SLOT)> &d);
 
   virtual ~DelegateToken();
 
-  virtual void Invoke(SLOT slot, ParamTypes... Args) override;
+  virtual void Invoke(ParamTypes... Args, SLOT slot) override;
 
-  const Delegate<void(SLOT, ParamTypes...)> &delegate() const {
+  const Delegate<void(ParamTypes..., SLOT)> &delegate() const {
     return delegate_;
   }
 
  private:
 
-  Delegate<void(SLOT, ParamTypes...)> delegate_;
+  Delegate<void(ParamTypes..., SLOT)> delegate_;
 
 };
 
 template<typename ... ParamTypes>
-inline DelegateToken<ParamTypes...>::DelegateToken(const Delegate<void(SLOT, ParamTypes...)> &d)
+inline DelegateToken<ParamTypes...>::DelegateToken(const Delegate<void(ParamTypes..., SLOT)> &d)
     : CallableToken<ParamTypes...>(), delegate_(d) {
 }
 
@@ -158,8 +158,8 @@ DelegateToken<ParamTypes...>::~DelegateToken() {
 }
 
 template<typename ... ParamTypes>
-void DelegateToken<ParamTypes...>::Invoke(SLOT slot, ParamTypes... Args) {
-  delegate_(slot, Args...);
+void DelegateToken<ParamTypes...>::Invoke(ParamTypes... Args, SLOT slot) {
+  delegate_(Args..., slot);
 }
 
 template<typename ... ParamTypes>
@@ -175,7 +175,7 @@ class SignalToken : public CallableToken<ParamTypes...> {
 
   virtual ~SignalToken();
 
-  virtual void Invoke(SLOT slot, ParamTypes... Args) override;
+  virtual void Invoke(ParamTypes... Args, SLOT slot) override;
 
   inline const Signal<ParamTypes...> *signal() const;
 
@@ -194,7 +194,7 @@ SignalToken<ParamTypes...>::~SignalToken() {
 }
 
 template<typename ... ParamTypes>
-void SignalToken<ParamTypes...>::Invoke(SLOT slot, ParamTypes... Args) {
+void SignalToken<ParamTypes...>::Invoke(ParamTypes... Args, SLOT slot) {
   signal_->Emit(Args...);
 }
 
@@ -258,21 +258,13 @@ class Trackable {
 
   void UnbindOnce(SLOT slot);
 
-  void UnbindAll(SLOT slot);
+  void UnbindAll(SLOT slot = nullptr);
 
   template<typename T, typename ... ParamTypes>
-  void UnbindAll(SLOT slot, void (T::*method)(SLOT, ParamTypes...));
-
-  void UnbindAll();
-
-  /**
-   * @brief Disconnect all delegates to a method
-   */
-  template<typename T, typename ... ParamTypes>
-  void UnbindAll(void (T::*method)(SLOT, ParamTypes...));
+  void UnbindAll(void (T::*method)(ParamTypes..., SLOT), SLOT slot = nullptr);
 
   template<typename T, typename ... ParamTypes>
-  std::size_t CountBindings(T *obj, void (T::*method)(SLOT, ParamTypes...)) const;
+  std::size_t CountBindings(void (T::*method)(ParamTypes..., SLOT)) const;
 
   std::size_t CountBindings() const;
 
@@ -326,75 +318,72 @@ class Trackable {
 };
 
 template<typename T, typename ... ParamTypes>
-void Trackable::UnbindAll(SLOT slot, void (T::*method)(SLOT, ParamTypes...)) {
+void Trackable::UnbindAll(void (T::*method)(ParamTypes..., SLOT), SLOT slot) {
   // (slot && slot->token_->binding->trackable_object == this) is always true
 
-  details::DelegateToken<ParamTypes...> *delegate_token = nullptr;
-  details::Token *p = nullptr;
-  details::Token *tmp = nullptr;
+  if (slot == nullptr) {
+    details::Binding *p = nullptr;
+    details::Binding *tmp = nullptr;
+    details::DelegateToken<ParamTypes...> *delegate_token = nullptr;
 
-  p = slot->token_;
-  while (p) {
-    tmp = p->previous;
-    if (p->binding->trackable_object == this) {
-      delegate_token = dynamic_cast<details::DelegateToken<ParamTypes...> *>(p);
-      if (delegate_token &&
-          (delegate_token->delegate().template equal<T>((T *) this, method))) {
-        if (p == slot->token_) {
-          const_cast<Slot *>(slot)->token_ = slot->token_->next;
-          const_cast<Slot *>(slot)->skip_ = true;
-        }
-        delete p;
+    p = last_binding_;
+    while (p) {
+      tmp = p->previous;
+      delegate_token = dynamic_cast<details::DelegateToken<ParamTypes...> *>(p->token);
+      if (delegate_token && (delegate_token->delegate().template equal<T>((T *) this, method))) {
+        delete delegate_token;
       }
+      p = tmp;
     }
-    p = tmp;
-  }
+  } else {
+    details::DelegateToken<ParamTypes...> *delegate_token = nullptr;
+    details::Token *p = nullptr;
+    details::Token *tmp = nullptr;
 
-  p = slot->token_;
-  while (p) {
-    tmp = p->next;
-    if (p->binding->trackable_object == this) {
-      delegate_token = dynamic_cast<details::DelegateToken<ParamTypes...> *>(p);
-      if (delegate_token &&
-          (delegate_token->delegate().template equal<T>((T *) this, method))) {
-        if (p == slot->token_) {
-          const_cast<Slot *>(slot)->token_ = slot->token_->next;
-          const_cast<Slot *>(slot)->skip_ = true;
+    p = slot->token_;
+    while (p) {
+      tmp = p->previous;
+      if (p->binding->trackable_object == this) {
+        delegate_token = dynamic_cast<details::DelegateToken<ParamTypes...> *>(p);
+        if (delegate_token &&
+            (delegate_token->delegate().template equal<T>((T *) this, method))) {
+          if (p == slot->token_) {
+            const_cast<Slot *>(slot)->token_ = slot->token_->next;
+            const_cast<Slot *>(slot)->skip_ = true;
+          }
+          delete p;
         }
-        delete p;
       }
+      p = tmp;
     }
-    p = tmp;
+
+    p = slot->token_;
+    while (p) {
+      tmp = p->next;
+      if (p->binding->trackable_object == this) {
+        delegate_token = dynamic_cast<details::DelegateToken<ParamTypes...> *>(p);
+        if (delegate_token &&
+            (delegate_token->delegate().template equal<T>((T *) this, method))) {
+          if (p == slot->token_) {
+            const_cast<Slot *>(slot)->token_ = slot->token_->next;
+            const_cast<Slot *>(slot)->skip_ = true;
+          }
+          delete p;
+        }
+      }
+      p = tmp;
+    }
   }
 }
 
 template<typename T, typename ... ParamTypes>
-void Trackable::UnbindAll(void (T::*method)(SLOT, ParamTypes...)) {
-
-  details::Binding *p = nullptr;
-  details::Binding *tmp = nullptr;
-  details::DelegateToken<ParamTypes...> *delegate_token = nullptr;
-
-  p = last_binding_;
-  while (p) {
-    tmp = p->previous;
-    delegate_token = dynamic_cast<details::DelegateToken<ParamTypes...> *>(p->token);
-    if (delegate_token && (delegate_token->delegate().template equal<T>((T *) this, method))) {
-      delete delegate_token;
-    }
-    p = tmp;
-  }
-
-}
-
-template<typename T, typename ... ParamTypes>
-size_t Trackable::CountBindings(T *obj, void (T::*method)(SLOT, ParamTypes...)) const {
+size_t Trackable::CountBindings(void (T::*method)(ParamTypes..., SLOT)) const {
   std::size_t count = 0;
   details::DelegateToken<ParamTypes...> *delegate_token = nullptr;
 
   for (details::Binding *p = first_binding_; p; p = p->next) {
     delegate_token = dynamic_cast<details::DelegateToken<ParamTypes...> *>(p->token);
-    if (delegate_token && (delegate_token->delegate().template equal<T>(obj, method))) {
+    if (delegate_token && (delegate_token->delegate().template equal<T>((T *) this, method))) {
       count++;
     }
   }
@@ -421,7 +410,7 @@ class Signal : public Trackable {
    * @brief Connect this signal to a slot method in a observer
    */
   template<typename T>
-  void Connect(T *obj, void (T::*method)(SLOT, ParamTypes...), int index = -1);
+  void Connect(T *obj, void (T::*method)(ParamTypes..., SLOT), int index = -1);
 
   void Connect(Signal<ParamTypes...> &other, int index = -1);
 
@@ -429,7 +418,7 @@ class Signal : public Trackable {
    * @brief Disconnect all delegates to a method
    */
   template<typename T>
-  void DisconnectAll(T *obj, void (T::*method)(SLOT, ParamTypes...));
+  void DisconnectAll(T *obj, void (T::*method)(ParamTypes..., SLOT));
 
   /**
    * @brief Disconnect all signals
@@ -440,7 +429,7 @@ class Signal : public Trackable {
    * @brief Disconnect the last delegate to a method
    */
   template<typename T>
-  void DisconnectOnce(T *obj, void (T::*method)(SLOT, ParamTypes...), int start_pos = -1);
+  void DisconnectOnce(T *obj, void (T::*method)(ParamTypes..., SLOT), int start_pos = -1);
 
   /**
    * @brief Disconnect the last signal
@@ -450,14 +439,14 @@ class Signal : public Trackable {
   void DisconnectAll();
 
   template<typename T>
-  bool IsConnected(T *obj, void (T::*method)(SLOT, ParamTypes...)) const;
+  bool IsConnected(T *obj, void (T::*method)(ParamTypes..., SLOT)) const;
 
   bool IsConnected(const Signal<ParamTypes...> &other) const;
 
   bool IsConnected(const Trackable *obj) const;
 
   template<typename T>
-  std::size_t CountConnections(T *obj, void (T::*method)(SLOT, ParamTypes...)) const;
+  std::size_t CountConnections(T *obj, void (T::*method)(ParamTypes..., SLOT)) const;
 
   std::size_t CountConnections(const Signal<ParamTypes...> &other) const;
 
@@ -507,10 +496,10 @@ Signal<ParamTypes...>::~Signal() {
 
 template<typename ... ParamTypes>
 template<typename T>
-void Signal<ParamTypes...>::Connect(T *obj, void (T::*method)(SLOT, ParamTypes...), int index) {
+void Signal<ParamTypes...>::Connect(T *obj, void (T::*method)(ParamTypes..., SLOT), int index) {
   details::Binding *downstream = new details::Binding;
-  Delegate<void(SLOT, ParamTypes...)> d =
-      Delegate<void(SLOT, ParamTypes...)>::template from_method<T>(obj, method);
+  Delegate<void(ParamTypes..., SLOT)> d =
+      Delegate<void(ParamTypes..., SLOT)>::template from_method<T>(obj, method);
   details::DelegateToken<ParamTypes...> *token = new details::DelegateToken<
       ParamTypes...>(d);
 
@@ -532,7 +521,7 @@ void Signal<ParamTypes...>::Connect(Signal<ParamTypes...> &other, int index) {
 
 template<typename ... ParamTypes>
 template<typename T>
-void Signal<ParamTypes...>::DisconnectAll(T *obj, void (T::*method)(SLOT, ParamTypes...)) {
+void Signal<ParamTypes...>::DisconnectAll(T *obj, void (T::*method)(ParamTypes..., SLOT)) {
   details::DelegateToken<ParamTypes...> *delegate_token = nullptr;
   details::Token *p = last_token_;
   details::Token *tmp = nullptr;
@@ -569,7 +558,7 @@ void Signal<ParamTypes...>::DisconnectAll(Signal<ParamTypes...> &other) {
 
 template<typename ... ParamTypes>
 template<typename T>
-void Signal<ParamTypes...>::DisconnectOnce(T *obj, void (T::*method)(SLOT, ParamTypes...), int start_pos) {
+void Signal<ParamTypes...>::DisconnectOnce(T *obj, void (T::*method)(ParamTypes..., SLOT), int start_pos) {
   details::DelegateToken<ParamTypes...> *delegate_token = nullptr;
   details::Token *start = nullptr;
 
@@ -664,7 +653,7 @@ void Signal<ParamTypes...>::DisconnectOnce(Signal<ParamTypes...> &other, int sta
 
 template<typename ... ParamTypes>
 template<typename T>
-bool Signal<ParamTypes...>::IsConnected(T *obj, void (T::*method)(SLOT, ParamTypes...)) const {
+bool Signal<ParamTypes...>::IsConnected(T *obj, void (T::*method)(ParamTypes..., SLOT)) const {
   details::DelegateToken<ParamTypes...> *delegate_token = nullptr;
 
   for (details::Token *p = first_token_; p; p = p->next) {
@@ -712,7 +701,7 @@ bool Signal<ParamTypes...>::IsConnected(const Trackable *obj) const {
 
 template<typename ... ParamTypes>
 template<typename T>
-std::size_t Signal<ParamTypes...>::CountConnections(T *obj, void (T::*method)(SLOT, ParamTypes...)) const {
+std::size_t Signal<ParamTypes...>::CountConnections(T *obj, void (T::*method)(ParamTypes..., SLOT)) const {
   std::size_t count = 0;
   details::DelegateToken<ParamTypes...> *delegate_token = nullptr;
 
@@ -757,7 +746,7 @@ void Signal<ParamTypes...>::Emit(ParamTypes ... Args) {
   Slot slot(first_token());
 
   while (slot.token_) {
-    static_cast<details::CallableToken<ParamTypes...> * > (slot.token_)->Invoke(&slot, Args...);
+    static_cast<details::CallableToken<ParamTypes...> * > (slot.token_)->Invoke(Args..., &slot);
 
     if (slot.skip_) {
       slot.skip_ = false;
@@ -941,7 +930,7 @@ class SignalRef {
   }
 
   template<typename T>
-  inline void connect(T *obj, void (T::*method)(SLOT, ParamTypes...), int index = -1) {
+  inline void connect(T *obj, void (T::*method)(ParamTypes..., SLOT), int index = -1) {
     signal_->Connect(obj, method, index);
   }
 
@@ -950,7 +939,7 @@ class SignalRef {
   }
 
   template<typename T>
-  inline void disconnect_all(T *obj, void (T::*method)(SLOT, ParamTypes...)) {
+  inline void disconnect_all(T *obj, void (T::*method)(ParamTypes..., SLOT)) {
     signal_->DisconnectAll(obj, method);
   }
 
@@ -959,7 +948,7 @@ class SignalRef {
   }
 
   template<typename T>
-  inline void disconnect_once(T *obj, void (T::*method)(SLOT, ParamTypes...), int start_pos = -1) {
+  inline void disconnect_once(T *obj, void (T::*method)(ParamTypes..., SLOT), int start_pos = -1) {
     signal_->DisconnectOnce(obj, method, start_pos);
   }
 
@@ -972,7 +961,7 @@ class SignalRef {
   }
 
   template<typename T>
-  inline bool is_connected(T *obj, void (T::*method)(SLOT, ParamTypes...)) const {
+  inline bool is_connected(T *obj, void (T::*method)(ParamTypes..., SLOT)) const {
     return signal_->IsConnected(obj, method);
   }
 
@@ -985,7 +974,7 @@ class SignalRef {
   }
 
   template<typename T>
-  inline std::size_t count_connections(T *obj, void (T::*method)(SLOT, ParamTypes...)) const {
+  inline std::size_t count_connections(T *obj, void (T::*method)(ParamTypes..., SLOT)) const {
     return signal_->CountConnections(obj, method);
   }
 
@@ -995,15 +984,6 @@ class SignalRef {
 
   inline std::size_t count_connections() const {
     return signal_->CountConnections();
-  }
-
-  template<typename T>
-  inline std::size_t count_bindings(T *obj, void (T::*method)(SLOT, ParamTypes...)) const {
-    return signal_->CountBindings(obj, method);
-  }
-
-  inline std::size_t count_bindings() const {
-    return signal_->CountBindings();
   }
 
  private:

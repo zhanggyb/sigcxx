@@ -12,17 +12,17 @@ class Observer: public sigcxx::Trackable
 
   void OnTest0 (sigcxx::SLOT slot);
 
-  void OnTest1IntegerParam(sigcxx::SLOT slot, int n);
+  void OnTest1IntegerParam(int n, sigcxx::SLOT slot = nullptr);
 
-  void OnTest2IntegerParams(sigcxx::SLOT slot, int n1, int n2);
+  void OnTest2IntegerParams(int n1, int n2, sigcxx::SLOT slot = nullptr);
 
-  void OnTestDestroy (sigcxx::SLOT slot);
+  void OnTestDestroy (sigcxx::SLOT slot = nullptr);
 
-  void OnTestUnbindOnceAt5 (sigcxx::SLOT slot);
+  void OnTestUnbindOnceAt5 (sigcxx::SLOT slot = nullptr);
 
-  void OnTestUnbindAllAt5 (sigcxx::SLOT slot);
+  void OnTestUnbindAllAt5 (sigcxx::SLOT slot = nullptr);
 
-  void OnTestUnbindAllMethodAt5 (sigcxx::SLOT slot);
+  void OnTestUnbindAllMethodAt5 (sigcxx::SLOT slot = nullptr);
 
   inline size_t test0_count () const
   {

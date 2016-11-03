@@ -57,7 +57,7 @@ public:
   AbstractConsumer() {}
   virtual ~AbstractConsumer() {}
 
-  virtual void OnVirtualTest (sigcxx::SLOT, int) = 0;
+  virtual void OnVirtualTest (int, sigcxx::SLOT slot = nullptr) = 0;
 };
 
 class Consumer: public AbstractConsumer
@@ -70,20 +70,20 @@ class Consumer: public AbstractConsumer
 
   virtual ~Consumer () { }
 
-  void OnTest1 (sigcxx::SLOT /* slot */, int n)
+  void OnTest1 (int n, sigcxx::SLOT /* slot */)
   {
 	  test1_count_++;
 	  std::cout << "Signal received in OnTest1, n " << n << ", " << test1_count_ << " times." << std::endl;
   }
 
-  void OnTest2 (sigcxx::SLOT /* slot */, int n1, int n2)
+  void OnTest2 (int n1, int n2, sigcxx::SLOT /* slot */)
   {
 	  test2_count_++;
     std::cout << "Signal received in OnTest2, n1: " << n1 << " n2: " << n2 << ", " << test2_count_ << " times."
               << std::endl;
   }
 
-  virtual void OnVirtualTest (sigcxx::SLOT /* slot */, int n) override
+  virtual void OnVirtualTest (int n, sigcxx::SLOT /* slot */) override
   {
     virtualtest_count_++;
     std::cout << "Virtual test in base class, param: " << n << ", " << virtualtest_count_ << " times."
@@ -126,7 +126,7 @@ class SubConsumer: public Consumer
 
   virtual ~SubConsumer() {}
 
-  virtual void OnVirtualTest (sigcxx::SLOT /* slot */, int n) override
+  virtual void OnVirtualTest (int n, sigcxx::SLOT /* slot */) override
   {
     set_virtualtest_count(virtualtest_count() + 1);
     std::cout << "Virtual test in sub class, param: " << n << ", " << virtualtest_count() << " times."

@@ -18,11 +18,11 @@ void Observer::OnTest0(SLOT /* slot */) {
   test0_count_++;
 }
 
-void Observer::OnTest1IntegerParam(SLOT /* slot */, int n) {
+void Observer::OnTest1IntegerParam(int n, SLOT slot) {
   test1_count_++;
 }
 
-void Observer::OnTest2IntegerParams(SLOT /* slot */, int n1, int n2) {
+void Observer::OnTest2IntegerParams(int n1, int n2, SLOT) {
   test2_count_++;
 }
 
@@ -48,6 +48,6 @@ void Observer::OnTestUnbindAllAt5(SLOT slot) {
 void Observer::OnTestUnbindAllMethodAt5(SLOT slot) {
   test0_count_++;
   if (test0_count_ >= 5) {
-    UnbindAll(slot, &Observer::OnTestUnbindAllMethodAt5);
+    UnbindAll(&Observer::OnTestUnbindAllMethodAt5, slot);
   }
 }

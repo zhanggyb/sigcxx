@@ -46,7 +46,7 @@ TEST_F(Test, unbind_all2) {
   s1.signal1().connect(&o, &Observer::OnTest1IntegerParam);
   s2.signal0().connect(&o, &Observer::OnTest0);
 
-  o.UnbindAll(&Observer::OnTest1IntegerParam);
+//  o.UnbindAll(&Observer::OnTest1IntegerParam);
 
   ASSERT_TRUE((s1.signal1().count_connections() == 0) &&
       (s2.signal0().count_connections() == 1) &&
