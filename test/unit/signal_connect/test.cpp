@@ -33,6 +33,8 @@ TEST_F(Test, connect_method_once) {
  *
  */
 TEST_F(Test, connect_method_4_times) {
+  using namespace sigcxx;
+
   Subject s;
   Observer o;
 
@@ -43,7 +45,9 @@ TEST_F(Test, connect_method_4_times) {
 
   s.emit_signal1(1);    // this should call 4 times
 
-  ASSERT_TRUE(o.test1_count() == 4 && s.signal1().count_connections() == 4 && o.CountBindings() == 4);
+  ASSERT_TRUE(o.test1_count() == 4 &&
+      s.signal1().count_connections() == 4 &&
+      o.CountBindings() == 4);
 }
 
 /*

@@ -25,9 +25,9 @@ class Subject: public sigcxx::Trackable
     signal_2_int_.Emit(n1, n2);
   }
 
-  void OnTest1IntegerParam(sigcxx::SLOT slot, int n);
+  void OnTest1IntegerParam(int n, sigcxx::SLOT slot = nullptr);
 
-  void OnTest2IntegerParams(sigcxx::SLOT slot, int n1, int n2);
+  void OnTest2IntegerParams(int n1, int n2, sigcxx::SLOT slot = nullptr);
 
   inline sigcxx::SignalRef<> signal0()
   {

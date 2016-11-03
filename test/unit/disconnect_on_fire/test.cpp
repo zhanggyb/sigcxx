@@ -10,29 +10,24 @@ using namespace std;
 using sigcxx::SLOT;
 
 Test::Test()
-    : testing::Test()
-{
+    : testing::Test() {
 }
 
-Test::~Test()
-{
+Test::~Test() {
 
 }
 
-class Source
-{
+class Source {
  public:
 
-  Source () { }
-  ~Source () { }
+  Source() {}
+  ~Source() {}
 
-  void DoTest (int n = 0)
-  {
+  void DoTest(int n = 0) {
     event_.Emit(n);
   }
 
-  inline sigcxx::Signal<int>& event ()
-  {
+  inline sigcxx::Signal<int> &event() {
     return event_;
   }
 
@@ -41,37 +36,31 @@ class Source
   sigcxx::Signal<int> event_;
 };
 
-class Consumer: public sigcxx::Trackable
-{
+class Consumer : public sigcxx::Trackable {
  public:
 
-  Consumer ()
-  { }
+  Consumer() {}
 
-  virtual ~Consumer () { }
+  virtual ~Consumer() {}
 
-  void OnTestNothing (SLOT /* slot */, int /* n */)
-  {
+  void OnTestNothing(int /* n */, SLOT /* slot */) {
     // do nothing...
   }
 
-  void OnTestDisconnectFirst (SLOT slot, int n)
-  {
+  void OnTestDisconnectFirst(int n, SLOT slot) {
     UnbindOnce(slot);
     // sender->signal_base().DisconnectOnce(this, &Consumer::OnTestDisconnectFirst, 0);
   }
 
-  void OnTestDisconnectLast (SLOT slot, int n)
-  {
+  void OnTestDisconnectLast(int n, SLOT slot) {
     UnbindOnce(slot);
     // sender->signal_base().DisconnectOnce(this, &Consumer::OnTestDisconnectLast, -1);
   }
 
-  void OnTestDisconnectAll (SLOT slot, int n)
-  {
+  void OnTestDisconnectAll(int n, SLOT slot) {
     // RemoveAllInConnections(sender);
     // sender->signal_base().DisconnectAll(this, &Consumer::OnTestDisconnectAll);
-    UnbindAll(slot, &Consumer::OnTestDisconnectAll);
+    UnbindAll(&Consumer::OnTestDisconnectAll, slot);
   }
 
 };
@@ -79,8 +68,7 @@ class Consumer: public sigcxx::Trackable
 /*
  *
  */
-TEST_F(Test, disconnect_first_on_fire1)
-{
+TEST_F(Test, disconnect_first_on_fire1) {
   Source s;
   Consumer c;
 
@@ -95,8 +83,7 @@ TEST_F(Test, disconnect_first_on_fire1)
 /*
  *
  */
-TEST_F(Test, disconnect_first_on_fire2)
-{
+TEST_F(Test, disconnect_first_on_fire2) {
   Source s;
   Consumer c;
 
@@ -111,8 +98,7 @@ TEST_F(Test, disconnect_first_on_fire2)
 /*
  *
  */
-TEST_F(Test, disconnect_last_on_fire1)
-{
+TEST_F(Test, disconnect_last_on_fire1) {
   Source s;
   Consumer c;
 
@@ -127,8 +113,7 @@ TEST_F(Test, disconnect_last_on_fire1)
 /*
  *
  */
-TEST_F(Test, disconnect_last_on_fire2)
-{
+TEST_F(Test, disconnect_last_on_fire2) {
   Source s;
   Consumer c;
 
@@ -143,8 +128,7 @@ TEST_F(Test, disconnect_last_on_fire2)
 /*
  *
  */
-TEST_F(Test, disconnect_all_on_fire1)
-{
+TEST_F(Test, disconnect_all_on_fire1) {
   Source s;
   Consumer c;
 

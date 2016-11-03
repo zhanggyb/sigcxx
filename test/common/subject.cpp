@@ -13,10 +13,10 @@ Subject::~Subject() {
 
 }
 
-void Subject::OnTest1IntegerParam(SLOT slot, int n) {
+void Subject::OnTest1IntegerParam(int n, SLOT slot) {
   test1_count_++;
 }
 
-void Subject::OnTest2IntegerParams(SLOT slot, int n1, int n2) {
+void Subject::OnTest2IntegerParams(int n1, int n2, SLOT slot) {
   test2_count_++;
 }
