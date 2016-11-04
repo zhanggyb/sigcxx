@@ -81,10 +81,12 @@ Trackable::~Trackable() {
 
 void Trackable::UnbindOnce(SLOT slot) {
   // (sender && sender->token_->binding->trackable_object == this) is always true
-  details::Token *tmp = slot->token_;
-  const_cast<Slot *>(slot)->token_ = slot->token_->next;
-  delete tmp;
-  const_cast<Slot *>(slot)->skip_ = true;
+  if (slot != nullptr) {
+    details::Token *tmp = slot->token_;
+    const_cast<Slot *>(slot)->token_ = slot->token_->next;
+    delete tmp;
+    const_cast<Slot *>(slot)->skip_ = true;
+  }
 }
 
 void Trackable::UnbindAll(SLOT slot) {

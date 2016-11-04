@@ -45,6 +45,7 @@ class Slot;
 
 typedef const Slot *SLOT;
 
+/// @cond IGNORE
 namespace details {
 
 struct Token;
@@ -52,13 +53,10 @@ template<typename ... ParamTypes>
 class SignalToken;
 
 /**
- * @brief A simple structure to build a list point to signal sources
+ * @brief A simple structure works as a list node in @ref Trackable object
  */
 struct Binding {
 
-  /**
-   * @brief Constructor
-   */
   inline Binding()
       : trackable_object(nullptr),
         previous(nullptr),
@@ -66,9 +64,6 @@ struct Binding {
         token(nullptr) {
   }
 
-  /**
-   * @brief Destructor
-   */
   ~Binding();
 
   Trackable *trackable_object;
@@ -78,13 +73,11 @@ struct Binding {
 };
 
 /**
- * @brief A simple structure to build a list point to objects which consume the signals
+ * @brief A simple structure works as a list node in @ref Signal object
+ * signals
  */
 struct Token {
 
-  /**
-   * @brief Constructor
-   */
   inline Token()
       : trackable_object(nullptr),
         previous(nullptr),
@@ -92,9 +85,6 @@ struct Token {
         binding(nullptr) {
   }
 
-  /**
-   * @brief Destructor
-   */
   virtual ~Token();
 
   Trackable *trackable_object;
@@ -207,7 +197,25 @@ inline const Signal<ParamTypes...> *SignalToken<ParamTypes...>::signal() const {
 }
 
 }// namespace details
+/// @endcond
 
+/**
+ * @brief Iterator and signature to a slot method
+ *
+ * A Slot object is created and destroyed when a signal is being emitting.
+ *
+ * It has two main purpose:
+ *   - Works as an iterator
+ *   - The last parameter in a slot method
+ *
+ * A Signal holds a list of token to support multicast, when it's being
+ * emitting, it create a simple Slot object to iterate the list and call each
+ * delegate (@ref Delegate) to the slot method.
+ *
+ * @note If you want to destroy the object in a slot method, you must unbind the
+ * signal connection by giving the Slot pointer to @ref Trackable::UnbindOnce(),
+ * @ref Trackable::UnbindAll().
+ */
 class Slot {
 
   template<typename ... ParamTypes> friend
@@ -216,10 +224,15 @@ class Slot {
   class details::SignalToken;
   friend class Trackable;
 
+  Slot() = delete;
+  Slot(const Slot &orig) = delete;
+  Slot &operator=(const Slot &other) = delete;
+
  public:
 
-  ~Slot() {}
-
+  /**
+   * @brief Get the Signal object which is just calling this slot
+   */
   template<typename ... ParamTypes>
   inline Signal<ParamTypes...> *signal() const {
     return dynamic_cast<Signal<ParamTypes...> *>(token_->trackable_object);
@@ -230,13 +243,15 @@ class Slot {
   inline Slot(details::Token *token = nullptr, bool skip = false)
       : token_(token), skip_(skip) {}
 
+  inline ~Slot() {}
+
   details::Token *token_;
   bool skip_;
 
 };
 
 /**
- * @brief The basic class for observer
+ * @brief The basic class for an object which provides slot methods
  */
 class Trackable {
 
@@ -259,16 +274,31 @@ class Trackable {
     return *this;
   }
 
+  /**
+   * @brief Break the connection to a signal by given slot
+   */
   void UnbindOnce(SLOT slot);
 
+  /**
+   * @brief Break the all connections to signal(s)
+   */
   void UnbindAll(SLOT slot = nullptr);
 
+  /**
+   * @brief Break all connections to the given slot method
+   */
   template<typename T, typename ... ParamTypes>
   void UnbindAll(void (T::*method)(ParamTypes...), SLOT slot = nullptr);
 
+  /**
+   * @brief Count connections to the given slot method
+   */
   template<typename T, typename ... ParamTypes>
   std::size_t CountBindings(void (T::*method)(ParamTypes...)) const;
 
+  /**
+   * @brief Count all connections
+   */
   std::size_t CountBindings() const;
 
  protected:
@@ -393,8 +423,9 @@ size_t Trackable::CountBindings(void (T::*method)(ParamTypes...)) const {
   return count;
 }
 
-// Signal declaration:
-
+/**
+ * @brief A template class which can emit signal(s)
+ */
 template<typename ... ParamTypes>
 class Signal : public Trackable {
 
@@ -908,7 +939,7 @@ void Signal<ParamTypes...>::DisconnectAll() {
 }
 
 /**
- * @brief A reference to expose signal in an object
+ * @brief A reference to a corresponding signal
  */
 template<typename ... ParamTypes>
 class SignalRef {
@@ -917,8 +948,8 @@ class SignalRef {
 
  public:
 
-  inline SignalRef(Signal<ParamTypes...> &other)
-      : signal_(&other) {
+  inline SignalRef(Signal<ParamTypes...> &signal)
+      : signal_(&signal) {
   }
 
   inline SignalRef(const SignalRef &orig)
@@ -927,8 +958,8 @@ class SignalRef {
 
   inline ~SignalRef() {}
 
-  inline SignalRef &operator=(const SignalRef &orig) {
-    signal_ = orig.signal_;
+  inline SignalRef &operator=(const SignalRef &other) {
+    signal_ = other.signal_;
     return *this;
   }
 
@@ -987,6 +1018,10 @@ class SignalRef {
 
   inline std::size_t count_connections() const {
     return signal_->CountConnections();
+  }
+
+  inline std::size_t count_bindings() const {
+    return signal_->CountBindings();
   }
 
  private:

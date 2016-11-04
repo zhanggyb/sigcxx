@@ -25,7 +25,7 @@ if (BUILD_DOCUMENTATION)
 
     set(doxyfile_in ${CMAKE_CURRENT_SOURCE_DIR}/doc/Doxyfile.in)
     set(doxyfile ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile)
-    set(doxy_main_page ${CMAKE_CURRENT_SOURCE_DIR}/doc/main.dox)
+    set(doxy_main_page ${CMAKE_CURRENT_SOURCE_DIR}/README.md)
 
     configure_file(${doxyfile_in} ${doxyfile} @ONLY)
 
@@ -33,6 +33,12 @@ if (BUILD_DOCUMENTATION)
             COMMAND ${DOXYGEN_EXECUTABLE} ${doxyfile}
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
             COMMENT "Generating API documentation with Doxygen"
+            VERBATIM)
+    add_custom_command(TARGET doc
+            POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/doc ${CMAKE_CURRENT_BINARY_DIR}/html/doc
+            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+            COMMENT "Copy \"${CMAKE_CURRENT_SOURCE_DIR}/doc\" to \"${CMAKE_CURRENT_BINARY_DIR}/html\""
             VERBATIM)
     install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/html DESTINATION share/doc)
 endif ()

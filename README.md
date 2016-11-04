@@ -6,11 +6,19 @@ sigcxx
 [sigcxx](https://github.com/zhanggyb/sigcxx) is a lightweight, fast C++11
 signal/slot (event/delegate) framework, inspired by:
 
-- [Member Function Pointers and the Fastest Possible C++ Delegates](http://www.codeproject.com/Articles/7150/Member-Function-Pointers-and-the-Fastest-Possible)
-by Don Clugston
-- [The Impossibly Fast C++ Delegates](http://www.codeproject.com/Articles/11015/The-Impossibly-Fast-C-Delegates) by Sergey Ryazanov
-- [Fast C++ Delegate: Boost.Function 'drop-in' replacement and multicast](http://www.codeproject.com/Articles/18389/Fast-C-Delegate-Boost-Function-drop-in-replacement) by JaeWook Choi
-- [CppEvents](http://code.google.com/p/cpp-events/) by Nickolas V. Pohilets
+- [Member Function Pointers and the Fastest Possible C++
+Delegates](http://www.codeproject.com/Articles/7150/Member-Function-Pointers-and-the-Fastest-Possible),
+author: Don Clugston
+- [The Impossibly Fast C++
+  Delegates](http://www.codeproject.com/Articles/11015/The-Impossibly-Fast-C-Delegates),
+  author: Sergey Ryazanov
+
+- [Fast C++ Delegate: Boost.Function 'drop-in' replacement and
+  multicast](http://www.codeproject.com/Articles/18389/Fast-C-Delegate-Boost-Function-drop-in-replacement),
+  author: JaeWook Choi
+
+- [CppEvents](http://code.google.com/p/cpp-events/), author: Nickolas
+  V. Pohilets
 
 Originally [signals and slots](http://doc.qt.io/qt-5/signalsandslots.html) is a
 language construct introduced in Qt for communication between objects. In other
@@ -91,9 +99,8 @@ public:
 };
 ```
 
-The slot method must have the last argument of `sigcxx::SLOT slot`, the
-following is the arguments received from a corresponding signal. You can define
-arbitray number of arguments.
+Slot method can have arbitray number of arguments, but must ended with
+`sigcxx::SLOT`.
 
 ```c++
 class Observer: public Widget
@@ -101,8 +108,30 @@ class Observer: public Widget
 public:
   // ...
 
-  void onUpdate1 (sigcxx::SLOT slot);
+  void onUpdate1 (sigcxx::SLOT slot = nullptr);
   void onUpdate2 (const Foo* param, sigcxx::SLOT slot = nullptr);
+};
+```
+
+The `SLOT` here is just a typedef:
+
+```c++
+typedef const Slot *SLOT;
+```
+
+It's recommended to give it a default value of `nullptr`. You can use a macro to
+make the code cleaner:
+
+```c++
+#define __SLOT__ sigcxx::SLOT slot = nullptr
+
+class Observer: public sigcxx::Trackable
+{
+public:
+  // ...
+
+  void onUpdate3 (__SLOT__);
+  void onUpdate4 (int a, int b, const Foo* foo, __SLOT__);
 };
 ```
 
@@ -164,9 +193,9 @@ subject.notify2().connect(&observer2, &Observer::onUpdate2);
 
 Now when any event in `subject` is emitted, it will call corresponding method in
 Observer objects. Note that the template arguments in the signal must match the
-arguments of a slot method, except the first `sigcxx::SLOT`, it's just a
-`typedef` of `const sigcxx::Slot *`, reserved to work as a signature to avoid
-any method to be a slot and has special usage in runtime.
+arguments of a slot method, except the last `sigcxx::SLOT`, it's reserved to
+work as a signature to avoid any method to be a slot and has special usage in
+runtime.
 
 A signal supports multicast, can be connected to a virtual (even pure virtual)
 function, it can also be disconnected manually or automatically when observer

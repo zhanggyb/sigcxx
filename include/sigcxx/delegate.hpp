@@ -32,13 +32,13 @@
 namespace sigcxx {
 
 /// @cond IGNORE
+
 // generic classes to calculate method pointer:
 class GenericBase1 {};
 class GenericBase2 {};
 class GenericMultiInherit : GenericBase1, GenericBase2 {};
 
 typedef void (GenericMultiInherit::*GenericMethodPointer)();
-/// @endcond
 
 // A forward declaration
 // This is the key to use the template format of Delegate<return_type (args...)>
@@ -47,6 +47,8 @@ class Delegate;
 
 template<typename _Signature>
 class DelegateRef;
+
+/// @endcond
 
 /**
  * @brief Delegate with variadic template
