@@ -40,7 +40,7 @@ TEST_F(Test, sigcxx_emit)
   Subject s;
   Observer c;
 
-  s.signal1().connect(&c, &Observer::OnTest1IntegerParam);
+  s.signal1().Connect(&c, &Observer::OnTest1IntegerParam);
 
   for(int i = 0; i < TEST_CYCLE_NUM; i++) {
     s.emit_signal1(i);
@@ -66,7 +66,7 @@ TEST_F(Test, sigcxx_connect)
   Observer c;
 
   for(int i = 0; i < TEST_CYCLE_NUM; i++) {
-    s.signal1().connect(&c, &Observer::OnTest1IntegerParam);
+    s.signal1().Connect(&c, &Observer::OnTest1IntegerParam);
   }
   s.emit_signal1(1);
   ASSERT_TRUE(true);

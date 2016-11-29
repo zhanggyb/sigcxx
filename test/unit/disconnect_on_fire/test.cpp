@@ -48,12 +48,12 @@ class Consumer : public sigcxx::Trackable {
   }
 
   void OnTestDisconnectFirst(int n, SLOT slot) {
-    UnbindOnce(slot);
+    Unbind(slot);
     // sender->signal_base().DisconnectOnce(this, &Consumer::OnTestDisconnectFirst, 0);
   }
 
   void OnTestDisconnectLast(int n, SLOT slot) {
-    UnbindOnce(slot);
+    Unbind(slot);
     // sender->signal_base().DisconnectOnce(this, &Consumer::OnTestDisconnectLast, -1);
   }
 

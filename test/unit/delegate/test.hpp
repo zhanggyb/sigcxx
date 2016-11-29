@@ -27,7 +27,7 @@ class TestClassBase {
 
   void TestPrivateMethod() {
     // delegate to private method only within class method
-    sigcxx::Delegate<void()> dp = sigcxx::Delegate<void()>::from_method(this, &TestClassBase::MethodInPrivate);
+    sigcxx::Delegate<void()> dp = sigcxx::Delegate<void()>::FromMethod(this, &TestClassBase::MethodInPrivate);
   }
 
   int MethodWithReturn(int n) {

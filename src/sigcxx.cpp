@@ -79,7 +79,7 @@ Trackable::~Trackable() {
   UnbindAll();
 }
 
-void Trackable::UnbindOnce(SLOT slot) {
+void Trackable::Unbind(SLOT slot) {
   // (sender && sender->token_->binding->trackable_object == this) is always true
   if (slot != nullptr) {
     details::Token *tmp = slot->token_;

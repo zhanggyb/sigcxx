@@ -27,14 +27,14 @@ void Observer::OnTest2IntegerParams(int n1, int n2, SLOT) {
 }
 
 void Observer::OnTestDestroy(SLOT slot) {
-  UnbindOnce(slot); // call this before delete self
+  Unbind(slot); // call this before delete self
   delete this;
 }
 
 void Observer::OnTestUnbindOnceAt5(SLOT slot) {
   test0_count_++;
   if (test0_count_ >= 5) {
-    UnbindOnce(slot);
+    Unbind(slot);
   }
 }
 

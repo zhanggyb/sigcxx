@@ -64,17 +64,17 @@ class Delegate<ReturnType(ParamTypes...)> {
 
   struct PointerData {
 
-    inline PointerData()
+    PointerData()
         : object_pointer(nullptr),
           method_stub(nullptr),
           method_pointer(nullptr) {}
 
-    inline PointerData(const PointerData &orig)
+    PointerData(const PointerData &orig)
         : object_pointer(orig.object_pointer),
           method_stub(orig.method_stub),
           method_pointer(orig.method_pointer) {}
 
-    inline PointerData &operator=(const PointerData &orig) {
+    PointerData &operator=(const PointerData &orig) {
       object_pointer = orig.object_pointer;
       method_stub = orig.method_stub;
       method_pointer = orig.method_pointer;
@@ -97,8 +97,8 @@ class Delegate<ReturnType(ParamTypes...)> {
  public:
 
   template<typename T>
-  static inline Delegate from_method(T *object_ptr,
-                                     ReturnType (T::*method)(ParamTypes...)) {
+  static inline Delegate FromMethod(T *object_ptr,
+                                    ReturnType (T::*method)(ParamTypes...)) {
     typedef ReturnType (T::*TMethod)(ParamTypes...);
 
     Delegate d;
@@ -110,8 +110,8 @@ class Delegate<ReturnType(ParamTypes...)> {
   }
 
   template<typename T>
-  static inline Delegate from_method(T *object_ptr,
-                                     ReturnType (T::*method)(ParamTypes...) const) {
+  static inline Delegate FromMethod(T *object_ptr,
+                                    ReturnType (T::*method)(ParamTypes...) const) {
     typedef ReturnType (T::*TMethod)(ParamTypes...) const;
 
     Delegate d;
@@ -122,10 +122,10 @@ class Delegate<ReturnType(ParamTypes...)> {
     return d;
   }
 
-  inline Delegate() {}
+  Delegate() {}
 
   template<typename T>
-  inline Delegate(T *object_ptr, ReturnType (T::*method)(ParamTypes...)) {
+  Delegate(T *object_ptr, ReturnType (T::*method)(ParamTypes...)) {
     typedef ReturnType (T::*TMethod)(ParamTypes...);
 
     data_.object_pointer = object_ptr;
@@ -134,7 +134,7 @@ class Delegate<ReturnType(ParamTypes...)> {
   }
 
   template<typename T>
-  inline Delegate(T *object_ptr, ReturnType (T::*method)(ParamTypes...) const) {
+  Delegate(T *object_ptr, ReturnType (T::*method)(ParamTypes...) const) {
     typedef ReturnType (T::*TMethod)(ParamTypes...) const;
 
     data_.object_pointer = object_ptr;
@@ -142,35 +142,35 @@ class Delegate<ReturnType(ParamTypes...)> {
     data_.method_pointer = reinterpret_cast<GenericMethodPointer>(method);
   }
 
-  inline Delegate(const Delegate &orig)
+  Delegate(const Delegate &orig)
       : data_(orig.data_) {}
 
-  inline ~Delegate() {}
+  ~Delegate() {}
 
-  inline void reset() {
+  void Reset() {
     memset(&data_, 0, sizeof(PointerData));
   }
 
-  inline Delegate &operator=(const Delegate &orig) {
+  Delegate &operator=(const Delegate &orig) {
     data_ = orig.data_;
     return *this;
   }
 
-  inline ReturnType operator()(ParamTypes... Args) const {
+  ReturnType operator()(ParamTypes... Args) const {
     return (*data_.method_stub)(data_.object_pointer, data_.method_pointer, Args...);
   }
 
-  inline ReturnType invoke(ParamTypes... Args) const {
+  ReturnType Invoke(ParamTypes... Args) const {
     return (*data_.method_stub)(data_.object_pointer, data_.method_pointer, Args...);
   }
 
-  inline operator bool() const {
+  operator bool() const {
     // Support method delegate only, no need to check other members:
     return data_.method_pointer != nullptr;
   }
 
   template<typename T>
-  inline bool equal(T *object_ptr, ReturnType(T::*method)(ParamTypes...)) const {
+  bool Equal(T *object_ptr, ReturnType(T::*method)(ParamTypes...)) const {
     typedef ReturnType (T::*TMethod)(ParamTypes...);
 
     return (data_.object_pointer == object_ptr) &&
@@ -179,7 +179,7 @@ class Delegate<ReturnType(ParamTypes...)> {
   }
 
   template<typename T>
-  inline bool equal(T *object_ptr, ReturnType(T::*method)(ParamTypes...) const) const {
+  bool Equal(T *object_ptr, ReturnType(T::*method)(ParamTypes...) const) const {
     typedef ReturnType (T::*TMethod)(ParamTypes...) const;
 
     return (data_.object_pointer == object_ptr) &&
@@ -249,44 +249,44 @@ class DelegateRef<ReturnType(ParamTypes...)> {
 
   DelegateRef() = delete;
 
-  inline DelegateRef(Delegate<ReturnType(ParamTypes...)> &delegate)
+  DelegateRef(Delegate<ReturnType(ParamTypes...)> &delegate)
       : delegate_(&delegate) {}
 
-  inline DelegateRef(const DelegateRef &orig)
+  DelegateRef(const DelegateRef &orig)
       : delegate_(orig.delegate_) {}
 
-  inline ~DelegateRef() {}
+  ~DelegateRef() {}
 
-  inline DelegateRef &operator=(const DelegateRef &orig) {
+  DelegateRef &operator=(const DelegateRef &orig) {
     delegate_ = orig.delegate_;
     return *this;
   }
 
   template<typename T>
-  inline void set(T *obj, ReturnType (T::*method)(ParamTypes...)) {
-    *delegate_ = Delegate<ReturnType(ParamTypes...)>::template from_method<T>(obj, method);
+  void Set(T *obj, ReturnType (T::*method)(ParamTypes...)) {
+    *delegate_ = Delegate<ReturnType(ParamTypes...)>::template FromMethod<T>(obj, method);
   }
 
   template<typename T>
-  inline void set(T *obj, ReturnType (T::*method)(ParamTypes...) const) {
-    *delegate_ = Delegate<ReturnType(ParamTypes...)>::template from_method<T>(obj, method);
+  void Set(T *obj, ReturnType (T::*method)(ParamTypes...) const) {
+    *delegate_ = Delegate<ReturnType(ParamTypes...)>::template FromMethod<T>(obj, method);
   }
 
-  inline void reset() {
-    delegate_->reset();
-  }
-
-  template<typename T>
-  inline bool is_delegated_to(T *obj, ReturnType (T::*method)(ParamTypes...)) {
-    return delegate_->equal(obj, method);
+  void Reset() {
+    delegate_->Reset();
   }
 
   template<typename T>
-  inline bool is_delegated_to(T *obj, ReturnType (T::*method)(ParamTypes...) const) {
-    return delegate_->equal(obj, method);
+  bool IsDelegatedTo(T *obj, ReturnType (T::*method)(ParamTypes...)) {
+    return delegate_->Equal(obj, method);
   }
 
-  inline operator bool() const {
+  template<typename T>
+  bool IsDelegatedTo(T *obj, ReturnType (T::*method)(ParamTypes...) const) {
+    return delegate_->Equal(obj, method);
+  }
+
+  operator bool() const {
     return (*delegate_);
   }
 
