@@ -197,7 +197,7 @@ void SignalToken<ParamTypes...>::Invoke(ParamTypes... Args) {
  * delegate (@ref Delegate) to the slot method.
  *
  * @note If you want to destroy the object in a slot method, you must unbind the
- * signal connection by giving the Slot pointer to @ref Trackable::UnbindOnce(),
+ * signal connection by giving the Slot pointer to @ref Trackable::Unbind(),
  * @ref Trackable::UnbindAll().
  */
 class Slot {
@@ -222,6 +222,10 @@ class Slot {
     return dynamic_cast<Signal<ParamTypes...> *>(token_->trackable_object);
   }
 
+  /**
+   * @brief The trackable object in which the slot method is being called
+   * @return The trackable object receiving signal
+   */
   Trackable *object() const {
     return token_->binding->trackable_object;
   }
@@ -289,12 +293,6 @@ class Trackable {
 
   /**
     * @brief Break all connections to the given slot method of this object
-    *
-    * When call this in a SLOT, pass the slot parameter to avoid damaging the iterator pointer
-    * used in Slot object.
-    *
-    * @note You do not need to pass the slot parameter when calling this method on another object.
-    * (slot->object() != this)
     */
   template<typename T, typename ... ParamTypes>
   void UnbindAll(void (T::*method)(ParamTypes...));
@@ -635,8 +633,8 @@ void Signal<ParamTypes...>::DisconnectAll(SLOT slot, T *obj, void (T::*method)(P
 
   while (p) {
     tmp = p->previous;
-    next = p->next;
     if (p == slot->token_) {
+      next = p->next;
       found = true;
     }
     if (p->binding->trackable_object == obj) {
@@ -645,12 +643,11 @@ void Signal<ParamTypes...>::DisconnectAll(SLOT slot, T *obj, void (T::*method)(P
         delete delegate_token;
       }
     }
-    if (found) {
-      slot->skip_ = true;
-      slot->token_ = next;
-      found = false;
-    }
     p = tmp;
+  }
+  if (found) {
+    slot->skip_ = true;
+    slot->token_ = next;
   }
 }
 
@@ -688,8 +685,8 @@ void Signal<ParamTypes...>::DisconnectAll(SLOT slot, Signal<ParamTypes...> &othe
 
   while (p) {
     tmp = p->previous;
-    next = p->next;
     if (p == slot->token_) {
+      next = p->next;
       found = true;
     }
     if (p->binding->trackable_object == (&other)) {
@@ -698,12 +695,11 @@ void Signal<ParamTypes...>::DisconnectAll(SLOT slot, Signal<ParamTypes...> &othe
         delete signal_token;
       }
     }
-    if (found) {
-      slot->skip_ = true;
-      slot->token_ = next;
-      found = false;
-    }
     p = tmp;
+  }
+  if (found) {
+    slot->skip_ = true;
+    slot->token_ = next;
   }
 }
 
@@ -806,7 +802,6 @@ int Signal<ParamTypes...>::Disconnect(SLOT slot,
     if (found) {
       slot->token_ = next;
       slot->skip_ = true;
-      found = false;
     }
   } else {
     p = last_token_;
@@ -835,7 +830,6 @@ int Signal<ParamTypes...>::Disconnect(SLOT slot,
     if (found) {
       slot->token_ = next;
       slot->skip_ = true;
-      found = false;
     }
   }
 
@@ -937,7 +931,6 @@ int Signal<ParamTypes...>::Disconnect(SLOT slot, Signal<ParamTypes...> &other, i
     if (found) {
       slot->token_ = next;
       slot->skip_ = true;
-      found = false;
     }
   } else {
     p = last_token_;
@@ -966,7 +959,6 @@ int Signal<ParamTypes...>::Disconnect(SLOT slot, Signal<ParamTypes...> &other, i
     if (found) {
       slot->token_ = next;
       slot->skip_ = true;
-      found = false;
     }
   }
 
@@ -1294,17 +1286,34 @@ class SignalRef {
     signal_->DisconnectAll(signal);
   }
 
+  void DisconnectAll(SLOT slot, Signal<ParamTypes...> &signal) {
+    signal_->DisconnectAll(slot, signal);
+  }
+
   template<typename T>
   int Disconnect(T *obj, void (T::*method)(ParamTypes..., SLOT), int start_pos = -1, int counts = 1) {
     return signal_->Disconnect(obj, method, start_pos, counts);
+  }
+
+  template<typename T>
+  int Disconnect(SLOT slot, T *obj, void (T::*method)(ParamTypes..., SLOT), int start_pos = -1, int counts = 1) {
+    return signal_->Disconnect(slot, obj, method, start_pos, counts);
   }
 
   int Disconnect(Signal<ParamTypes...> &signal, int start_pos = -1, int counts = 1) {
     return signal_->Disconnect(signal, start_pos, counts);
   }
 
+  int Disconnect(SLOT slot, Signal<ParamTypes...> &signal, int start_pos = -1, int counts = 1) {
+    return signal_->Disconnect(slot, signal, start_pos, counts);
+  }
+
   void DisconnectAll() {
     signal_->DisconnectAll();
+  }
+
+  void DisconnectAll(SLOT slot) {
+    signal_->DisconnectAll(slot);
   }
 
   template<typename T>

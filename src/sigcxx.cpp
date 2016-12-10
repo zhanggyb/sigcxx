@@ -86,7 +86,7 @@ void Trackable::Unbind(SLOT slot) {
     fprintf(stderr, "No need to pass \'slot\' parameter to a SLOT method in another object.\n");
   }
 #endif
-  if ((slot->token_->binding->trackable_object == this)) {
+  if (slot->token_->binding->trackable_object == this) {
     details::Token *tmp = slot->token_;
     slot->token_ = slot->token_->next;
     delete tmp;

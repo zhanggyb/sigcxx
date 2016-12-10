@@ -7,7 +7,7 @@
 #include <iostream>
 
 using namespace std;
-using sigcxx::SLOT;
+using namespace sigcxx;
 
 Test::Test()
     : testing::Test() {
