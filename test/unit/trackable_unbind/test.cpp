@@ -157,9 +157,9 @@ TEST_F(Test, unbind_all_in_callback2) {
     s1.emit_signal0();
   }
 
-  ASSERT_TRUE((o.CountBindings() == 5) &&
+  ASSERT_TRUE((o.CountBindings() == 0) &&
       (s1.signal0().CountConnections() == 0) &&
-      (s2.signal0().CountConnections() == 5));
+      (s2.signal0().CountConnections() == 0));
 }
 
 TEST_F(Test, unbind_all_method_in_callback) {
