@@ -39,6 +39,15 @@ class Observer: public sigcxx::Trackable
     return test2_count_;
   }
 
+  template<typename T, typename ... ParamTypes>
+  void unbind_all(void (T::*method)(ParamTypes...)) {
+    UnbindAll(method);
+  };
+
+  void unbind_all() {
+    UnbindAll();
+  }
+
  private:
 
   size_t test0_count_;

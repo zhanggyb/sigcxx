@@ -203,3 +203,75 @@ TEST_F(Test, disconnect_all) {
 
   ASSERT_TRUE(o.test1_count() == 0 && s.signal1().CountConnections() == 0 && o.CountBindings() == 0);
 }
+
+/*
+ *
+ */
+TEST_F(Test, disconnect_no_check_1) {
+  Subject s;
+  Observer o;
+
+  s.signal1().Connect(&o, &Observer::OnTest1IntegerParam);
+  s.signal1().Connect(&o, &Observer::OnTest1IntegerParam);
+  s.signal1().Connect(&o, &Observer::OnTest1IntegerParam);
+  s.signal1().Connect(&o, &Observer::OnTest1IntegerParam);
+  s.signal1().Connect(&o, &Observer::OnTest1IntegerParam);
+
+  s.signal1().Disconnect(-1, 2);
+
+  ASSERT_TRUE(s.signal1().CountConnections() == 3 && o.CountBindings() == 3);
+}
+
+/*
+ *
+ */
+TEST_F(Test, disconnect_no_check_2) {
+  Subject s;
+  Observer o;
+
+  s.signal1().Connect(&o, &Observer::OnTest1IntegerParam);
+  s.signal1().Connect(&o, &Observer::OnTest1IntegerParam);
+  s.signal1().Connect(&o, &Observer::OnTest1IntegerParam);
+  s.signal1().Connect(&o, &Observer::OnTest1IntegerParam);
+  s.signal1().Connect(&o, &Observer::OnTest1IntegerParam);
+
+  s.signal1().Disconnect(0, 2);
+
+  ASSERT_TRUE(s.signal1().CountConnections() == 3 && o.CountBindings() == 3);
+}
+
+/*
+ *
+ */
+TEST_F(Test, disconnect_no_check_3) {
+  Subject s;
+  Observer o;
+
+  s.signal1().Connect(&o, &Observer::OnTest1IntegerParam);
+  s.signal1().Connect(&o, &Observer::OnTest1IntegerParam);
+  s.signal1().Connect(&o, &Observer::OnTest1IntegerParam);
+  s.signal1().Connect(&o, &Observer::OnTest1IntegerParam);
+  s.signal1().Connect(&o, &Observer::OnTest1IntegerParam);
+
+  s.signal1().Disconnect(-1, 6);  // by giving a very big counts, this is the same as DisconnectAll()
+
+  ASSERT_TRUE(s.signal1().CountConnections() == 0 && o.CountBindings() == 0);
+}
+
+/*
+ *
+ */
+TEST_F(Test, disconnect_no_check_4) {
+  Subject s;
+  Observer o;
+
+  s.signal1().Connect(&o, &Observer::OnTest1IntegerParam);
+  s.signal1().Connect(&o, &Observer::OnTest1IntegerParam);
+  s.signal1().Connect(&o, &Observer::OnTest1IntegerParam);
+  s.signal1().Connect(&o, &Observer::OnTest1IntegerParam);
+  s.signal1().Connect(&o, &Observer::OnTest1IntegerParam);
+
+  s.signal1().Disconnect(-1, -2); // by giving a negative of last parameter, this is the same as DisconnectAll()
+
+  ASSERT_TRUE(s.signal1().CountConnections() == 0 && o.CountBindings() == 0);
+}

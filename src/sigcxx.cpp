@@ -80,18 +80,12 @@ Trackable::~Trackable() {
 }
 
 void Trackable::Unbind(SLOT slot) {
-  if (nullptr == slot) return;
-#ifdef DEBUG
-  if (slot->token_->binding->trackable_object != this) {
-    fprintf(stderr, "No need to pass \'slot\' parameter to a SLOT method in another object.\n");
-  }
-#endif
-  if (slot->token_->binding->trackable_object == this) {
-    details::Token *tmp = slot->token_;
-    slot->token_ = slot->token_->next;
-    delete tmp;
-    slot->skip_ = true;
-  }
+  if ((nullptr == slot) || (slot->token_->binding->trackable_object != this)) return;
+
+  details::Token *tmp = slot->token_;
+  slot->token_ = slot->token_->next;
+  delete tmp;
+  slot->skip_ = true;
 }
 
 void Trackable::UnbindAll() {
@@ -111,11 +105,10 @@ void Trackable::UnbindAll(SLOT slot) {
     return;
   }
 
-#ifdef DEBUG
-  if (slot->token_->binding->trackable_object != this) {
-    fprintf(stderr, "No need to pass \'slot\' parameter to a SLOT method in another object.\n");
-  }
-#endif
+  /* Check if the slot points to this object is being using, if is,
+   * move the iterator of token to next until it points to another one,
+   * then it's save to remove all bindings to signals
+   */
   details::Token *tmp = nullptr;
   while (slot->token_->binding->trackable_object == this) {
     tmp = slot->token_;

@@ -31,7 +31,6 @@
 #include "delegate.hpp"
 
 #ifdef DEBUG
-#include <cstdio>
 #include <cassert>
 #endif
 
@@ -267,11 +266,24 @@ class Trackable {
   }
 
   /**
+   * @brief Count connections to the given slot method
+   */
+  template<typename T, typename ... ParamTypes>
+  std::size_t CountBindings(void (T::*method)(ParamTypes...)) const;
+
+  /**
+   * @brief Count all connections
+   */
+  std::size_t CountBindings() const;
+
+ protected:
+
+  /**
    * @brief Break the connection to a signal by given slot
    *
    * In SLOT you should use this method instead of Disconnect() to support 'disconnect on emit'.
    *
-   * This method only works once.
+   * You should make sure this method is only called once.
    */
   void Unbind(SLOT slot);
 
@@ -308,19 +320,6 @@ class Trackable {
    */
   template<typename T, typename ... ParamTypes>
   void UnbindAll(SLOT slot, void (T::*method)(ParamTypes...));
-
-  /**
-   * @brief Count connections to the given slot method
-   */
-  template<typename T, typename ... ParamTypes>
-  std::size_t CountBindings(void (T::*method)(ParamTypes...)) const;
-
-  /**
-   * @brief Count all connections
-   */
-  std::size_t CountBindings() const;
-
- protected:
 
   virtual void AuditDestroyingToken(details::Token *token) {}
 
@@ -393,11 +392,6 @@ void Trackable::UnbindAll(SLOT slot, void (T::*method)(ParamTypes...)) {
     return;
   }
 
-#ifdef DEBUG
-  if (slot->token_->binding->trackable_object != this) {
-    fprintf(stderr, "No need to pass \'slot\' parameter to a SLOT method in another object.\n");
-  }
-#endif
   details::DelegateToken<ParamTypes...> *delegate_token = nullptr;
   details::Token *tmp = nullptr;
   while (slot->token_->binding->trackable_object == this) {
@@ -517,6 +511,26 @@ class Signal : public Trackable {
   int Disconnect(SLOT slot, Signal<ParamTypes...> &other, int start_pos = -1, int counts = 1);
 
   /**
+   * @brief Disconnect any kind of connections from the start position
+   * @param start_pos
+   * @param counts How many connections to be break, if it's negative or a very big number,
+   *        this is the same as DisconnectAll()
+   * @return
+   */
+  int Disconnect(int start_pos = -1, int counts = 1);
+
+  /**
+   * @brief Disconnect any kind of connections from the start position
+   * @param slot
+   * @param start_pos
+   * @param counts
+   * @return
+   *
+   * @note This is used in a slot method
+   */
+  int Disconnect(SLOT slot, int start_pos = -1, int counts = 1);
+
+  /**
    * @brief Disconnect all
    */
   void DisconnectAll();
@@ -622,7 +636,7 @@ void Signal<ParamTypes...>::DisconnectAll(SLOT slot, T *obj, void (T::*method)(P
     return;
   }
 
-  // This signal is emitting, a void impact the iterator in the slot object
+  // This signal is emitting, avoid impact the iterator in the slot object
 
   details::DelegateToken<ParamTypes..., SLOT> *delegate_token = nullptr;
   details::Token *p = last_token_;
@@ -953,6 +967,113 @@ int Signal<ParamTypes...>::Disconnect(SLOT slot, Signal<ParamTypes...> &other, i
           delete p;
         }
       }
+      if (counts == 0) break;
+      p = tmp;
+    }
+    if (found) {
+      slot->token_ = next;
+      slot->skip_ = true;
+    }
+  }
+
+  return ret_count;
+}
+
+template<typename ... ParamTypes>
+int Signal<ParamTypes...>::Disconnect(int start_pos, int counts) {
+  details::Token *p = nullptr;
+  details::Token *tmp = nullptr;
+  int ret_count = 0;
+
+  if (start_pos >= 0) {
+    p = first_token_;
+    while (p && (start_pos > 0)) {
+      p = p->next;
+      start_pos--;
+    }
+
+    while (p) {
+      tmp = p->next;
+      ret_count++;
+      counts--;
+      delete p;
+      if (counts == 0) break;
+      p = tmp;
+    }
+
+  } else {
+    p = last_token_;
+    while (p && (start_pos < -1)) {
+      p = p->previous;
+      start_pos++;
+    }
+
+    while (p) {
+      tmp = p->previous;
+      ret_count++;
+      counts--;
+      delete p;
+      if (counts == 0) break;
+      p = tmp;
+    }
+
+  }
+
+  return ret_count;
+}
+
+template<typename ... ParamTypes>
+int Signal<ParamTypes...>::Disconnect(SLOT slot, int start_pos, int counts) {
+  if ((nullptr == slot) || (slot->token_->trackable_object != this)) {
+    return Disconnect(start_pos, counts);
+  }
+
+  details::Token *p = nullptr;
+  details::Token *tmp = nullptr;
+  int ret_count = 0;
+
+  bool found = false;
+  details::Token *next = nullptr;
+
+  if (start_pos >= 0) {
+    p = first_token_;
+    while (p && (start_pos > 0)) {
+      p = p->next;
+      start_pos--;
+    }
+
+    while (p) {
+      tmp = p->next;
+      if (p == slot->token_) {
+        found = true;
+      }
+      ret_count++;
+      counts--;
+      delete p;
+      next = tmp;
+      if (counts == 0) break;
+      p = tmp;
+    }
+    if (found) {
+      slot->token_ = next;
+      slot->skip_ = true;
+    }
+  } else {
+    p = last_token_;
+    while (p && (start_pos < -1)) {
+      p = p->previous;
+      start_pos++;
+    }
+
+    while (p) {
+      tmp = p->previous;
+      if (p == slot->token_) {
+        next = p->next;
+        found = true;
+      }
+      ret_count++;
+      counts--;
+      delete p;
       if (counts == 0) break;
       p = tmp;
     }
@@ -1306,6 +1427,14 @@ class SignalRef {
 
   int Disconnect(SLOT slot, Signal<ParamTypes...> &signal, int start_pos = -1, int counts = 1) {
     return signal_->Disconnect(slot, signal, start_pos, counts);
+  }
+
+  int Disconnect(int start_pos = -1, int counts = 1) {
+    return signal_->Disconnect(start_pos, counts);
+  }
+
+  int Disconnect(SLOT slot, int start_pos = -1, int counts = 1) {
+    return signal_->Disconnect(slot, start_pos, counts);
   }
 
   void DisconnectAll() {

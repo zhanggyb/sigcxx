@@ -34,6 +34,15 @@ class Consumer : public sigcxx::Trackable {
 
   void OnTestDisconnect2(SLOT slot);
 
+  template<typename T, typename ... ParamTypes>
+  void unbind_all(void (T::*method)(ParamTypes...)) {
+    UnbindAll(method);
+  };
+
+  void unbind_all() {
+    UnbindAll();
+  }
+
   int test;
 
   bool done;
@@ -118,7 +127,7 @@ TEST_F(Test, disconnect_1) {
 TEST_F(Test, disconnect_2) {
 
   sig1.DisconnectAll();
-  consumer.UnbindAll();
+  consumer.unbind_all();
   consumer.done = false;
 
   // 5 connection
@@ -138,7 +147,7 @@ TEST_F(Test, disconnect_2) {
 TEST_F(Test, disconnect_3) {
 
   sig1.DisconnectAll();
-  consumer.UnbindAll();
+  consumer.unbind_all();
   consumer.done = false;
 
   // 5 connection
@@ -158,7 +167,7 @@ TEST_F(Test, disconnect_3) {
 TEST_F(Test, disconnect_4) {
 
   sig1.DisconnectAll();
-  consumer.UnbindAll();
+  consumer.unbind_all();
   consumer.done = false;
 
   // 5 connection
@@ -178,7 +187,7 @@ TEST_F(Test, disconnect_4) {
 TEST_F(Test, disconnect_5) {
 
   sig1.DisconnectAll();
-  consumer.UnbindAll();
+  consumer.unbind_all();
   consumer.done = false;
 
   // 5 connection
@@ -198,7 +207,7 @@ TEST_F(Test, disconnect_5) {
 TEST_F(Test, disconnect_6) {
 
   sig1.DisconnectAll();
-  consumer.UnbindAll();
+  consumer.unbind_all();
   consumer.done = false;
 
   // 5 connection
