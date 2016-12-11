@@ -59,13 +59,13 @@ class Consumer: public sigcxx::Trackable
 
   void DisconnectAll ();
 
-  void OnTest1 (int n, const Slot* slot = nullptr)
+  void OnTest1 (int n, Slot* slot = nullptr)
   {
     test1_count_++;
     //std::cout << "Signal received in OnTest1, n " << n << ", " << test1_count_ << " times." << std::endl;
   }
 
-  void OnTest2 (int n1, int n2, const Slot* slot = nullptr)
+  void OnTest2 (int n1, int n2, Slot* slot = nullptr)
   {
     test2_count_++;
     //std::cout << "Signal received in OnTest2, n1: " << n1 << " n2: " << n2 << ", " << test2_count_ << " times."

@@ -129,8 +129,8 @@ TEST_F(Test, delegate_ref_1) {
 
   ASSERT_TRUE(r1 && r2);
 
-  bool result1 = r1.IsDelegatedTo(&obj1, &TestClassBase::Method1);
-  bool result2 = r2.IsDelegatedTo(&obj1, &TestClassBase::ConstMethod1);
+  bool result1 = r1.IsAssignedTo(&obj1, &TestClassBase::Method1);
+  bool result2 = r2.IsAssignedTo(&obj1, &TestClassBase::ConstMethod1);
 
   ASSERT_TRUE(result1 && result2);
 

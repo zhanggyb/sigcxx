@@ -13,6 +13,7 @@ add_subdirectory(signal_check_connection)
 add_subdirectory(signal_disconnect)
 add_subdirectory(signal_virtual)
 add_subdirectory(disconnect_on_fire)
+add_subdirectory(disconnect_with_slot)
 add_subdirectory(compare_boost_signal2)
 add_subdirectory(thread_safe)
 

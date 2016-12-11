@@ -116,7 +116,7 @@ public:
 The `SLOT` here is just a typedef:
 
 ```c++
-typedef const Slot *SLOT;
+typedef Slot *SLOT;
 ```
 
 It's recommended to give it a default value of `nullptr`. You can use a macro to
@@ -178,7 +178,7 @@ private:
 
 ### Connect signals when you want
 
-Use the `connect` method of `sigcxx::SignalRef<>`:
+Use the `Connect` method of `sigcxx::SignalRef<>`:
 
 ```c++
 Subject subject;
@@ -187,8 +187,8 @@ Observer observer2;
 
 // ...
 
-subject.notify1().connect(&observer1, &Observer::onUpdate1);
-subject.notify2().connect(&observer2, &Observer::onUpdate2);
+subject.notify1().Connect(&observer1, &Observer::onUpdate1);
+subject.notify2().Connect(&observer2, &Observer::onUpdate2);
 ```
 
 Now when any event in `subject` is emitted, it will call corresponding method in
