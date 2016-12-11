@@ -35,6 +35,9 @@
 #endif
 
 #ifndef __SLOT__
+/**
+ * @brief A helper macro to define a slot parameter with default nullptr
+ */
 #define __SLOT__ SLOT slot = nullptr
 #endif
 
@@ -76,8 +79,7 @@ struct Binding {
 };
 
 /**
- * @brief A simple structure works as a list node in @ref Signal object
- * signals
+ * @brief A simple structure works as a list node in @ref Signal object signals
  */
 struct Token {
 
@@ -192,8 +194,8 @@ void SignalToken<ParamTypes...>::Invoke(ParamTypes... Args) {
  *   - The last parameter in a slot method
  *
  * A Signal holds a list of token to support multicast, when it's being
- * emitting, it create a simple Slot object to iterate the list and call each
- * delegate (@ref Delegate) to the slot method.
+ * emitting, it create a simple Slot object and use it as an iterate and call
+ * each delegate (@ref Delegate) to the slot method or another signal.
  *
  * @note If you want to destroy the object in a slot method, you must unbind the
  * signal connection by giving the Slot pointer to @ref Trackable::Unbind(),
@@ -281,7 +283,8 @@ class Trackable {
   /**
    * @brief Break the connection to a signal by given slot
    *
-   * In SLOT you should use this method instead of Disconnect() to support 'disconnect on emit'.
+   * In SLOT you should use this method instead of Disconnect() to support
+   * 'disconnect on emit'.
    *
    * You should make sure this method is only called once.
    */
@@ -295,11 +298,11 @@ class Trackable {
   /**
    * @brief Break the all connections to this object
    *
-   * When call this in a SLOT, pass the slot parameter to avoid damaging the iterator pointer
-   * used in Slot object.
+   * When call this in a SLOT, pass the slot parameter to avoid damaging the
+   * iterator pointer used in Slot object.
    *
-   * @note You do not need to pass the slot parameter when calling this method on another object.
-   * (slot->object() != this)
+   * @note You do not need to pass the slot parameter when calling this method
+   * on another object.  (slot->object() != this)
    */
   void UnbindAll(SLOT slot);
 
@@ -312,11 +315,11 @@ class Trackable {
   /**
    * @brief Break all connections to the given slot method of this object
    *
-   * When call this in a SLOT, pass the slot parameter to avoid damaging the iterator pointer
-   * used in Slot object.
+   * When call this in a SLOT, pass the slot parameter to avoid damaging the
+   * iterator pointer used in Slot object.
    *
-   * @note You do not need to pass the slot parameter when calling this method on another object.
-   * (slot->object() != this)
+   * @note You do not need to pass the slot parameter when calling this method
+   * on another object.  (slot->object() != this)
    */
   template<typename T, typename ... ParamTypes>
   void UnbindAll(SLOT slot, void (T::*method)(ParamTypes...));

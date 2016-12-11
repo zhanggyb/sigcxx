@@ -96,6 +96,13 @@ class Delegate<ReturnType(ParamTypes...)> {
 
  public:
 
+  /**
+   * @brief Create a delegate from the given object and a member function pointer
+   * @tparam T The object type
+   * @param object_ptr A pointer to an object
+   * @param method A pointer to a member function in class T
+   * @return A delegate object
+   */
   template<typename T>
   static inline Delegate FromMethod(T *object_ptr,
                                     ReturnType (T::*method)(ParamTypes...)) {
@@ -109,6 +116,13 @@ class Delegate<ReturnType(ParamTypes...)> {
     return d;
   }
 
+  /**
+   * @brief Create a delegate from the given object and a const member function pointer
+   * @tparam T The object type
+   * @param object_ptr A pointer to an object
+   * @param method A pointer to a member function in class T
+   * @return A delegate object
+   */
   template<typename T>
   static inline Delegate FromMethod(T *object_ptr,
                                     ReturnType (T::*method)(ParamTypes...) const) {
@@ -277,12 +291,12 @@ class DelegateRef<ReturnType(ParamTypes...)> {
   }
 
   template<typename T>
-  bool IsDelegatedTo(T *obj, ReturnType (T::*method)(ParamTypes...)) {
+  bool IsAssignedTo(T *obj, ReturnType (T::*method)(ParamTypes...)) {
     return delegate_->Equal(obj, method);
   }
 
   template<typename T>
-  bool IsDelegatedTo(T *obj, ReturnType (T::*method)(ParamTypes...) const) {
+  bool IsAssignedTo(T *obj, ReturnType (T::*method)(ParamTypes...) const) {
     return delegate_->Equal(obj, method);
   }
 
