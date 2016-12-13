@@ -220,15 +220,17 @@ class Slot {
    */
   template<typename ... ParamTypes>
   Signal<ParamTypes...> *signal() const {
-    return dynamic_cast<Signal<ParamTypes...> *>(token_->trackable_object);
+    return nullptr != token_ ?
+           dynamic_cast<Signal<ParamTypes...> *>(token_->trackable_object) : nullptr;
   }
 
   /**
    * @brief The trackable object in which the slot method is being called
    * @return The trackable object receiving signal
    */
-  Trackable *object() const {
-    return token_->binding->trackable_object;
+  Trackable *binding_object() const {
+    return nullptr != token_ ?
+           token_->binding->trackable_object : nullptr;
   }
 
  private:
