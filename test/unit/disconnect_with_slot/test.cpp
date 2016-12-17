@@ -56,42 +56,42 @@ void Consumer::OnTestDisconnect1(SLOT slot) {
   switch (test) {
     case TestDisconnectMethod_End_1: {
       if (!done) {
-        sig1.Disconnect(slot, &consumer, &Consumer::OnTestDisconnect1);
+        sig1.Disconnect(&consumer, &Consumer::OnTestDisconnect1);
         done = true;
       }
       break;
     }
     case TestDisconnectMethod_Start_1: {
       if (!done) {
-        sig1.Disconnect(slot, &consumer, &Consumer::OnTestDisconnect1, 0);
+        sig1.Disconnect(&consumer, &Consumer::OnTestDisconnect1, 0);
         done = true;
       }
       break;
     }
     case TestDisconnectMethod_End_Count_5: {
       if (!done) {
-        sig1.Disconnect(slot, &consumer, &Consumer::OnTestDisconnect1, -1, 5);
+        sig1.Disconnect(&consumer, &Consumer::OnTestDisconnect1, -1, 5);
         done = true;
       }
       break;
     }
     case TestDisconnectMethod_2_5: {
       if (!done) {
-        sig1.Disconnect(slot, &consumer, &Consumer::OnTestDisconnect1, 2, 5);
+        sig1.Disconnect(&consumer, &Consumer::OnTestDisconnect1, 2, 5);
         done = true;
       }
       break;
     }
     case TestDisconnectMethod_Complex_1_2: {
       if (!done) {
-        sig1.Disconnect(slot, &consumer, &Consumer::OnTestDisconnect1, 1, 2);
+        sig1.Disconnect(&consumer, &Consumer::OnTestDisconnect1, 1, 2);
         done = true;
       }
       break;
     }
     case TestDisconnectAllTest1: {
       if (!done) {
-        sig1.DisconnectAll(slot, &consumer, &Consumer::OnTestDisconnect1);
+        sig1.DisconnectAll(&consumer, &Consumer::OnTestDisconnect1);
         done = true;
       }
       break;

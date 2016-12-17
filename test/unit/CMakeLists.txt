@@ -5,7 +5,6 @@
 set(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)
 
 add_subdirectory(delegate)
-add_subdirectory(trackable_base)
 add_subdirectory(trackable_unbind)
 add_subdirectory(signal_base)
 add_subdirectory(signal_connect)

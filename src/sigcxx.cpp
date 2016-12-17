@@ -31,18 +31,8 @@ namespace sigcxx {
 namespace details {
 
 Binding::~Binding() {
-  if (previous) previous->next = next;
-  if (next) next->previous = previous;
 
-  if (trackable_object) {
-    if (!previous)
-      trackable_object->first_binding_ = next;
-    if (!next)
-      trackable_object->last_binding_ = previous;
-  }
-
-  previous = nullptr;
-  next = nullptr;
+  Isolate();
 
   if (token) {
 #ifdef DEBUG
@@ -50,8 +40,21 @@ Binding::~Binding() {
 #endif
     token->binding = nullptr;
     delete token;
-    token = nullptr;
   }
+}
+
+void Binding::Isolate() {
+  if (previous) previous->next = next;
+  if (next) next->previous = previous;
+
+  if (trackable_object) {
+    if (nullptr == previous) trackable_object->first_binding_ = next;
+    if (nullptr == next) trackable_object->last_binding_ = previous;
+  }
+
+  previous = nullptr;
+  next = nullptr;
+  trackable_object = nullptr;
 }
 
 Token::~Token() {
@@ -69,7 +72,6 @@ Token::~Token() {
 #endif
     binding->token = nullptr;
     delete binding;
-    binding = nullptr;
   }
 }
 
@@ -80,50 +82,32 @@ Trackable::~Trackable() {
 }
 
 void Trackable::Unbind(SLOT slot) {
-  if ((nullptr == slot) || (slot->token_->binding->trackable_object != this)) return;
+  if (nullptr == slot) return;
 
-  details::Token *tmp = slot->token_;
-  slot->token_ = slot->token_->next;
-  delete tmp;
-  slot->skip_ = true;
+  if (slot->token_->is_calling && (slot->token_->binding->trackable_object == this))
+    slot->token_->binding->Isolate();
 }
 
 void Trackable::UnbindAll() {
   details::Binding *tmp = nullptr;
-  details::Binding *p = first_binding_;
+  details::Binding *it = last_binding_;
 
-  while (p) {
-    tmp = p->next;
-    delete p;
-    p = tmp;
+  while (it) {
+    tmp = it;
+    it = it->previous;
+
+    if (tmp->token->is_calling) {
+      // The token linked to this binding is being called and will delete itself and this binding
+      tmp->Isolate();
+    } else {
+      delete tmp;
+    }
   }
-}
-
-void Trackable::UnbindAll(SLOT slot) {
-  if (nullptr == slot) {
-    UnbindAll();
-    return;
-  }
-
-  /* Check if the slot points to this object is being using, if is,
-   * move the iterator of token to next until it points to another one,
-   * then it's save to remove all bindings to signals
-   */
-  details::Token *tmp = nullptr;
-  while (slot->token_->binding->trackable_object == this) {
-    tmp = slot->token_;
-    slot->token_ = slot->token_->next;
-    delete tmp;
-    slot->skip_ = true;
-    if (nullptr == slot->token_) break;
-  }
-
-  UnbindAll(nullptr);
 }
 
 std::size_t Trackable::CountBindings() const {
   std::size_t count = 0;
-  for (details::Binding *p = first_binding_; p; p = p->next) {
+  for (details::Binding *it = first_binding_; it; it = it->next) {
     count++;
   }
   return count;

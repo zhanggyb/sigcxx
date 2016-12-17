@@ -41,13 +41,13 @@ void Observer::OnTestUnbindOnceAt5(SLOT slot) {
 void Observer::OnTestUnbindAllAt5(SLOT slot) {
   test0_count_++;
   if (test0_count_ >= 5) {
-    UnbindAll(slot);
+    UnbindAll();
   }
 }
 
 void Observer::OnTestUnbindAllMethodAt5(SLOT slot) {
   test0_count_++;
   if (test0_count_ >= 5) {
-    UnbindAll(slot, &Observer::OnTestUnbindAllMethodAt5);
+    UnbindAll(&Observer::OnTestUnbindAllMethodAt5);
   }
 }
