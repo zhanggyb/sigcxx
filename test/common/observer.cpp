@@ -27,7 +27,6 @@ void Observer::OnTest2IntegerParams(int n1, int n2, SLOT) {
 }
 
 void Observer::OnTestDestroy(SLOT slot) {
-  Unbind(slot); // call this before delete self
   delete this;
 }
 

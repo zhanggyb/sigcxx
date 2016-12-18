@@ -282,12 +282,11 @@ class Trackable {
   /**
    * @brief Break the connection to a signal by given slot
    *
-   * In SLOT you should use this method instead of Disconnect() to support
-   * 'disconnect on emit'.
-   *
-   * You should make sure this method is only called once.
+   * This is the fastest way to disconnect from a signal via the slot parameter.
    */
-  void Unbind(SLOT slot);
+  void Unbind(SLOT slot) {
+    slot->token_->binding->Isolate();
+  }
 
   /**
     * @brief Break the all connections to this object

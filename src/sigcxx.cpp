@@ -81,13 +81,6 @@ Trackable::~Trackable() {
   UnbindAll();
 }
 
-void Trackable::Unbind(SLOT slot) {
-  if (nullptr == slot) return;
-
-  if (slot->token_->is_calling && (slot->token_->binding->trackable_object == this))
-    slot->token_->binding->Isolate();
-}
-
 void Trackable::UnbindAll() {
   details::Binding *tmp = nullptr;
   details::Binding *it = last_binding_;
