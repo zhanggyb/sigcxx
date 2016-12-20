@@ -94,7 +94,6 @@ member function of a `sigcxx::Trackable` or its subclass.
 ```c++
 class Widget: public sigcxx::Trackable
 {
-public:
   // ...
 };
 ```
@@ -113,10 +112,13 @@ public:
 };
 ```
 
-The `SLOT` here is just a typedef:
+The `SLOT` here is just a `typedef`:
 
 ```c++
-typedef Slot *SLOT;
+namespace sigcxx {
+  // ...
+  typedef Slot *SLOT;
+}
 ```
 
 It's recommended to give it a default value of `nullptr`. You can use a macro to
@@ -149,11 +151,11 @@ public:
 
     // ...
 
-    inline sigcxx::SignalRef<> notify1 () {
+    sigcxx::SignalRef<> notify1 () {
        return notify1_;
     }
 
-    inline sigcxx::SignalRef<const Foo*> notify2 () {
+    sigcxx::SignalRef<const Foo*> notify2 () {
        return notify2_;
     }
 
@@ -197,10 +199,10 @@ arguments of a slot method, except the last `sigcxx::SLOT`, it's reserved to
 work as a signature to avoid any method to be a slot and has special usage in
 runtime.
 
-A signal supports multicast, can be connected to a virtual (even pure virtual)
+A signal supports multi-cast, can be connected to a virtual (even pure virtual)
 function, it can also be disconnected manually or automatically when observer
 object is destroyed. For more information, please see the [Wiki
-page](https://github.com/zhanggyb/libcppevent/wiki).
+page](https://github.com/zhanggyb/sigcxx/wiki).
 
 ## Known Issue
 
@@ -208,5 +210,4 @@ This project currently does not support MSVC.(FIXME)
 
 ## License
 
-This project is licensed under MIT License, which can be found in the
-[LICENSE](https://github.com/zhanggyb/sigcxx/blob/master/LICENSE) file.
+This project is licensed under [MIT License](https://github.com/zhanggyb/sigcxx/blob/master/LICENSE).
