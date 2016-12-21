@@ -31,8 +31,13 @@ namespace sigcxx {
 namespace details {
 
 Binding::~Binding() {
+  if (previous) previous->next = next;
+  if (next) next->previous = previous;
 
-  Isolate();
+  if (trackable_object) {
+    if (nullptr == previous) trackable_object->first_binding_ = next;
+    if (nullptr == next) trackable_object->last_binding_ = previous;
+  }
 
   if (token) {
 #ifdef DEBUG
@@ -43,28 +48,17 @@ Binding::~Binding() {
   }
 }
 
-void Binding::Isolate() {
-  if (previous) previous->next = next;
-  if (next) next->previous = previous;
-
-  if (trackable_object) {
-    if (nullptr == previous) trackable_object->first_binding_ = next;
-    if (nullptr == next) trackable_object->last_binding_ = previous;
-  }
-
-  previous = nullptr;
-  next = nullptr;
-  trackable_object = nullptr;
-}
-
 Token::~Token() {
   if (trackable_object) trackable_object->AuditDestroyingToken(this);
 
+  if (slot) {
+    // This token is emitting
+    slot->token_ = next;
+    slot->skip_ = true;
+  }
+
   if (previous) previous->next = next;
   if (next) next->previous = previous;
-
-  previous = nullptr;
-  next = nullptr;
 
   if (binding) {
 #ifdef DEBUG
@@ -81,6 +75,17 @@ Trackable::~Trackable() {
   UnbindAll();
 }
 
+void Trackable::Unbind(SLOT slot) {
+  if (slot->token_->binding->trackable_object == this) {
+    details::Token* tmp = slot->token_;
+    slot->token_ = slot->token_->next;
+    slot->skip_ = true;
+
+    tmp->slot = nullptr;
+    delete tmp;
+  }
+}
+
 void Trackable::UnbindAll() {
   details::Binding *tmp = nullptr;
   details::Binding *it = last_binding_;
@@ -88,13 +93,7 @@ void Trackable::UnbindAll() {
   while (it) {
     tmp = it;
     it = it->previous;
-
-    if (tmp->token->is_calling) {
-      // The token linked to this binding is being called and will delete itself and this binding
-      tmp->Isolate();
-    } else {
-      delete tmp;
-    }
+    delete tmp;
   }
 }
 
@@ -142,7 +141,6 @@ void Trackable::PushFrontBinding(details::Binding *node) {
     last_binding_ = node;
   }
   first_binding_ = node;
-
   node->previous = nullptr;
   node->trackable_object = this;
 }

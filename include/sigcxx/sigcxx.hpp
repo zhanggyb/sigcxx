@@ -71,11 +71,6 @@ struct Binding {
 
   ~Binding();
 
-  /**
-   * @brief Isolate this binding object and let it to be deleted when emitting signal
-   */
-  void Isolate();
-
   Trackable *trackable_object;
   Binding *previous;
   Binding *next;
@@ -93,7 +88,7 @@ struct Token {
         previous(nullptr),
         next(nullptr),
         binding(nullptr),
-        is_calling(false) {
+        slot(nullptr) {
   }
 
   virtual ~Token();
@@ -102,7 +97,8 @@ struct Token {
   Token *previous;
   Token *next;
   Binding *binding;
-  bool is_calling;
+  Slot *slot;
+
 };
 
 template<typename ... ParamTypes>
@@ -138,7 +134,7 @@ class DelegateToken : public CallableToken<ParamTypes...> {
 
   virtual ~DelegateToken() {}
 
-  virtual void Invoke(ParamTypes... Args) override {
+  virtual void Invoke(ParamTypes... Args) final {
     delegate_(Args...);
   }
 
@@ -167,7 +163,7 @@ class SignalToken : public CallableToken<ParamTypes...> {
 
   virtual ~SignalToken() {}
 
-  virtual void Invoke(ParamTypes... Args) override {
+  virtual void Invoke(ParamTypes... Args) final {
     signal_->Emit(Args...);
   }
 
@@ -196,13 +192,10 @@ class SignalToken : public CallableToken<ParamTypes...> {
  * A Signal holds a list of token to support multicast, when it's being
  * emitting, it create a simple Slot object and use it as an iterate and call
  * each delegate (@ref Delegate) to the slot method or another signal.
- *
- * @note If you want to destroy the object in a slot method, you must unbind the
- * signal connection by giving the Slot pointer to @ref Trackable::Unbind(),
- * @ref Trackable::UnbindAll().
  */
 class Slot {
 
+  friend struct details::Token;
   template<typename ... ParamTypes> friend
   class Signal;
   template<typename ... ParamTypes> friend
@@ -234,11 +227,13 @@ class Slot {
  private:
 
   Slot(details::Token *token = nullptr)
-      : token_(token) {}
+      : token_(token), skip_(false) {}
 
   ~Slot() {}
 
   details::Token *token_;
+
+  bool skip_;
 
 };
 
@@ -284,9 +279,7 @@ class Trackable {
    *
    * This is the fastest way to disconnect from a signal via the slot parameter.
    */
-  void Unbind(SLOT slot) {
-    slot->token_->binding->Isolate();
-  }
+  void Unbind(SLOT slot);
 
   /**
     * @brief Break the all connections to this object
@@ -359,11 +352,7 @@ void Trackable::UnbindAll(void (T::*method)(ParamTypes...)) {
 
     delegate_token = dynamic_cast<details::DelegateToken<ParamTypes...> *>(tmp->token);
     if (delegate_token && (delegate_token->delegate().template Equal<T>((T *) this, method))) {
-      if (tmp->token->is_calling) {
-        tmp->Isolate();
-      } else {
-        delete tmp;
-      }
+      delete tmp;
     }
   }
 }
@@ -479,7 +468,9 @@ class Signal : public Trackable {
 
   void Emit(ParamTypes ... Args);
 
-  inline void operator()(ParamTypes ... Args);
+  inline void operator()(ParamTypes ... Args) {
+    Emit(Args...);
+  }
 
  protected:
 
@@ -547,11 +538,7 @@ void Signal<ParamTypes...>::DisconnectAll(T *obj, void (T::*method)(ParamTypes..
     if (tmp->binding->trackable_object == obj) {
       delegate_token = dynamic_cast<details::DelegateToken<ParamTypes..., SLOT> * > (tmp);
       if (delegate_token && (delegate_token->delegate().template Equal<T>(obj, method))) {
-        if (tmp->is_calling) {
-          tmp->binding->Isolate();
-        } else {
-          delete tmp;
-        }
+        delete tmp;
       }
     }
   }
@@ -570,11 +557,7 @@ void Signal<ParamTypes...>::DisconnectAll(Signal<ParamTypes...> &other) {
     if (tmp->binding->trackable_object == (&other)) {
       signal_token = dynamic_cast<details::SignalToken<ParamTypes...> * > (tmp);
       if (signal_token && (signal_token->signal() == (&other))) {
-        if (tmp->is_calling) {
-          tmp->binding->Isolate();
-        } else {
-          delete tmp;
-        }
+        delete tmp;
       }
     }
   }
@@ -604,11 +587,7 @@ int Signal<ParamTypes...>::Disconnect(T *obj, void (T::*method)(ParamTypes..., S
         if (delegate_token && (delegate_token->delegate().template Equal<T>(obj, method))) {
           ret_count++;
           counts--;
-          if (tmp->is_calling) {
-            tmp->binding->Isolate();
-          } else {
-            delete tmp;
-          }
+          delete tmp;
         }
       }
       if (counts == 0) break;
@@ -629,11 +608,7 @@ int Signal<ParamTypes...>::Disconnect(T *obj, void (T::*method)(ParamTypes..., S
         if (delegate_token && (delegate_token->delegate().template Equal<T>(obj, method))) {
           ret_count++;
           counts--;
-          if (tmp->is_calling) {
-            tmp->binding->Isolate();
-          } else {
-            delete tmp;
-          }
+          delete tmp;
         }
       }
       if (counts == 0) break;
@@ -666,11 +641,7 @@ int Signal<ParamTypes...>::Disconnect(Signal<ParamTypes...> &other, int start_po
         if (signal_token && (signal_token->signal() == (&other))) {
           ret_count++;
           counts--;
-          if (tmp->is_calling) {
-            tmp->binding->Isolate();
-          } else {
-            delete tmp;
-          }
+          delete tmp;
         }
       }
       if (counts == 0) break;
@@ -692,11 +663,7 @@ int Signal<ParamTypes...>::Disconnect(Signal<ParamTypes...> &other, int start_po
         if (signal_token && (signal_token->signal() == (&other))) {
           ret_count++;
           counts--;
-          if (tmp->is_calling) {
-            tmp->binding->Isolate();
-          } else {
-            delete tmp;
-          }
+          delete tmp;
         }
       }
       if (counts == 0) break;
@@ -726,12 +693,7 @@ int Signal<ParamTypes...>::Disconnect(int start_pos, int counts) {
 
       ret_count++;
       counts--;
-
-      if (tmp->is_calling) {
-        tmp->binding->Isolate();
-      } else {
-        delete tmp;
-      }
+      delete tmp;
 
       if (counts == 0) break;
     }
@@ -749,12 +711,7 @@ int Signal<ParamTypes...>::Disconnect(int start_pos, int counts) {
 
       ret_count++;
       counts--;
-
-      if (tmp->is_calling) {
-        tmp->binding->Isolate();
-      } else {
-        delete tmp;
-      }
+      delete tmp;
 
       if (counts == 0) break;
     }
@@ -857,32 +814,18 @@ std::size_t Signal<ParamTypes...>::CountConnections() const {
 template<typename ... ParamTypes>
 void Signal<ParamTypes...>::Emit(ParamTypes ... Args) {
   Slot slot(first_token());
-  details::Token *tmp = nullptr;
 
   while (slot.token_) {
-
-    slot.token_->is_calling = true;
+    slot.token_->slot = &slot;
     static_cast<details::CallableToken<ParamTypes..., SLOT> * > (slot.token_)->Invoke(Args..., &slot);
 
-    if (nullptr == slot.token_->binding->trackable_object) {
-#ifdef DEBUG
-      assert(nullptr == slot.token_->binding->previous);
-      assert(nullptr == slot.token_->binding->next);
-#endif
-      tmp = slot.token_;
-      slot.token_ = slot.token_->next;
-      delete tmp;
+    if (slot.skip_) {
+      slot.skip_ = false;
     } else {
-      slot.token_->is_calling = false;
+      slot.token_->slot = nullptr;
       slot.token_ = slot.token_->next;
     }
-
   }
-}
-
-template<typename ... ParamTypes>
-inline void Signal<ParamTypes...>::operator()(ParamTypes ... Args) {
-  Emit(Args...);
 }
 
 template<typename ... ParamTypes>
@@ -1024,12 +967,7 @@ void Signal<ParamTypes...>::DisconnectAll() {
   while (it) {
     tmp = it;
     it = it->next;
-
-    if (tmp->is_calling) {
-      tmp->binding->Isolate();
-    } else {
-      delete tmp;
-    }
+    delete tmp;
   }
 }
 
