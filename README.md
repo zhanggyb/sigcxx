@@ -1,6 +1,8 @@
 sigcxx
 ======
 
+**Note:** The code in this repository is out-of-dated, the latest can be found [here](https://github.com/zhanggyb/skland).
+
 ## Overview
 
 [sigcxx](https://github.com/zhanggyb/sigcxx) is a lightweight, fast C++11
