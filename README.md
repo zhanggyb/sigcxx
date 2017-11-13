@@ -1,7 +1,7 @@
 sigcxx
 ======
 
-**Note:** The code in this repository is out-of-dated, the latest can be found [here](https://github.com/zhanggyb/skland).
+**Note:** The code in this repository is out-of-dated, the latest can be found [here](https://github.com/wiztk/framework).
 
 ## Overview
 
