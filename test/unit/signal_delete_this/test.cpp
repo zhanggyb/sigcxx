@@ -11,11 +11,11 @@ class Button {
 
   ~Button() {}
 
-  SignalRef<> clicked() {
+  SignalRefT<> clicked() {
     return clicked_;
   }
 
-  Signal<> clicked_;
+  SignalT<> clicked_;
 };
 
 class TitleBar : public Trackable {
@@ -31,11 +31,11 @@ class TitleBar : public Trackable {
     action_(1);
   }
 
-  SignalRef<int> action() {
+  SignalRefT<int> action() {
     return action_;
   }
 
-  Signal<int> action_;
+  SignalT<int> action_;
 
   Button button_;
 };

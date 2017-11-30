@@ -29,17 +29,17 @@ class Subject: public sigcxx::Trackable
 
   void OnTest2IntegerParams(int n1, int n2, sigcxx::SLOT slot = nullptr);
 
-  inline sigcxx::SignalRef<> signal0()
+  inline sigcxx::SignalRefT<> signal0()
   {
     return signal_0_;
   }
 
-  inline sigcxx::SignalRef<int> signal1()
+  inline sigcxx::SignalRefT<int> signal1()
   {
     return signal_1_int_;
   }
 
-  inline sigcxx::SignalRef<int, int> signal2()
+  inline sigcxx::SignalRefT<int, int> signal2()
   {
     return signal_2_int_;
   }
@@ -56,9 +56,9 @@ class Subject: public sigcxx::Trackable
 
  private:
 
-  sigcxx::Signal<> signal_0_;
-  sigcxx::Signal<int> signal_1_int_;
-  sigcxx::Signal<int, int> signal_2_int_;
+  sigcxx::SignalT<> signal_0_;
+  sigcxx::SignalT<int> signal_1_int_;
+  sigcxx::SignalT<int, int> signal_2_int_;
   size_t test1_count_;
   size_t test2_count_;
 

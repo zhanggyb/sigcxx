@@ -1,7 +1,7 @@
 sigcxx
 ======
 
-**Note:** The code in this repository is out-of-dated, the latest can be found [here](https://github.com/wiztk/framework).
+**Note:** The code in this repository may be out-of-dated, the latest can be found [here](https://github.com/wiztk/framework).
 
 ## Overview
 
@@ -141,9 +141,9 @@ public:
 
 ### Decleare and expose signals in Subject
 
-It's highly recommended to use the template class `sigcxx::Signal<>` to declare
+It's highly recommended to use the template class `sigcxx::SignalT<>` to declare
 signals as a member variable, and expose the signal with
-`sigcxx::SignalRef<>`. Both of them are variadic templates and can take arbitray
+`sigcxx::SignalRefT<>`. Both of them are variadic templates and can take arbitray
 number of template arguments.
 
 ```c++
@@ -153,11 +153,11 @@ public:
 
     // ...
 
-    sigcxx::SignalRef<> notify1 () {
+    sigcxx::SignalRefT<> notify1 () {
        return notify1_;
     }
 
-    sigcxx::SignalRef<const Foo*> notify2 () {
+    sigcxx::SignalRefT<const Foo*> notify2 () {
        return notify2_;
     }
 
@@ -175,14 +175,14 @@ protected:
     }
 
 private:
-    sigcxx::Signal<> notify1_;
-    sigcxx::Signal<const Foo*> notify2_;
+    sigcxx::SignalT<> notify1_;
+    sigcxx::SignalT<const Foo*> notify2_;
 };
 ```
 
 ### Connect signals when you want
 
-Use the `Connect` method of `sigcxx::SignalRef<>`:
+Use the `Connect` method of `sigcxx::SignalRefT<>`:
 
 ```c++
 Subject subject;

@@ -32,7 +32,7 @@ TEST_F(Test, Disconnect1) {
 
   int count1 = s2.signal1().Disconnect(&o, &Observer::OnTest1IntegerParam);
 
-  ASSERT_TRUE((o.CountBindings() == 2) &&
+  ASSERT_TRUE((o.CountSignalBindings() == 2) &&
       (s1.signal1().CountConnections() == 1) &&
       (s2.signal1().CountConnections() == 0) &&
       (s3.signal1().CountConnections() == 1) && (count1 == 1));
@@ -70,7 +70,7 @@ TEST_F(Test, Disconnect3) {
 
   int count1 = s.signal1().Disconnect(&c, &Observer::OnTest1IntegerParam, -1, 2);
 
-  ASSERT_TRUE(c.CountBindings() == 1 && count1 == 2);
+  ASSERT_TRUE(c.CountSignalBindings() == 1 && count1 == 2);
 }
 
 /*
@@ -86,7 +86,7 @@ TEST_F(Test, Disconnect4) {
 
   int count1 = s.signal1().Disconnect(&c, &Observer::OnTest1IntegerParam, -1, 4);
 
-  ASSERT_TRUE(c.CountBindings() == 0 && count1 == 3);
+  ASSERT_TRUE(c.CountSignalBindings() == 0 && count1 == 3);
 }
 
 /*
@@ -102,7 +102,7 @@ TEST_F(Test, Disconnect5) {
 
   int count1 = s.signal1().Disconnect(&c, &Observer::OnTest1IntegerParam, -1, -1);
 
-  ASSERT_TRUE(c.CountBindings() == 0 && count1 == 3);
+  ASSERT_TRUE(c.CountSignalBindings() == 0 && count1 == 3);
 }
 
 /*
@@ -118,7 +118,7 @@ TEST_F(Test, Disconnect6) {
 
   int count1 = s.signal1().Disconnect(&c, &Observer::OnTest1IntegerParam, 0, 2);
 
-  ASSERT_TRUE(c.CountBindings() == 1 && count1 == 2);
+  ASSERT_TRUE(c.CountSignalBindings() == 1 && count1 == 2);
 }
 
 /*
@@ -134,7 +134,7 @@ TEST_F(Test, Disconnect7) {
 
   int count1 = s.signal1().Disconnect(&c, &Observer::OnTest1IntegerParam, 2, 2);
 
-  ASSERT_TRUE(c.CountBindings() == 2 && count1 == 1);
+  ASSERT_TRUE(c.CountSignalBindings() == 2 && count1 == 1);
 }
 
 /*
@@ -150,7 +150,7 @@ TEST_F(Test, Disconnect8) {
 
   int count1 = s.signal1().Disconnect(&c, &Observer::OnTest1IntegerParam, 0, 4);
 
-  ASSERT_TRUE(c.CountBindings() == 0 && count1 == 3);
+  ASSERT_TRUE(c.CountSignalBindings() == 0 && count1 == 3);
 }
 
 /*
@@ -166,7 +166,7 @@ TEST_F(Test, Disconnect9) {
 
   int count1 = s.signal1().Disconnect(&c, &Observer::OnTest1IntegerParam, 0, -1);
 
-  ASSERT_TRUE(c.CountBindings() == 0 && count1 == 3);
+  ASSERT_TRUE(c.CountSignalBindings() == 0 && count1 == 3);
 }
 
 /*
@@ -182,7 +182,7 @@ TEST_F(Test, Disconnect10) {
 
   int count1 = s.signal1().Disconnect(&c, &Observer::OnTest1IntegerParam, -2, 2);
 
-  ASSERT_TRUE(c.CountBindings() == 1 && count1 == 2);
+  ASSERT_TRUE(c.CountSignalBindings() == 1 && count1 == 2);
 }
 
 /*
@@ -201,7 +201,7 @@ TEST_F(Test, disconnect_all) {
 
   s.emit_signal1(1);
 
-  ASSERT_TRUE(o.test1_count() == 0 && s.signal1().CountConnections() == 0 && o.CountBindings() == 0);
+  ASSERT_TRUE(o.test1_count() == 0 && s.signal1().CountConnections() == 0 && o.CountSignalBindings() == 0);
 }
 
 /*
@@ -219,7 +219,7 @@ TEST_F(Test, disconnect_no_check_1) {
 
   s.signal1().Disconnect(-1, 2);
 
-  ASSERT_TRUE(s.signal1().CountConnections() == 3 && o.CountBindings() == 3);
+  ASSERT_TRUE(s.signal1().CountConnections() == 3 && o.CountSignalBindings() == 3);
 }
 
 /*
@@ -237,7 +237,7 @@ TEST_F(Test, disconnect_no_check_2) {
 
   s.signal1().Disconnect(0, 2);
 
-  ASSERT_TRUE(s.signal1().CountConnections() == 3 && o.CountBindings() == 3);
+  ASSERT_TRUE(s.signal1().CountConnections() == 3 && o.CountSignalBindings() == 3);
 }
 
 /*
@@ -255,7 +255,7 @@ TEST_F(Test, disconnect_no_check_3) {
 
   s.signal1().Disconnect(-1, 6);  // by giving a very big counts, this is the same as DisconnectAll()
 
-  ASSERT_TRUE(s.signal1().CountConnections() == 0 && o.CountBindings() == 0);
+  ASSERT_TRUE(s.signal1().CountConnections() == 0 && o.CountSignalBindings() == 0);
 }
 
 /*
@@ -273,5 +273,5 @@ TEST_F(Test, disconnect_no_check_4) {
 
   s.signal1().Disconnect(-1, -2); // by giving a negative of last parameter, this is the same as DisconnectAll()
 
-  ASSERT_TRUE(s.signal1().CountConnections() == 0 && o.CountBindings() == 0);
+  ASSERT_TRUE(s.signal1().CountConnections() == 0 && o.CountSignalBindings() == 0);
 }

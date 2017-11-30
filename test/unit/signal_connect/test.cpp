@@ -26,7 +26,7 @@ TEST_F(Test, connect_method_once) {
 
   s.signal1().Connect(&o, &Observer::OnTest1IntegerParam);
 
-  ASSERT_TRUE((s.CountBindings() == 0) && (s.signal1().CountConnections() == 1) && (o.CountBindings() == 1));
+  ASSERT_TRUE((s.CountSignalBindings() == 0) && (s.signal1().CountConnections() == 1) && (o.CountSignalBindings() == 1));
 }
 
 /*
@@ -47,7 +47,7 @@ TEST_F(Test, connect_method_4_times) {
 
   ASSERT_TRUE(o.test1_count() == 4 &&
       s.signal1().CountConnections() == 4 &&
-      o.CountBindings() == 4);
+      o.CountSignalBindings() == 4);
 }
 
 /*
@@ -55,7 +55,7 @@ TEST_F(Test, connect_method_4_times) {
  */
 TEST_F(Test, connect_event_once) {
   Subject s1;
-  sigcxx::Signal<int> s2;
+  sigcxx::SignalT<int> s2;
   Observer o;
 
   s2.Connect(&o, &Observer::OnTest1IntegerParam);
@@ -63,8 +63,8 @@ TEST_F(Test, connect_event_once) {
 
   s1.emit_signal1(1);  // cause chain signal_base
 
-  ASSERT_TRUE((o.test1_count() == 1) && (s1.signal1().CountConnections() == 1) && (s2.CountBindings() == 1)
-                  && (s2.CountConnections() == 1) && (o.CountBindings() == 1));
+  ASSERT_TRUE((o.test1_count() == 1) && (s1.signal1().CountConnections() == 1) && (s2.CountSignalBindings() == 1)
+                  && (s2.CountConnections() == 1) && (o.CountSignalBindings() == 1));
 }
 
 /*
@@ -99,7 +99,7 @@ TEST_F(Test, selfconsumer) {
 
 TEST_F(Test, event_chaining) {
   Subject s1;
-  sigcxx::Signal<int> s2;
+  sigcxx::SignalT<int> s2;
   Observer c;
 
   s1.signal1().Connect(s2);
@@ -107,7 +107,7 @@ TEST_F(Test, event_chaining) {
 
   s1.emit_signal1(1);
 
-  ASSERT_TRUE(c.CountBindings() == 1 && c.test1_count() == 1);
+  ASSERT_TRUE(c.CountSignalBindings() == 1 && c.test1_count() == 1);
 }
 
 TEST_F(Test, delete_when_called) {
@@ -156,7 +156,7 @@ TEST_F(Test, delete_more_when_called) {
 
 TEST_F(Test, count_event_connections) {
   Subject s1;
-  sigcxx::Signal<> s2;
+  sigcxx::SignalT<> s2;
   Observer c;
 
   s1.signal0().Connect(s2);

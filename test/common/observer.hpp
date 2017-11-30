@@ -41,11 +41,11 @@ class Observer: public sigcxx::Trackable
 
   template<typename T, typename ... ParamTypes>
   void unbind_all(void (T::*method)(ParamTypes...)) {
-    UnbindAll(method);
+    UnbindAllSignalsTo(method);
   };
 
   void unbind_all() {
-    UnbindAll();
+    UnbindAllSignals();
   }
 
  private:

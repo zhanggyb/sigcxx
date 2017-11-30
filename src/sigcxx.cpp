@@ -24,23 +24,23 @@
  * SOFTWARE.
  */
 
-#include <sigcxx/sigcxx.hpp>
+#include "sigcxx/sigcxx.hpp"
 
 namespace sigcxx {
 
-namespace details {
+namespace internal {
 
 Binding::~Binding() {
   if (previous) previous->next = next;
   if (next) next->previous = previous;
 
-  if (trackable_object) {
-    if (nullptr == previous) trackable_object->first_binding_ = next;
-    if (nullptr == next) trackable_object->last_binding_ = previous;
+  if (trackable) {
+    if (nullptr == previous) trackable->first_binding_ = next;
+    if (nullptr == next) trackable->last_binding_ = previous;
   }
 
   if (token) {
-#ifdef DEBUG
+#ifdef __DEBUG__
     assert(token->binding == this);
 #endif
     token->binding = nullptr;
@@ -49,19 +49,22 @@ Binding::~Binding() {
 }
 
 Token::~Token() {
-  if (trackable_object) trackable_object->AuditDestroyingToken(this);
+  if (trackable) trackable->AuditDestroyingToken(this);
 
-  if (slot) {
-    // This token is emitting
-    slot->token_ = next;
-    slot->skip_ = true;
+  _ASSERT(nullptr == slot_mark_head.previous());
+  Slot::Mark *mark = nullptr;
+  while (nullptr != slot_mark_head.next()) {
+    mark = static_cast<Slot::Mark *>(slot_mark_head.next());
+    mark->slot()->token_ = next;
+    mark->slot()->skip_ = true;
+    mark->Unlink();
   }
 
   if (previous) previous->next = next;
   if (next) next->previous = previous;
 
   if (binding) {
-#ifdef DEBUG
+#ifdef __DEBUG__
     assert(binding->token == this);
 #endif
     binding->token = nullptr;
@@ -72,23 +75,28 @@ Token::~Token() {
 }  // namespace details
 
 Trackable::~Trackable() {
-  UnbindAll();
+  UnbindAllSignals();
 }
 
-void Trackable::Unbind(SLOT slot) {
-  if (slot->token_->binding->trackable_object == this) {
-    details::Token* tmp = slot->token_;
-    slot->token_ = slot->token_->next;
-    slot->skip_ = true;
+void Trackable::UnbindSignal(SLOT slot) {
+  using internal::Token;
 
-    tmp->slot = nullptr;
+  if (slot->token_->binding->trackable == this) {
+    Token *tmp = slot->token_;
+//    slot->token_ = slot->token_->next;
+//    slot->skip_ = true;
+
+//    slot->running_node_.Unlink();
+//    tmp->slot = nullptr;
     delete tmp;
   }
 }
 
-void Trackable::UnbindAll() {
-  details::Binding *tmp = nullptr;
-  details::Binding *it = last_binding_;
+void Trackable::UnbindAllSignals() {
+  using internal::Binding;
+
+  Binding *tmp = nullptr;
+  Binding *it = last_binding_;
 
   while (it) {
     tmp = it;
@@ -97,24 +105,26 @@ void Trackable::UnbindAll() {
   }
 }
 
-std::size_t Trackable::CountBindings() const {
-  std::size_t count = 0;
-  for (details::Binding *it = first_binding_; it; it = it->next) {
+int Trackable::CountSignalBindings() const {
+  using internal::Binding;
+
+  int count = 0;
+  for (Binding *it = first_binding_; it; it = it->next) {
     count++;
   }
   return count;
 }
 
-void Trackable::PushBackBinding(details::Binding *node) {
-#ifdef DEBUG
-  assert(nullptr == node->trackable_object);
+void Trackable::PushBackBinding(internal::Binding *node) {
+#ifdef __DEBUG__
+  assert(nullptr == node->trackable);
 #endif
 
   if (last_binding_) {
     last_binding_->next = node;
     node->previous = last_binding_;
   } else {
-#ifdef DEBUG
+#ifdef __DEBUG__
     assert(nullptr == first_binding_);
 #endif
     node->previous = nullptr;
@@ -122,19 +132,19 @@ void Trackable::PushBackBinding(details::Binding *node) {
   }
   last_binding_ = node;
   node->next = nullptr;
-  node->trackable_object = this;
+  node->trackable = this;
 }
 
-void Trackable::PushFrontBinding(details::Binding *node) {
-#ifdef DEBUG
-  assert(nullptr == node->trackable_object);
+void Trackable::PushFrontBinding(internal::Binding *node) {
+#ifdef __DEBUG__
+  assert(nullptr == node->trackable);
 #endif
 
   if (first_binding_) {
     first_binding_->previous = node;
     node->next = first_binding_;
   } else {
-#ifdef DEBUG
+#ifdef __DEBUG__
     assert(nullptr == last_binding_);
 #endif
     node->next = nullptr;
@@ -142,16 +152,16 @@ void Trackable::PushFrontBinding(details::Binding *node) {
   }
   first_binding_ = node;
   node->previous = nullptr;
-  node->trackable_object = this;
+  node->trackable = this;
 }
 
-void Trackable::InsertBinding(int index, details::Binding *node) {
-#ifdef DEBUG
-  assert(nullptr == node->trackable_object);
+void Trackable::InsertBinding(int index, internal::Binding *node) {
+#ifdef __DEBUG__
+  assert(nullptr == node->trackable);
 #endif
 
   if (nullptr == first_binding_) {
-#ifdef DEBUG
+#ifdef __DEBUG__
     assert(nullptr == last_binding_);
 #endif
     node->next = nullptr;
@@ -161,8 +171,8 @@ void Trackable::InsertBinding(int index, details::Binding *node) {
   } else {
     if (index >= 0) {
 
-      details::Binding *p = first_binding_;
-#ifdef DEBUG
+      internal::Binding *p = first_binding_;
+#ifdef __DEBUG__
       assert(p != nullptr);
 #endif
 
@@ -192,8 +202,8 @@ void Trackable::InsertBinding(int index, details::Binding *node) {
 
     } else {
 
-      details::Binding *p = last_binding_;
-#ifdef DEBUG
+      internal::Binding *p = last_binding_;
+#ifdef __DEBUG__
       assert(p);
 #endif
 
@@ -223,7 +233,7 @@ void Trackable::InsertBinding(int index, details::Binding *node) {
 
     }
   }
-  node->trackable_object = this;
+  node->trackable = this;
 }
 
-}  // namespace sigcxx
+}

@@ -12,7 +12,7 @@ Test::~Test() {
 
 }
 
-class Consumer : public sigcxx::Trackable {
+class Consumer : public Trackable {
  public:
 
   enum Test {
@@ -36,11 +36,11 @@ class Consumer : public sigcxx::Trackable {
 
   template<typename T, typename ... ParamTypes>
   void unbind_all(void (T::*method)(ParamTypes...)) {
-    UnbindAll(method);
+    UnbindAllSignalsTo(method);
   };
 
   void unbind_all() {
-    UnbindAll();
+    UnbindAllSignals();
   }
 
   int test;
@@ -49,7 +49,7 @@ class Consumer : public sigcxx::Trackable {
 
 };
 
-Signal<> sig1;
+SignalT<> sig1;
 Consumer consumer;
 
 void Consumer::OnTestDisconnect1(SLOT slot) {
@@ -121,7 +121,7 @@ TEST_F(Test, disconnect_1) {
 
   sig1.Emit();
 
-  ASSERT_TRUE(sig1.CountConnections() == 4 && consumer.CountBindings() == 4);
+  ASSERT_TRUE(sig1.CountConnections() == 4 && consumer.CountSignalBindings() == 4);
 }
 
 TEST_F(Test, disconnect_2) {
@@ -141,7 +141,7 @@ TEST_F(Test, disconnect_2) {
 
   sig1.Emit();
 
-  ASSERT_TRUE(sig1.CountConnections() == 4 && consumer.CountBindings() == 4);
+  ASSERT_TRUE(sig1.CountConnections() == 4 && consumer.CountSignalBindings() == 4);
 }
 
 TEST_F(Test, disconnect_3) {
@@ -161,7 +161,7 @@ TEST_F(Test, disconnect_3) {
 
   sig1.Emit();
 
-  ASSERT_TRUE(sig1.CountConnections() == 0 && consumer.CountBindings() == 0);
+  ASSERT_TRUE(sig1.CountConnections() == 0 && consumer.CountSignalBindings() == 0);
 }
 
 TEST_F(Test, disconnect_4) {
@@ -181,7 +181,7 @@ TEST_F(Test, disconnect_4) {
 
   sig1.Emit();
 
-  ASSERT_TRUE(sig1.CountConnections() == 2 && consumer.CountBindings() == 2);
+  ASSERT_TRUE(sig1.CountConnections() == 2 && consumer.CountSignalBindings() == 2);
 }
 
 TEST_F(Test, disconnect_5) {
@@ -201,7 +201,7 @@ TEST_F(Test, disconnect_5) {
 
   sig1.Emit();
 
-  ASSERT_TRUE(sig1.CountConnections() == 3 && consumer.CountBindings() == 3);
+  ASSERT_TRUE(sig1.CountConnections() == 3 && consumer.CountSignalBindings() == 3);
 }
 
 TEST_F(Test, disconnect_6) {
@@ -221,5 +221,5 @@ TEST_F(Test, disconnect_6) {
 
   sig1.Emit();
 
-  ASSERT_TRUE(sig1.CountConnections() == 2 && consumer.CountBindings() == 2);
+  ASSERT_TRUE(sig1.CountConnections() == 2 && consumer.CountSignalBindings() == 2);
 }

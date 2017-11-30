@@ -35,20 +35,20 @@ class Source
     event2_.Emit(n1, n2);
   }
 
-  inline sigcxx::Signal<int>& event1 ()
+  inline sigcxx::SignalT<int>& event1 ()
   {
     return event1_;
   }
 
-  inline sigcxx::Signal<int, int>& event2 ()
+  inline sigcxx::SignalT<int, int>& event2 ()
   {
     return event2_;
   }
 
  private:
 
-  sigcxx::Signal<int> event1_;
-  sigcxx::Signal<int, int> event2_;
+  sigcxx::SignalT<int> event1_;
+  sigcxx::SignalT<int, int> event2_;
 };
 
 class AbstractConsumer: public sigcxx::Trackable
@@ -73,13 +73,13 @@ class Consumer: public AbstractConsumer
   void OnTest1 (int n, sigcxx::SLOT /* slot */)
   {
 	  test1_count_++;
-	  std::cout << "Signal received in OnTest1, n " << n << ", " << test1_count_ << " times." << std::endl;
+	  std::cout << "SignalT received in OnTest1, n " << n << ", " << test1_count_ << " times." << std::endl;
   }
 
   void OnTest2 (int n1, int n2, sigcxx::SLOT /* slot */)
   {
 	  test2_count_++;
-    std::cout << "Signal received in OnTest2, n1: " << n1 << " n2: " << n2 << ", " << test2_count_ << " times."
+    std::cout << "SignalT received in OnTest2, n1: " << n1 << " n2: " << n2 << ", " << test2_count_ << " times."
               << std::endl;
   }
 

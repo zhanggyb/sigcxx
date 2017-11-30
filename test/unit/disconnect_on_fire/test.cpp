@@ -27,13 +27,13 @@ class Source {
     event_.Emit(n);
   }
 
-  inline sigcxx::Signal<int> &event() {
+  inline sigcxx::SignalT<int> &event() {
     return event_;
   }
 
  private:
 
-  sigcxx::Signal<int> event_;
+  sigcxx::SignalT<int> event_;
 };
 
 class Consumer : public sigcxx::Trackable {
@@ -48,19 +48,19 @@ class Consumer : public sigcxx::Trackable {
   }
 
   void OnTestDisconnectFirst(int n, SLOT slot) {
-    Unbind(slot);
+    UnbindSignal(slot);
     // sender->signal_base().DisconnectOnce(this, &Consumer::OnTestDisconnectFirst, 0);
   }
 
   void OnTestDisconnectLast(int n, SLOT slot) {
-    Unbind(slot);
+    UnbindSignal(slot);
     // sender->signal_base().DisconnectOnce(this, &Consumer::OnTestDisconnectLast, -1);
   }
 
   void OnTestDisconnectAll(int n, SLOT slot) {
     // RemoveAllInConnections(sender);
     // sender->signal_base().DisconnectAll(this, &Consumer::OnTestDisconnectAll);
-    UnbindAll(&Consumer::OnTestDisconnectAll);
+    UnbindAllSignalsTo(&Consumer::OnTestDisconnectAll);
   }
 
 };
@@ -77,7 +77,7 @@ TEST_F(Test, disconnect_first_on_fire1) {
   s.event().Connect(&c, &Consumer::OnTestNothing);
 
   s.DoTest();
-  ASSERT_TRUE(c.CountBindings() == 2);
+  ASSERT_TRUE(c.CountSignalBindings() == 2);
 }
 
 /*
@@ -92,7 +92,7 @@ TEST_F(Test, disconnect_first_on_fire2) {
   s.event().Connect(&c, &Consumer::OnTestNothing);
 
   s.DoTest();
-  ASSERT_TRUE(c.CountBindings() == 2);
+  ASSERT_TRUE(c.CountSignalBindings() == 2);
 }
 
 /*
@@ -107,7 +107,7 @@ TEST_F(Test, disconnect_last_on_fire1) {
   s.event().Connect(&c, &Consumer::OnTestDisconnectLast);
 
   s.DoTest();
-  ASSERT_TRUE(c.CountBindings() == 2);
+  ASSERT_TRUE(c.CountSignalBindings() == 2);
 }
 
 /*
@@ -122,7 +122,7 @@ TEST_F(Test, disconnect_last_on_fire2) {
   s.event().Connect(&c, &Consumer::OnTestNothing);
 
   s.DoTest();
-  ASSERT_TRUE(c.CountBindings() == 2);
+  ASSERT_TRUE(c.CountSignalBindings() == 2);
 }
 
 /*
@@ -139,5 +139,5 @@ TEST_F(Test, disconnect_all_on_fire1) {
   s.event().Connect(&c, &Consumer::OnTestDisconnectAll);
 
   s.DoTest();
-  ASSERT_TRUE(c.CountBindings() == 1);
+  ASSERT_TRUE(c.CountSignalBindings() == 1);
 }

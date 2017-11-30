@@ -16,21 +16,21 @@ Test::~Test()
 
 }
 
-struct VToken: public sigcxx::details::CallableToken<>
+struct VToken: public sigcxx::internal::CallableTokenT<>
 {
  public:
   VToken(int value = 0)
-      : sigcxx::details::CallableToken<>(), v(value)
+      : sigcxx::internal::CallableTokenT<>(), v(value)
   {}
   
   int v;
 };
 
-class Event: public sigcxx::Signal<>
+class Event: public sigcxx::SignalT<>
 {
  public:
   Event ()
-      : sigcxx::Signal<>()
+      : sigcxx::SignalT<>()
   { }
   
   virtual ~Event()
@@ -54,7 +54,7 @@ class Event: public sigcxx::Signal<>
   void print () const
   {
     VToken* v = 0;
-    for (sigcxx::details::Token* p = first_token(); p; p = p->next) {
+    for (sigcxx::internal::Token* p = first_token(); p; p = p->next) {
       v = static_cast<VToken*>(p);
       cout << v->v << endl;
     }
@@ -74,14 +74,14 @@ class Source
     event_.Emit(this);
   }
 
-  inline sigcxx::Signal<Source*>& event ()
+  inline sigcxx::SignalT<Source*>& event ()
   {
     return event_;
   }
 
  private:
 
-  sigcxx::Signal<Source*> event_;
+  sigcxx::SignalT<Source*> event_;
 };
 
 class Consumer: public sigcxx::Trackable
