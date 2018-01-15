@@ -55,7 +55,7 @@ TEST_F(Test, connect_method_4_times) {
  */
 TEST_F(Test, connect_event_once) {
   Subject s1;
-  sigcxx::SignalT<int> s2;
+  sigcxx::Signal<int> s2;
   Observer o;
 
   s2.Connect(&o, &Observer::OnTest1IntegerParam);
@@ -99,7 +99,7 @@ TEST_F(Test, selfconsumer) {
 
 TEST_F(Test, event_chaining) {
   Subject s1;
-  sigcxx::SignalT<int> s2;
+  sigcxx::Signal<int> s2;
   Observer c;
 
   s1.signal1().Connect(s2);
@@ -156,7 +156,7 @@ TEST_F(Test, delete_more_when_called) {
 
 TEST_F(Test, count_event_connections) {
   Subject s1;
-  sigcxx::SignalT<> s2;
+  sigcxx::Signal<> s2;
   Observer c;
 
   s1.signal0().Connect(s2);

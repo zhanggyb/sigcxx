@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Freeman Zhang <zhanggyb@gmail.com>
+ * Copyright 2017 - 2018 The WizTK Authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef SIGCXX_MACROS_HPP_
-#define SIGCXX_MACROS_HPP_
+#ifndef WIZTK_BASE_DEFINES_HPP_
+#define WIZTK_BASE_DEFINES_HPP_
 
 #ifdef __DEBUG__
 
@@ -85,4 +85,4 @@
 #define WIZTK_DEPRECATED_NO_EXPORT WIZTK_NO_EXPORT WIZTK_DEPRECATED
 #endif
 
-#endif
+#endif // WIZTK_BASE_DEFINES_HPP_

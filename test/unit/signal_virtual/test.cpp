@@ -14,13 +14,13 @@ TEST_F(Test, connect_method_once) {
   Consumer *obj1 = new Consumer;
   SubConsumer *obj2 = new SubConsumer;
 
-  sigcxx::SignalT<int> signal1;
+  sigcxx::Signal<int> signal1;
   signal1.Connect(obj1, &Consumer::OnVirtualTest);
 
-  sigcxx::SignalT<int> signal2;
+  sigcxx::Signal<int> signal2;
   signal2.Connect(obj2, &SubConsumer::OnVirtualTest); // this signal_connect to the method in sub class
 
-  sigcxx::SignalT<int> signal3;
+  sigcxx::Signal<int> signal3;
   signal3.Connect(dynamic_cast<Consumer *>(obj2),
                  &Consumer::OnVirtualTest); // this still signal_connect to the method in sub class
 
@@ -37,7 +37,7 @@ TEST_F(Test, connect_method_once) {
 }
 
 TEST_F(Test, connect_to_pure_virtual_function) {
-  sigcxx::SignalT<int> signal1;
+  sigcxx::Signal<int> signal1;
   AbstractConsumer *obj1 = new Consumer;
 
   signal1.Connect(obj1, &AbstractConsumer::OnVirtualTest);

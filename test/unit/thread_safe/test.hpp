@@ -31,20 +31,20 @@ class Source
 
   void DoTest2 (int n1, int n2);
 
-  inline sigcxx::SignalT<int>& event1 ()
+  inline sigcxx::Signal<int>& event1 ()
   {
     return event1_;
   }
 
-  inline sigcxx::SignalT<int, int>& event2 ()
+  inline sigcxx::Signal<int, int>& event2 ()
   {
     return event2_;
   }
 
  private:
 
-  sigcxx::SignalT<int> event1_;
-  sigcxx::SignalT<int, int> event2_;
+  sigcxx::Signal<int> event1_;
+  sigcxx::Signal<int, int> event2_;
 };
 
 class Consumer: public sigcxx::Trackable

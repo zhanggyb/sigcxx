@@ -49,7 +49,7 @@ class Consumer : public Trackable {
 
 };
 
-SignalT<> sig1;
+Signal<> sig1;
 Consumer consumer;
 
 void Consumer::OnTestDisconnect1(SLOT slot) {

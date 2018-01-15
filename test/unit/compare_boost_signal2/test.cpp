@@ -23,7 +23,7 @@ Test::~Test()
 TEST_F(Test, fire_many_times)
 {
   Observer consumer;
-  sigcxx::SignalT<> event;
+  sigcxx::Signal<> event;
 
   event.Connect(&consumer, &Observer::OnTest0);
 
@@ -38,7 +38,7 @@ TEST_F(Test, fire_many_times)
 TEST_F(Test, connect_many_events)
 {
   Observer consumer;
-  sigcxx::SignalT<> event;
+  sigcxx::Signal<> event;
 
   for(int i = 0; i < TEST_CYCLE_NUM; i++)
   {

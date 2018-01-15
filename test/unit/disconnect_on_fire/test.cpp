@@ -27,13 +27,13 @@ class Source {
     event_.Emit(n);
   }
 
-  inline sigcxx::SignalT<int> &event() {
+  inline sigcxx::Signal<int> &event() {
     return event_;
   }
 
  private:
 
-  sigcxx::SignalT<int> event_;
+  sigcxx::Signal<int> event_;
 };
 
 class Consumer : public sigcxx::Trackable {

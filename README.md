@@ -141,7 +141,7 @@ public:
 
 ### Decleare and expose signals in Subject
 
-It's highly recommended to use the template class `sigcxx::SignalT<>` to declare
+It's highly recommended to use the template class `sigcxx::Signal<>` to declare
 signals as a member variable, and expose the signal with
 `sigcxx::SignalRefT<>`. Both of them are variadic templates and can take arbitray
 number of template arguments.
@@ -175,8 +175,8 @@ protected:
     }
 
 private:
-    sigcxx::SignalT<> notify1_;
-    sigcxx::SignalT<const Foo*> notify2_;
+    sigcxx::Signal<> notify1_;
+    sigcxx::Signal<const Foo*> notify2_;
 };
 ```
 

@@ -5,185 +5,57 @@
 #include <sigcxx/sigcxx.hpp>
 
 using namespace std;
+using namespace sigcxx;
 
 Test::Test()
-    : testing::Test()
-{
+    : testing::Test() {
 }
 
-Test::~Test()
-{
+Test::~Test() {
 
 }
 
-struct VToken: public sigcxx::internal::CallableTokenT<>
-{
- public:
-  VToken(int value = 0)
-      : sigcxx::internal::CallableTokenT<>(), v(value)
-  {}
-  
-  int v;
-};
-
-class Event: public sigcxx::SignalT<>
-{
- public:
-  Event ()
-      : sigcxx::SignalT<>()
-  { }
-  
-  virtual ~Event()
-  {}
-  
-  void push_back (VToken* token)
-  {
-    PushBackToken(token);
-  }
-  
-  void push_front (VToken* token)
-  {
-    PushFrontToken(token);
-  }
-  
-  void insert (int index, VToken* token)
-  {
-    InsertToken(index, token);
-  }
-  
-  void print () const
-  {
-    VToken* v = 0;
-    for (sigcxx::internal::Token* p = first_token(); p; p = p->next) {
-      v = static_cast<VToken*>(p);
-      cout << v->v << endl;
-    }
-  }
-
-};
-
-class Source
-{
+class Source {
  public:
 
-  Source () { }
-  ~Source () { }
+  Source() {}
+  ~Source() {}
 
-  void DoTest ()
-  {
+  void DoTest() {
     event_.Emit(this);
   }
 
-  inline sigcxx::SignalT<Source*>& event ()
-  {
+  inline sigcxx::Signal<Source *> &event() {
     return event_;
   }
 
  private:
 
-  sigcxx::SignalT<Source*> event_;
+  sigcxx::Signal<Source *> event_;
 };
 
-class Consumer: public sigcxx::Trackable
-{
+class Consumer : public sigcxx::Trackable {
  public:
 
-  Consumer ()
-  { }
+  Consumer() {}
 
-  virtual ~Consumer () { }
+  virtual ~Consumer() {}
 
-  void OnTestNothing (Source* sender)
-  {
+  void OnTestNothing(Source *sender, __SLOT__) {
     // do nothing...
   }
 
 };
 
-TEST_F(Test, push_back1)
-{
-  Event e;
-  
-  e.push_back(new VToken(0));
-  e.push_back(new VToken(1));
-  e.push_back(new VToken(2));
-  
-  e.print();
-  
-  ASSERT_TRUE(e.CountConnections() == 3);
-}
+TEST_F(Test, push_back1) {
+  Consumer consumer;
+  Signal<Source *> signal;
 
-TEST_F(Test, push_front1)
-{
-  Event c;
-  
-  c.push_front(new VToken(0));
-  c.push_front(new VToken(1));
-  c.push_front(new VToken(2));
-  
-  c.print();
-  
-  ASSERT_TRUE(c.CountConnections() == 3);
-}
+  signal.Connect(&consumer, &Consumer::OnTestNothing);
+  signal.Connect(&consumer, &Consumer::OnTestNothing);
+  signal.Connect(&consumer, &Consumer::OnTestNothing);
 
-TEST_F(Test, insert1)
-{
-  Event c;
-  
-  // same as push_front
-  c.insert(0, new VToken(0));
-  c.insert(0, new VToken(1));
-  c.insert(0, new VToken(2));
-  
-  c.print();
-  
-  ASSERT_TRUE(c.CountConnections() == 3);
-}
-
-TEST_F(Test, insert2)
-{
-  Event c;
-  
-  // same as push back
-  c.insert(-1, new VToken(0));
-  c.insert(-1, new VToken(1));
-  c.insert(-1, new VToken(2));
-  
-  c.print();
-  
-  ASSERT_TRUE(c.CountConnections() == 3);
-}
-
-TEST_F(Test, insert3)
-{
-  Event c;
-  
-  // same as push back
-  c.insert(-1, new VToken(0));
-  c.insert(-1, new VToken(1));
-  c.insert(-1, new VToken(2));
-  
-  c.insert(1, new VToken(3));
-  
-  c.print();
-  
-  ASSERT_TRUE(c.CountConnections() == 4);
-}
-
-TEST_F(Test, insert4)
-{
-  Event c;
-
-  // same as push back
-  c.insert(-1, new VToken(0));
-  c.insert(-1, new VToken(1));
-  c.insert(-1, new VToken(2));
-  
-  c.insert(-5, new VToken(3));
-  
-  c.print();
-  
-  ASSERT_TRUE(c.CountConnections() == 4);
+  ASSERT_TRUE(consumer.CountSignalBindings() == 3 && signal.CountConnections() == 3);
 }
 
 //TEST_F(Test, copy_observer)

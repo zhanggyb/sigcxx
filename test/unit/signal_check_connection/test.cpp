@@ -48,7 +48,7 @@ TEST_F(Test, IsConnectedTo1) {
  */
 TEST_F(Test, IsConnectedTo2) {
   Subject s1;
-  sigcxx::SignalT<int> s2;
+  sigcxx::Signal<int> s2;
 
   s1.signal1().Connect(s2);
 
